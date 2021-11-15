@@ -1,6 +1,6 @@
 # RIP ⚰
 
-REST In Peace
+REST in peace
 
 ## Why?
 
