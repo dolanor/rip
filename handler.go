@@ -38,6 +38,7 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 			switch e := err.(type) {
 			case NotFoundError:
 				http.Error(w, e.Error(), http.StatusNotFound)
+				return
 			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
