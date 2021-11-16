@@ -21,13 +21,17 @@ type User struct {
 	BirthDate time.Time `json:"birth_date"`
 }
 
+func (u User) Identity() string {
+	return u.Name
+}
+
 func SaveUser(ctx context.Context, u User) (User, error) {
 	mem[u.Name] = u
 	return u, nil
 }
 
-func GetUser(ctx context.Context, name string) (User, error) {
-	u, ok := mem[name]
+func GetUser(ctx context.Context, u User) (User, error) {
+	u, ok := mem[u.Identity()]
 	if !ok {
 		return User{}, rip.NotFoundError{Resource: "user"}
 	}
