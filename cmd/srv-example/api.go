@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/dolanor/rip"
 )
@@ -16,8 +17,8 @@ func Greet(ctx context.Context, name string) (string, error) {
 }
 
 type User struct {
-	Name string
-	Age  int
+	Name      string    `json:"name"`
+	BirthDate time.Time `json:"birth_date"`
 }
 
 func SaveUser(ctx context.Context, u User) (User, error) {
