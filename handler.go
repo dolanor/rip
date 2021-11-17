@@ -29,8 +29,14 @@ func HandleID[Res any, ID Identifier[string]](method string, f Txn[ID, Res]) htt
 			return
 		}
 
+		contentType, err := BestHeaderValue(r.Header["Content-Type"])
+		if err != nil {
+			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			return
+		}
+
 		var id string
-		err := json.NewDecoder(r.Body).Decode(&id)
+		err = ContentTypeDecoder(r.Body, contentType).Decode(&id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -48,7 +54,12 @@ func HandleID[Res any, ID Identifier[string]](method string, f Txn[ID, Res]) htt
 			return
 		}
 
-		err = json.NewEncoder(w).Encode(res)
+		accept, err := BestHeaderValue(r.Header["Accept"])
+		if err != nil {
+			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			return
+		}
+		err = AcceptEncoder(w, accept).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -64,8 +75,14 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 			return
 		}
 
+		contentType, err := BestHeaderValue(r.Header["Content-Type"])
+		if err != nil {
+			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			return
+		}
+
 		var req Req
-		err := json.NewDecoder(r.Body).Decode(&req)
+		err = ContentTypeDecoder(r.Body, contentType).Decode(&req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -82,7 +99,12 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 			return
 		}
 
-		err = json.NewEncoder(w).Encode(res)
+		accept, err := BestHeaderValue(r.Header["Accept"])
+		if err != nil {
+			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			return
+		}
+		err = AcceptEncoder(w, accept).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
