@@ -2,7 +2,6 @@ package rip
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 )
 
