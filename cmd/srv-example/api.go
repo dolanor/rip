@@ -17,8 +17,8 @@ func Greet(ctx context.Context, name string) (string, error) {
 }
 
 type User struct {
-	Name      string    `json:"name"`
-	BirthDate time.Time `json:"birth_date"`
+	Name      string    `json:"name" xml:"name"`
+	BirthDate time.Time `json:"birth_date" xml:"birth_date"`
 }
 
 func (u User) Identity() string {
