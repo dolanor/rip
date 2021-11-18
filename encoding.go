@@ -6,6 +6,11 @@ import (
 	"io"
 )
 
+var AvailableEncodings = []string{
+	"text/json",
+	"text/xml",
+}
+
 type Decoder interface {
 	Decode(v interface{}) error
 }

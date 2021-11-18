@@ -29,7 +29,7 @@ func HandleID[Res any, ID Identifier[string]](method string, f Txn[ID, Res]) htt
 			return
 		}
 
-		contentType, err := BestHeaderValue(r.Header["Content-Type"])
+		contentType, err := BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -54,7 +54,7 @@ func HandleID[Res any, ID Identifier[string]](method string, f Txn[ID, Res]) htt
 			return
 		}
 
-		accept, err := BestHeaderValue(r.Header["Accept"])
+		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -75,7 +75,7 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 			return
 		}
 
-		contentType, err := BestHeaderValue(r.Header["Content-Type"])
+		contentType, err := BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -99,7 +99,7 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 			return
 		}
 
-		accept, err := BestHeaderValue(r.Header["Accept"])
+		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
