@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -25,17 +26,23 @@ func (u User) Identity() string {
 	return u.Name
 }
 
-func SaveUser(ctx context.Context, u User) (User, error) {
-	mem[u.Name] = u
+func (u *User) SetID(s string) {
+	u.Name = s
+}
+
+func SaveUser(ctx context.Context, u *User) (*User, error) {
+	log.Printf("SaveUser: saving %+v", u)
+	mem[u.Name] = *u
 	return u, nil
 }
 
-func GetUser(ctx context.Context, u User) (User, error) {
-	u, ok := mem[u.Identity()]
+func GetUser(ctx context.Context, id string) (*User, error) {
+	log.Printf("GetUser: getting %+v", id)
+	u, ok := mem[id]
 	if !ok {
-		return User{}, rip.NotFoundError{Resource: "user"}
+		return &User{}, rip.NotFoundError{Resource: "user"}
 	}
-	return u, nil
+	return &u, nil
 }
 
 var mem = map[string]User{}
