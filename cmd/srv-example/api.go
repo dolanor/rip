@@ -36,13 +36,24 @@ func SaveUser(ctx context.Context, u *User) (*User, error) {
 	return u, nil
 }
 
-func GetUser(ctx context.Context, id string) (*User, error) {
-	log.Printf("GetUser: getting %+v", id)
-	u, ok := mem[id]
+func GetUser(ctx context.Context, ider rip.IDer) (*User, error) {
+	log.Printf("GetUser: getting %+v", ider)
+	u, ok := mem[ider.String()]
 	if !ok {
 		return &User{}, rip.NotFoundError{Resource: "user"}
 	}
 	return &u, nil
+}
+
+func DeleteUser(ctx context.Context, ider rip.IDer) (*User, error) {
+	log.Printf("DeleteUser: deleting %+v", ider)
+	_, ok := mem[ider.String()]
+	if !ok {
+		return &User{}, rip.NotFoundError{Resource: "user"}
+	}
+
+	delete(mem, ider.String())
+	return nil, nil
 }
 
 var mem = map[string]User{}

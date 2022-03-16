@@ -2,6 +2,7 @@ package rip
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -9,28 +10,55 @@ import (
 
 type Txn[Req, Res any] func(ctx context.Context, req Req) (Res, error)
 
-type Identifier[T any] interface {
-	Identity() T
-	SetID(id T)
-}
-
-func HandleResource[Req, Res any](req Req, save Txn[Req, Res], get Txn[string, Res]) http.HandlerFunc {
-	_, f := HandleResourcePath("", req, save, get)
+func HandleResource[Req, Res any](req Req, save Txn[Req, Res], get Txn[IDer, Res], deleteFn Txn[IDer, Res]) http.HandlerFunc {
+	_, f := HandleResourcePath("", req, save, get, deleteFn)
 	return f
 }
 
-func HandleResourcePath[Req, Res any](urlPath string, req Req, save Txn[Req, Res], get Txn[string, Res]) (string, http.HandlerFunc) {
+func HandleResourcePath[Req, Res any](urlPath string, req Req, save Txn[Req, Res], get Txn[IDer, Res], deleteFn Txn[IDer, Res]) (path string, handler http.HandlerFunc) {
 	return urlPath, func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			Handle(r.Method, save)(w, r)
 		case http.MethodGet:
 			HandlePathID(urlPath, r.Method, get)(w, r)
+		case http.MethodDelete:
+			DeletePathID(urlPath, r.Method, deleteFn)(w, r)
 		}
 	}
 }
 
-func HandleID[Res any, ID Identifier[string]](method string, f Txn[string, Res]) http.HandlerFunc {
+func DeletePathID[Res any](urlPath, method string, f Txn[IDer, Res]) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			http.Error(w, "bad method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		id := strings.TrimPrefix(r.URL.Path, urlPath)
+
+		var resID stringID
+		resID.FromString(id)
+
+		log.Printf("delete: whatting %+v, %s %s", resID, r.URL.Path, urlPath)
+		// we don't need the returning resource, it's mostly a no-op
+		_, err := f(r.Context(), &resID)
+		if err != nil {
+			switch e := err.(type) {
+			case NotFoundError:
+				http.Error(w, e.Error(), http.StatusNotFound)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func HandleID[Res any](method string, f Txn[IDer, Res]) http.HandlerFunc {
+	//TODO what to use for default path?
 	return HandlePathID("", method, f)
 }
 
@@ -41,7 +69,22 @@ type StringID struct {
 func (i *StringID) Identity() string { return string(i.id) }
 func (i *StringID) SetID(id string)  { i.id = id }
 
-func HandlePathID[Res any](urlPath, method string, f Txn[string, Res]) http.HandlerFunc {
+type IDer interface {
+	fmt.Stringer
+	FromString(s string)
+}
+
+type stringID string
+
+func (i *stringID) FromString(s string) {
+	*i = stringID(s)
+}
+
+func (i stringID) String() string {
+	return string(i)
+}
+
+func HandlePathID[Res any](urlPath, method string, f Txn[IDer, Res]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
@@ -50,11 +93,11 @@ func HandlePathID[Res any](urlPath, method string, f Txn[string, Res]) http.Hand
 
 		id := strings.TrimPrefix(r.URL.Path, urlPath)
 
-		var req = StringID{}
-		req.SetID(id)
+		var resID stringID
+		resID.FromString(id)
 
-		log.Printf("what: whatting %+v, %s %s", req, r.URL.Path, urlPath)
-		res, err := f(r.Context(), id)
+		log.Printf("what: whatting %+v, %s %s", resID, r.URL.Path, urlPath)
+		res, err := f(r.Context(), &resID)
 		if err != nil {
 			switch e := err.(type) {
 			case NotFoundError:
