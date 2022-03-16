@@ -3,8 +3,9 @@ package rip_test
 import (
 	"testing"
 
-	"github.com/dolanor/rip"
 	"github.com/matryer/is"
+
+	"github.com/dolanor/rip"
 )
 
 func TestChooseHeaderValue(t *testing.T) {

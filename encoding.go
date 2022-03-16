@@ -16,6 +16,7 @@ type Decoder interface {
 }
 
 func ContentTypeDecoder(r io.Reader, contentTypeHeader string) Decoder {
+	// TODO use a map[string]Decoder to be able to extend it
 	switch contentTypeHeader {
 	case "text/xml":
 		return xml.NewDecoder(r)
