@@ -3,7 +3,6 @@ package rip
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -70,7 +69,6 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 		var resID stringID
 		resID.FromString(id)
 
-		log.Printf("update: %+v, %s %s", resID, r.URL.Path, urlPath)
 		contentType, err := BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
@@ -125,7 +123,6 @@ func DeletePathID(urlPath, method string, f DeleteFn[IDer]) http.HandlerFunc {
 		var resID stringID
 		resID.FromString(id)
 
-		log.Printf("delete: whatting %+v, %s %s", resID, r.URL.Path, urlPath)
 		// we don't need the returning resource, it's mostly a no-op
 		err := f(r.Context(), &resID)
 		if err != nil {
@@ -183,7 +180,6 @@ func HandleGet[Res IDer](urlPath, method string, f GetFn[IDer, Res]) http.Handle
 		var resID stringID
 		resID.FromString(id)
 
-		log.Printf("what: whatting %+v, %s %s", resID, r.URL.Path, urlPath)
 		res, err := f(r.Context(), &resID)
 		if err != nil {
 			switch e := err.(type) {
