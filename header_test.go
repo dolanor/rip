@@ -3,8 +3,6 @@ package rip_test
 import (
 	"testing"
 
-	"github.com/matryer/is"
-
 	"github.com/dolanor/rip"
 )
 
@@ -19,12 +17,16 @@ func TestChooseHeaderValue(t *testing.T) {
 		"2x2 values with q":           {[]string{"text/xml; q=0.7, text/json; q=0.1", "text/json; q=0.3, text/plaintext;q=0.71"}, "text/xml"},
 		"2x2 values with q and other": {[]string{"text/xml; nope; q=0.7, text/json; q=0.1", "text/json; q=0.3, text/plaintext; other;q=0.71"}, "text/xml"},
 	}
+
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			is := is.New(t)
 			got, err := rip.BestHeaderValue(c.in, rip.AvailableEncodings)
-			is.NoErr(err)
-			is.Equal(got, c.exp)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != c.exp {
+				t.Fatalf("result not equal: got %v, expected %v", got, c.exp)
+			}
 		})
 	}
 }
