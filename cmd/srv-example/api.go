@@ -38,7 +38,7 @@ func SaveUser(ctx context.Context, u *User) (*User, error) {
 
 func GetUser(ctx context.Context, ider rip.IDer) (*User, error) {
 	log.Printf("GetUser: getting %+v", ider)
-	u, ok := mem[ider.String()]
+	u, ok := mem[ider.IDString()]
 	if !ok {
 		return &User{}, rip.NotFoundError{Resource: "user"}
 	}
@@ -47,12 +47,12 @@ func GetUser(ctx context.Context, ider rip.IDer) (*User, error) {
 
 func DeleteUser(ctx context.Context, ider rip.IDer) (*User, error) {
 	log.Printf("DeleteUser: deleting %+v", ider)
-	_, ok := mem[ider.String()]
+	_, ok := mem[ider.IDString()]
 	if !ok {
 		return &User{}, rip.NotFoundError{Resource: "user"}
 	}
 
-	delete(mem, ider.String())
+	delete(mem, ider.IDString())
 	return nil, nil
 }
 

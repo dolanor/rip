@@ -2,7 +2,6 @@ package rip
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -70,7 +69,7 @@ func (i *StringID) Identity() string { return string(i.id) }
 func (i *StringID) SetID(id string)  { i.id = id }
 
 type IDer interface {
-	fmt.Stringer
+	IDString() string
 	FromString(s string)
 }
 
@@ -80,7 +79,7 @@ func (i *stringID) FromString(s string) {
 	*i = stringID(s)
 }
 
-func (i stringID) String() string {
+func (i stringID) IDString() string {
 	return string(i)
 }
 
