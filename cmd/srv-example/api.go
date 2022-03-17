@@ -40,13 +40,13 @@ func NewUserProvider() *UserProvider {
 	}
 }
 
-func (up *UserProvider) SaveUser(ctx context.Context, u *User) (*User, error) {
+func (up *UserProvider) Save(ctx context.Context, u *User) (*User, error) {
 	log.Printf("SaveUser: saving %+v", u)
 	up.mem[u.Name] = *u
 	return u, nil
 }
 
-func (up UserProvider) GetUser(ctx context.Context, ider rip.IDer) (*User, error) {
+func (up UserProvider) Get(ctx context.Context, ider rip.IDer) (*User, error) {
 	log.Printf("GetUser: getting %+v", ider)
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
@@ -55,7 +55,7 @@ func (up UserProvider) GetUser(ctx context.Context, ider rip.IDer) (*User, error
 	return &u, nil
 }
 
-func (up *UserProvider) DeleteUser(ctx context.Context, ider rip.IDer) error {
+func (up *UserProvider) Delete(ctx context.Context, ider rip.IDer) error {
 	log.Printf("DeleteUser: deleting %+v", ider)
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
@@ -66,7 +66,7 @@ func (up *UserProvider) DeleteUser(ctx context.Context, ider rip.IDer) error {
 	return nil
 }
 
-func (up *UserProvider) UpdateUser(ctx context.Context, u *User) error {
+func (up *UserProvider) Update(ctx context.Context, u *User) error {
 	log.Printf("UpdateUser: updating %+v", u.Name)
 	_, ok := up.mem[u.Name]
 	if !ok {

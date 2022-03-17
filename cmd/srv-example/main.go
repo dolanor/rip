@@ -16,7 +16,8 @@ func main() {
 
 	up := NewUserProvider()
 	http.HandleFunc("/greet", rip.Handle(http.MethodPost, Greet))
-	http.HandleFunc(rip.HandleResourcePath("/users/", &User{}, up.SaveUser, up.GetUser, up.UpdateUser, up.DeleteUser))
+	http.HandleFunc(rip.HandleRscPath("/users/", &User{}, up))
+	//http.HandleFunc(rip.HandleResourcePath("/users/", &User{}, up.Save, up.Get, up.Update, up.Delete))
 	http.HandleFunc(tuple())
 	http.HandleFunc("/", handleRoot)
 
