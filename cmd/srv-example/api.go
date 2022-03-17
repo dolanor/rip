@@ -22,38 +22,57 @@ type User struct {
 	BirthDate time.Time `json:"birth_date" xml:"birth_date"`
 }
 
-func (u User) Identity() string {
+func (u User) IDString() string {
 	return u.Name
 }
 
-func (u *User) SetID(s string) {
+func (u *User) FromString(s string) {
 	u.Name = s
 }
 
-func SaveUser(ctx context.Context, u *User) (*User, error) {
+type UserProvider struct {
+	mem map[string]User
+}
+
+func NewUserProvider() *UserProvider {
+	return &UserProvider{
+		mem: map[string]User{},
+	}
+}
+
+func (up *UserProvider) SaveUser(ctx context.Context, u *User) (*User, error) {
 	log.Printf("SaveUser: saving %+v", u)
-	mem[u.Name] = *u
+	up.mem[u.Name] = *u
 	return u, nil
 }
 
-func GetUser(ctx context.Context, ider rip.IDer) (*User, error) {
+func (up UserProvider) GetUser(ctx context.Context, ider rip.IDer) (*User, error) {
 	log.Printf("GetUser: getting %+v", ider)
-	u, ok := mem[ider.IDString()]
+	u, ok := up.mem[ider.IDString()]
 	if !ok {
 		return &User{}, rip.NotFoundError{Resource: "user"}
 	}
 	return &u, nil
 }
 
-func DeleteUser(ctx context.Context, ider rip.IDer) (*User, error) {
+func (up *UserProvider) DeleteUser(ctx context.Context, ider rip.IDer) error {
 	log.Printf("DeleteUser: deleting %+v", ider)
-	_, ok := mem[ider.IDString()]
+	_, ok := up.mem[ider.IDString()]
 	if !ok {
-		return &User{}, rip.NotFoundError{Resource: "user"}
+		return rip.NotFoundError{Resource: "user"}
 	}
 
-	delete(mem, ider.IDString())
-	return nil, nil
+	delete(up.mem, ider.IDString())
+	return nil
 }
 
-var mem = map[string]User{}
+func (up *UserProvider) UpdateUser(ctx context.Context, u *User) error {
+	log.Printf("UpdateUser: updating %+v", u.Name)
+	_, ok := up.mem[u.Name]
+	if !ok {
+		return rip.NotFoundError{Resource: "user"}
+	}
+	up.mem[u.Name] = *u
+
+	return nil
+}

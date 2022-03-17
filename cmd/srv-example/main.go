@@ -13,8 +13,10 @@ func tuple() (string, http.HandlerFunc) {
 }
 func main() {
 	hostPort := os.ExpandEnv("$HOST:$PORT")
+
+	up := NewUserProvider()
 	http.HandleFunc("/greet", rip.Handle(http.MethodPost, Greet))
-	http.HandleFunc(rip.HandleResourcePath("/users/", &User{}, SaveUser, GetUser, DeleteUser))
+	http.HandleFunc(rip.HandleResourcePath("/users/", &User{}, up.SaveUser, up.GetUser, up.UpdateUser, up.DeleteUser))
 	http.HandleFunc(tuple())
 	http.HandleFunc("/", handleRoot)
 
