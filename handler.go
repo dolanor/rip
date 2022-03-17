@@ -245,11 +245,14 @@ func HandleCreate[Res any](method string, f CreateFn[Res]) http.HandlerFunc {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
 		}
+
+		w.WriteHeader(http.StatusCreated)
 		err = AcceptEncoder(w, accept).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 	}
 }
 
