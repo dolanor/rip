@@ -17,7 +17,7 @@ type UpdateFn[Res any] func(ctx context.Context, res Res) error
 type DeleteFn[ID IDer] func(ctx context.Context, id IDer) error
 
 func HandleResource[Res IDer](res Res, create CreateFn[Res], get GetFn[IDer, Res], update UpdateFn[Res], del DeleteFn[IDer]) http.HandlerFunc {
-	_, f := HandleResourcePath("", res, create, get, update, del)
+	_, f := HandleResourcePath("", create, get, update, del)
 	return f
 }
 
@@ -44,11 +44,11 @@ type ResourceProvider[Res IDer] interface {
 	Deleter[Res]
 }
 
-func HandleRscPath[Res IDer, RP ResourceProvider[Res]](urlPath string, res Res, rp RP) (path string, handler http.HandlerFunc) {
-	return HandleResourcePath(urlPath, res, rp.Save, rp.Get, rp.Update, rp.Delete)
+func HandleRscPath[Res IDer, RP ResourceProvider[Res]](urlPath string, rp RP) (path string, handler http.HandlerFunc) {
+	return HandleResourcePath(urlPath, rp.Save, rp.Get, rp.Update, rp.Delete)
 }
 
-func HandleResourcePath[Res IDer](urlPath string, res Res, create CreateFn[Res], get GetFn[IDer, Res], updateFn UpdateFn[Res], deleteFn DeleteFn[IDer]) (path string, handler http.HandlerFunc) {
+func HandleResourcePath[Res IDer](urlPath string, create CreateFn[Res], get GetFn[IDer, Res], updateFn UpdateFn[Res], deleteFn DeleteFn[IDer]) (path string, handler http.HandlerFunc) {
 	return urlPath, func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
