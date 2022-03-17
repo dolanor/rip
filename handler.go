@@ -21,8 +21,8 @@ func HandleResource[Res IDer](res Res, create CreateFn[Res], get GetFn[IDer, Res
 	return f
 }
 
-type Saver[Res IDer] interface {
-	Save(ctx context.Context, res Res) (Res, error)
+type Creater[Res IDer] interface {
+	Create(ctx context.Context, res Res) (Res, error)
 }
 
 type Getter[Res IDer] interface {
@@ -38,14 +38,14 @@ type Deleter[Res IDer] interface {
 }
 
 type ResourceProvider[Res IDer] interface {
-	Saver[Res]
+	Creater[Res]
 	Getter[Res]
 	Updater[Res]
 	Deleter[Res]
 }
 
 func HandleRscPath[Res IDer, RP ResourceProvider[Res]](urlPath string, rp RP) (path string, handler http.HandlerFunc) {
-	return HandleResourcePath(urlPath, rp.Save, rp.Get, rp.Update, rp.Delete)
+	return HandleResourcePath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete)
 }
 
 func HandleResourcePath[Res IDer](urlPath string, create CreateFn[Res], get GetFn[IDer, Res], updateFn UpdateFn[Res], deleteFn DeleteFn[IDer]) (path string, handler http.HandlerFunc) {

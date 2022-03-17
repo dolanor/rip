@@ -40,7 +40,7 @@ func NewUserProvider() *UserProvider {
 	}
 }
 
-func (up *UserProvider) Save(ctx context.Context, u *User) (*User, error) {
+func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 	log.Printf("SaveUser: saving %+v", u)
 	up.mem[u.Name] = *u
 	return u, nil
