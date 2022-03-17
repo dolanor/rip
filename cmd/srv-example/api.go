@@ -41,13 +41,13 @@ func NewUserProvider() *UserProvider {
 }
 
 func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
-	log.Printf("SaveUser: saving %+v", u)
+	log.Printf("SaveUser: %+v", *u)
 	up.mem[u.Name] = *u
 	return u, nil
 }
 
 func (up UserProvider) Get(ctx context.Context, ider rip.IDer) (*User, error) {
-	log.Printf("GetUser: getting %+v", ider)
+	log.Printf("GetUser: %+v", ider.IDString())
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
 		return &User{}, rip.NotFoundError{Resource: "user"}
@@ -56,7 +56,7 @@ func (up UserProvider) Get(ctx context.Context, ider rip.IDer) (*User, error) {
 }
 
 func (up *UserProvider) Delete(ctx context.Context, ider rip.IDer) error {
-	log.Printf("DeleteUser: deleting %+v", ider)
+	log.Printf("DeleteUser: %+v", ider.IDString())
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
 		return rip.NotFoundError{Resource: "user"}
@@ -67,7 +67,7 @@ func (up *UserProvider) Delete(ctx context.Context, ider rip.IDer) error {
 }
 
 func (up *UserProvider) Update(ctx context.Context, u *User) error {
-	log.Printf("UpdateUser: updating %+v", u.Name)
+	log.Printf("UpdateUser: %+v", u.IDString())
 	_, ok := up.mem[u.Name]
 	if !ok {
 		return rip.NotFoundError{Resource: "user"}
