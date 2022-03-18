@@ -53,6 +53,8 @@ func handleResourceWithPath[Res IDer](urlPath string, create CreateFn[Res], get 
 			UpdatePathID(urlPath, r.Method, updateFn)(w, r)
 		case http.MethodDelete:
 			DeletePathID(urlPath, r.Method, deleteFn)(w, r)
+		default:
+			badMethodHandler(w, r)
 		}
 	}
 }
@@ -66,7 +68,7 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 		}
 
 		if r.Method != method {
-			http.Error(w, "bad method", http.StatusMethodNotAllowed)
+			WriteError(w, accept, Error{Status: http.StatusMethodNotAllowed, Message: "bad method"})
 			return
 		}
 
@@ -276,4 +278,14 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 			return
 		}
 	}
+}
+
+func badMethodHandler(w http.ResponseWriter, r *http.Request) {
+	accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+	if err != nil {
+		WriteError(w, accept, fmt.Errorf("bad accept header format: %w", err))
+		return
+	}
+
+	WriteError(w, accept, Error{Status: http.StatusMethodNotAllowed, Message: "bad method"})
 }
