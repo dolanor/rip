@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -9,6 +10,7 @@ import (
 )
 
 func main() {
+	log.SetPrefix("DBGTHE: APP: ")
 	hostPort := os.ExpandEnv("$HOST:$PORT")
 
 	up := NewUserProvider()

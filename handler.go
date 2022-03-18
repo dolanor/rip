@@ -91,7 +91,8 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 		}
 
 		if resID.IDString() != res.IDString() {
-			http.Error(w, fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", resID.IDString(), res.IDString()), http.StatusBadRequest)
+			// TODO check for better status code
+			WriteError(w, accept, Error{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", resID.IDString(), res.IDString())})
 			return
 		}
 
@@ -103,7 +104,7 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 
 		err = AcceptEncoder(w, accept).Encode(res)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			WriteError(w, accept, err)
 			return
 		}
 	}
