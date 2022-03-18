@@ -46,3 +46,17 @@ type NotFoundError struct {
 func (e NotFoundError) Error() string {
 	return "resource not found: " + e.Resource
 }
+
+type BadRequestError struct {
+	origin error
+}
+
+func (e BadRequestError) Error() string {
+	return "bad request: " + e.origin.Error()
+}
+
+func BadRequestErr(err error) error {
+	var e BadRequestError
+	e.origin = fmt.Errorf("BAD: %w", err)
+	return e
+}

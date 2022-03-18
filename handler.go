@@ -59,6 +59,12 @@ func handleResourceWithPath[Res IDer](urlPath string, create CreateFn[Res], get 
 
 func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+		if err != nil {
+			WriteError(w, accept, BadRequestErr(err), "bad content type header format")
+			return
+		}
+
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
 			return
@@ -98,11 +104,6 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 			return
 		}
 
-		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
-		if err != nil {
-			http.Error(w, "bad content type header format", http.StatusBadRequest)
-			return
-		}
 		err = AcceptEncoder(w, accept).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
