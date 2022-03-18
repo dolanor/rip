@@ -1,8 +1,6 @@
 package rip
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,46 +9,29 @@ import (
 type ErrorCode int
 
 const (
-	ErrorCodeBadQArg ErrorCode = 499
+	ErrorCodeNotFound ErrorCode = 404
+	ErrorCodeBadQArg  ErrorCode = 499
 )
 
 type Error struct {
 	Status  int
-	Err     error
 	Code    ErrorCode
 	Message string
 }
 
-func (e Error) MarshalJSON() ([]byte, error) {
-	type ex struct {
-		Status  int
-		Err     string
-		Code    int
-		Message string
-	}
-	exx := ex{
-		Status:  e.Status,
-		Err:     e.Err.Error(),
-		Code:    int(e.Code),
-		Message: e.Message,
-	}
-	return json.Marshal(exx)
-}
-
 func (e Error) Error() string {
-	return e.Err.Error() + " " + e.Message
+	return e.Message
 }
 
-func WriteError(w http.ResponseWriter, accept string, err error, msg string) {
+func WriteError(w http.ResponseWriter, accept string, err error) {
 	var e Error
-
 	if !errors.As(err, &e) {
 		e = Error{
-			Err:     err,
-			Message: msg,
+			Message: err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
 	}
+	e.Message = err.Error()
 
 	var eee BadRequestError
 	if e.Code == ErrorCodeBadQArg || errors.As(err, &eee) {

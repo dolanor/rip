@@ -95,12 +95,7 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 
 		err = f(r.Context(), res)
 		if err != nil {
-			switch e := err.(type) {
-			case NotFoundError:
-				http.Error(w, e.Error(), http.StatusNotFound)
-				return
-			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			WriteError(w, accept, err)
 			return
 		}
 
