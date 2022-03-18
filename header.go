@@ -56,7 +56,8 @@ func HeaderValues(header []string) ([]HeaderQ, error) {
 					hasQ = true
 					q, err := strconv.ParseFloat(qp[1], 32)
 					if err != nil {
-						return hqs, BadRequestErr(fmt.Errorf("parsing q value: %w", err))
+						err := fmt.Errorf("parsing q value of %v: %w", aQStrs, err)
+						return hqs, Error{Code: ErrorCodeBadQArg, Err: err, Message: err.Error()}
 					}
 					hq := HeaderQ{Value: aQ[0], Q: float32(q)}
 					hqs = append(hqs, hq)
