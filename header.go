@@ -15,7 +15,7 @@ type HeaderQ struct {
 func BestHeaderValue(header []string, serverPreferences []string) (string, error) {
 	clientPreferences, err := HeaderValues(header)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	best := MatchHeaderValue(clientPreferences, serverPreferences)
