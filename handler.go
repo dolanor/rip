@@ -63,7 +63,7 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 	return func(w http.ResponseWriter, r *http.Request) {
 		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
 		if err != nil {
-			WriteError(w, accept, BadRequestErr(err), "bad content type header format")
+			WriteError(w, accept, fmt.Errorf("bad accept header format: %w", err))
 			return
 		}
 
@@ -79,14 +79,14 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 
 		contentType, err := BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
 		if err != nil {
-			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			WriteError(w, accept, fmt.Errorf("bad content type header format: %w", err))
 			return
 		}
 
 		var res Res
 		err = ContentTypeDecoder(r.Body, contentType).Decode(&res)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			WriteError(w, accept, fmt.Errorf("bad input format: %w", err))
 			return
 		}
 
