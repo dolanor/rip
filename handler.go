@@ -140,20 +140,6 @@ func DeletePathID(urlPath, method string, f DeleteFn[IDer]) http.HandlerFunc {
 	}
 }
 
-func HandleID[ID IDer, Res IDer](method string, f Txn[ID, Res]) http.HandlerFunc {
-	//TODO what to use for default path?
-	//return HandlePathID("", method, f)
-	//TODO fix
-	return nil
-}
-
-type StringID struct {
-	id string
-}
-
-func (i *StringID) Identity() string { return string(i.id) }
-func (i *StringID) SetID(id string)  { i.id = id }
-
 type IDer interface {
 	IDString() string
 	FromString(s string)
