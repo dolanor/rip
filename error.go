@@ -28,9 +28,13 @@ func WriteError(w http.ResponseWriter, accept string, err error) {
 	if !errors.As(err, &e) {
 		e = Error{
 			Message: err.Error(),
-			Status:  http.StatusInternalServerError,
 		}
 	}
+
+	if e.Status == 0 {
+		e.Status = http.StatusInternalServerError
+	}
+
 	e.Message = err.Error()
 
 	var eee BadRequestError
@@ -38,10 +42,11 @@ func WriteError(w http.ResponseWriter, accept string, err error) {
 		e.Status = http.StatusBadRequest
 	}
 	var ee NotFoundError
-	if errors.As(err, &ee) {
+	if e.Code == ErrorCodeNotFound || errors.As(err, &ee) {
 		e.Status = http.StatusNotFound
 	}
 
+	w.WriteHeader(e.Status)
 	err = AcceptEncoder(w, accept).Encode(e)
 	// We can't do anything, we need to make the HTTP server intercept the panic
 	if err != nil {
