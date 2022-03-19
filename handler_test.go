@@ -116,6 +116,19 @@ func TestHandleResourceWithPath(t *testing.T) {
 			t.Fatal("get status code after delete is not 404")
 		}
 	})
+
+	t.Run("delete again (check idempotency)", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.IDString(), nil)
+		panicErr(t, err)
+
+		resp, err := c.Do(req)
+		panicErr(t, err)
+		defer resp.Body.Close()
+		t.Log(resp.StatusCode)
+		if resp.StatusCode != http.StatusNoContent {
+			t.Fatal("delete status is not 204")
+		}
+	})
 }
 
 func Greet(ctx context.Context, name string) (string, error) {
@@ -155,7 +168,7 @@ func (up UserProvider) Get(ctx context.Context, ider rip.IDer) (*User, error) {
 	log.Printf("GetUser: %+v", ider.IDString())
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
-		return &User{}, rip.NotFoundError{Resource: "user"}
+		return &User{}, rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
 	}
 	return &u, nil
 }
@@ -164,7 +177,7 @@ func (up *UserProvider) Delete(ctx context.Context, ider rip.IDer) error {
 	log.Printf("DeleteUser: %+v", ider.IDString())
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
-		return rip.NotFoundError{Resource: "user"}
+		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
 	}
 
 	delete(up.mem, ider.IDString())
@@ -175,7 +188,7 @@ func (up *UserProvider) Update(ctx context.Context, u *User) error {
 	log.Printf("UpdateUser: %+v", u.IDString())
 	_, ok := up.mem[u.Name]
 	if !ok {
-		return rip.NotFoundError{Resource: "user"}
+		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
 	}
 	up.mem[u.Name] = *u
 

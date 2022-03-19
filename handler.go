@@ -2,6 +2,7 @@ package rip
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,8 @@ type ResFn[ID IDer, Res any] func(ctx context.Context, id ID) (Res, error)
 type GetFn[ID IDer, Res any] func(ctx context.Context, id ID) (Res, error)
 type UpdateFn[Res any] func(ctx context.Context, res Res) error
 type DeleteFn[ID IDer] func(ctx context.Context, id IDer) error
+
+// TODO add ListFn to deal with list (pagination, etc)
 
 type Creater[Res IDer] interface {
 	Create(ctx context.Context, res Res) (Res, error)
@@ -77,14 +80,20 @@ func ProcessRequest(w http.ResponseWriter, r *http.Request, method string, heade
 	return "", contentType, nil
 }
 
-func checkPathID(requestPath, prefixPath string, id string) error {
+func resID(requestPath, prefixPath string, id string) stringID {
 	pathID := strings.TrimPrefix(requestPath, prefixPath)
 
 	var resID stringID
 	resID.FromString(pathID)
 
-	if resID.IDString() != id {
-		return Error{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", resID.IDString(), pathID)}
+	return resID
+}
+
+func checkPathID(requestPath, prefixPath string, id string) error {
+	rID := resID(requestPath, prefixPath, id)
+
+	if rID.IDString() != id {
+		return Error{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", rID.IDString(), id)}
 	}
 
 	return nil
@@ -133,26 +142,33 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 
 func DeletePathID(urlPath, method string, f DeleteFn[IDer]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != method {
-			http.Error(w, "bad method", http.StatusMethodNotAllowed)
+		accept, _, err := ProcessRequest(w, r, method, r.Header)
+		if err != nil {
+			WriteError(w, accept, err)
 			return
 		}
 
 		id := strings.TrimPrefix(r.URL.Path, urlPath)
 
-		var resID stringID
-		resID.FromString(id)
+		resID := resID(r.URL.Path, urlPath, id)
+		if err != nil {
+			WriteError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
+			return
+		}
 
 		// we don't need the returning resource, it's mostly a no-op
-		err := f(r.Context(), &resID)
+		err = f(r.Context(), &resID)
 		if err != nil {
-			switch e := err.(type) {
-			case NotFoundError:
-				http.Error(w, e.Error(), http.StatusNotFound)
+			var e Error
+			if errors.As(err, &e) {
+				if e.Code != ErrorCodeNotFound {
+					WriteError(w, accept, e)
+					return
+				}
+			} else {
+				WriteError(w, accept, err)
 				return
 			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
 		}
 
 		w.WriteHeader(http.StatusNoContent)
@@ -176,8 +192,9 @@ func (i stringID) IDString() string {
 
 func HandleGet[Res IDer](urlPath, method string, f GetFn[IDer, Res]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != method {
-			http.Error(w, "bad method", http.StatusMethodNotAllowed)
+		accept, _, err := ProcessRequest(w, r, method, r.Header)
+		if err != nil {
+			WriteError(w, accept, err)
 			return
 		}
 
@@ -188,23 +205,13 @@ func HandleGet[Res IDer](urlPath, method string, f GetFn[IDer, Res]) http.Handle
 
 		res, err := f(r.Context(), &resID)
 		if err != nil {
-			switch e := err.(type) {
-			case NotFoundError:
-				http.Error(w, e.Error(), http.StatusNotFound)
-				return
-			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			WriteError(w, accept, err)
 			return
 		}
 
-		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
-		if err != nil {
-			http.Error(w, "bad content type header format", http.StatusBadRequest)
-			return
-		}
 		err = AcceptEncoder(w, accept).Encode(res)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			WriteError(w, accept, err)
 			return
 		}
 
