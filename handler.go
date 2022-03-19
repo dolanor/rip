@@ -3,6 +3,7 @@ package rip
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -59,40 +60,60 @@ func handleResourceWithPath[Res IDer](urlPath string, create CreateFn[Res], get 
 	}
 }
 
+func ProcessRequest(w http.ResponseWriter, r *http.Request, method string, header http.Header) (accept, contentType string, err error) {
+	accept, err = BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+	if err != nil {
+		return "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad accept header format: %v", err)}
+	}
+	if r.Method != method {
+		return "", "", Error{Status: http.StatusMethodNotAllowed, Message: "bad method"}
+	}
+
+	contentType, err = BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
+	if err != nil {
+		return "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
+	}
+
+	return "", contentType, nil
+}
+
+func checkPathID(requestPath, prefixPath string, id string) error {
+	pathID := strings.TrimPrefix(requestPath, prefixPath)
+
+	var resID stringID
+	resID.FromString(pathID)
+
+	if resID.IDString() != id {
+		return Error{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", resID.IDString(), pathID)}
+	}
+
+	return nil
+}
+
+// Decode use the content type to decode the data from r into v.
+func Decode[T any](r io.Reader, contentType string) (T, error) {
+	var t T
+	err := ContentTypeDecoder(r, contentType).Decode(&t)
+	return t, err
+}
+
 func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+		accept, contentType, err := ProcessRequest(w, r, method, r.Header)
 		if err != nil {
-			WriteError(w, accept, fmt.Errorf("bad accept header format: %w", err))
+			WriteError(w, accept, err)
 			return
 		}
 
-		if r.Method != method {
-			WriteError(w, accept, Error{Status: http.StatusMethodNotAllowed, Message: "bad method"})
-			return
-		}
-
-		id := strings.TrimPrefix(r.URL.Path, urlPath)
-
-		var resID stringID
-		resID.FromString(id)
-
-		contentType, err := BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
-		if err != nil {
-			WriteError(w, accept, fmt.Errorf("bad content type header format: %w", err))
-			return
-		}
-
-		var res Res
-		err = ContentTypeDecoder(r.Body, contentType).Decode(&res)
+		res, err := Decode[Res](r.Body, contentType)
 		if err != nil {
 			WriteError(w, accept, fmt.Errorf("bad input format: %w", err))
 			return
 		}
 
-		if resID.IDString() != res.IDString() {
-			// TODO check for better status code
-			WriteError(w, accept, Error{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", resID.IDString(), res.IDString())})
+		err = checkPathID(r.URL.Path, urlPath, res.IDString())
+		if err != nil {
+			WriteError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
 			return
 		}
 
