@@ -20,7 +20,7 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return e.Message
+	return fmt.Sprintf("%d - %s", e.Code, e.Message)
 }
 
 func WriteError(w http.ResponseWriter, accept string, err error) {
