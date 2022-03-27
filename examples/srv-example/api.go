@@ -26,7 +26,7 @@ func (u User) IDString() string {
 	return u.Name
 }
 
-func (u *User) FromString(s string) {
+func (u *User) IDFromString(s string) {
 	u.Name = s
 }
 
@@ -46,7 +46,7 @@ func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, ider rip.IDer) (*User, error) {
+func (up UserProvider) Get(ctx context.Context, ider rip.ResourceIdentifier) (*User, error) {
 	log.Printf("GetUser: %+v", ider.IDString())
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
@@ -55,7 +55,7 @@ func (up UserProvider) Get(ctx context.Context, ider rip.IDer) (*User, error) {
 	return &u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, ider rip.IDer) error {
+func (up *UserProvider) Delete(ctx context.Context, ider rip.ResourceIdentifier) error {
 	log.Printf("DeleteUser: %+v", ider.IDString())
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
@@ -75,4 +75,14 @@ func (up *UserProvider) Update(ctx context.Context, u *User) error {
 	up.mem[u.Name] = *u
 
 	return nil
+}
+
+func (up UserProvider) ListAll(ctx context.Context) ([]*User, error) {
+	log.Printf("ListAllUser")
+	var users []*User
+	for _, u := range up.mem {
+		u := u
+		users = append(users, &u)
+	}
+	return users, nil
 }

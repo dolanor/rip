@@ -12,46 +12,56 @@ import (
 type Txn[Req, Res any] func(ctx context.Context, req Req) (Res, error)
 
 type CreateFn[Res any] func(ctx context.Context, res Res) (Res, error)
-type ResFn[ID IDer, Res any] func(ctx context.Context, id ID) (Res, error)
-type GetFn[ID IDer, Res any] func(ctx context.Context, id ID) (Res, error)
+type ResFn[ID ResourceIdentifier, Res any] func(ctx context.Context, id ID) (Res, error)
+type GetFn[ID ResourceIdentifier, Res any] func(ctx context.Context, id ID) (Res, error)
 type UpdateFn[Res any] func(ctx context.Context, res Res) error
-type DeleteFn[ID IDer] func(ctx context.Context, id IDer) error
+type DeleteFn[ID ResourceIdentifier] func(ctx context.Context, id ResourceIdentifier) error
+type ListFn[Res any] func(ctx context.Context) ([]Res, error)
 
 // TODO add ListFn to deal with list (pagination, etc)
 
-type Creater[Res IDer] interface {
+type Creater[Res ResourceIdentifier] interface {
 	Create(ctx context.Context, res Res) (Res, error)
 }
 
-type Getter[Res IDer] interface {
-	Get(ctx context.Context, id IDer) (Res, error)
+type Getter[Res ResourceIdentifier] interface {
+	Get(ctx context.Context, id ResourceIdentifier) (Res, error)
 }
 
-type Updater[Res IDer] interface {
+type Updater[Res ResourceIdentifier] interface {
 	Update(ctx context.Context, res Res) error
 }
 
-type Deleter[Res IDer] interface {
-	Delete(ctx context.Context, id IDer) error
+type Deleter[Res ResourceIdentifier] interface {
+	Delete(ctx context.Context, id ResourceIdentifier) error
 }
 
-type ResourceProvider[Res IDer] interface {
+type Lister[Res any] interface {
+	ListAll(ctx context.Context) ([]Res, error)
+}
+
+type ResourceProvider[Res ResourceIdentifier] interface {
 	Creater[Res]
 	Getter[Res]
 	Updater[Res]
 	Deleter[Res]
+	Lister[Res]
 }
 
-func HandleResourceWithPath[Res IDer, RP ResourceProvider[Res]](urlPath string, rp RP) (path string, handler http.HandlerFunc) {
-	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete)
+func HandleResourceWithPath[Res ResourceIdentifier, RP ResourceProvider[Res]](urlPath string, rp RP) (path string, handler http.HandlerFunc) {
+	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll)
 }
 
-func handleResourceWithPath[Res IDer](urlPath string, create CreateFn[Res], get GetFn[IDer, Res], updateFn UpdateFn[Res], deleteFn DeleteFn[IDer]) (path string, handler http.HandlerFunc) {
+func handleResourceWithPath[Res ResourceIdentifier](urlPath string, create CreateFn[Res], get GetFn[ResourceIdentifier, Res], updateFn UpdateFn[Res], deleteFn DeleteFn[ResourceIdentifier], list ListFn[Res]) (path string, handler http.HandlerFunc) {
 	return urlPath, func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			HandleCreate(r.Method, create)(w, r)
 		case http.MethodGet:
+			if urlPath == r.URL.Path {
+				HandleListAll(urlPath, r.Method, list)(w, r)
+				return
+			}
 			HandleGet(urlPath, r.Method, get)(w, r)
 		case http.MethodPut:
 			UpdatePathID(urlPath, r.Method, updateFn)(w, r)
@@ -77,6 +87,9 @@ func ProcessRequest(w http.ResponseWriter, r *http.Request, method string, heade
 		return "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
 	}
 
+	// TODO check for the suffix, if .xml, .json, .html, etc
+	// if it exists, it overwrites the "Content-Type" because it means the end-user used the URL bar to choose the format.
+
 	return "", contentType, nil
 }
 
@@ -84,7 +97,7 @@ func resID(requestPath, prefixPath string, id string) stringID {
 	pathID := strings.TrimPrefix(requestPath, prefixPath)
 
 	var resID stringID
-	resID.FromString(pathID)
+	resID.IDFromString(pathID)
 
 	return resID
 }
@@ -106,7 +119,7 @@ func Decode[T any](r io.Reader, contentType string) (T, error) {
 	return t, err
 }
 
-func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.HandlerFunc {
+func UpdatePathID[Res ResourceIdentifier](urlPath, method string, f UpdateFn[Res]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accept, contentType, err := ProcessRequest(w, r, method, r.Header)
 		if err != nil {
@@ -140,7 +153,7 @@ func UpdatePathID[Res IDer](urlPath, method string, f UpdateFn[Res]) http.Handle
 	}
 }
 
-func DeletePathID(urlPath, method string, f DeleteFn[IDer]) http.HandlerFunc {
+func DeletePathID(urlPath, method string, f DeleteFn[ResourceIdentifier]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accept, _, err := ProcessRequest(w, r, method, r.Header)
 		if err != nil {
@@ -175,14 +188,14 @@ func DeletePathID(urlPath, method string, f DeleteFn[IDer]) http.HandlerFunc {
 	}
 }
 
-type IDer interface {
+type ResourceIdentifier interface {
 	IDString() string
-	FromString(s string)
+	IDFromString(s string)
 }
 
 type stringID string
 
-func (i *stringID) FromString(s string) {
+func (i *stringID) IDFromString(s string) {
 	*i = stringID(s)
 }
 
@@ -190,7 +203,7 @@ func (i stringID) IDString() string {
 	return string(i)
 }
 
-func HandleGet[Res IDer](urlPath, method string, f GetFn[IDer, Res]) http.HandlerFunc {
+func HandleGet[Res ResourceIdentifier](urlPath, method string, f GetFn[ResourceIdentifier, Res]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accept, _, err := ProcessRequest(w, r, method, r.Header)
 		if err != nil {
@@ -201,7 +214,7 @@ func HandleGet[Res IDer](urlPath, method string, f GetFn[IDer, Res]) http.Handle
 		id := strings.TrimPrefix(r.URL.Path, urlPath)
 
 		var resID stringID
-		resID.FromString(id)
+		resID.IDFromString(id)
 
 		res, err := f(r.Context(), &resID)
 		if err != nil {
@@ -215,6 +228,28 @@ func HandleGet[Res IDer](urlPath, method string, f GetFn[IDer, Res]) http.Handle
 			return
 		}
 
+	}
+}
+
+func HandleListAll[Res any](urlPath, method string, f ListFn[Res]) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accept, _, err := ProcessRequest(w, r, method, r.Header)
+		if err != nil {
+			WriteError(w, accept, err)
+			return
+		}
+
+		rscs, err := f(r.Context())
+		if err != nil {
+			WriteError(w, accept, err)
+			return
+		}
+
+		err = AcceptEncoder(w, accept).Encode(rscs)
+		if err != nil {
+			WriteError(w, accept, err)
+			return
+		}
 	}
 }
 
