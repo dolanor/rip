@@ -54,12 +54,12 @@ type ResourceProvider[Rsc IdentifiableResource] interface {
 }
 
 // HandleResource associates an urlPath with a resource provider, and handles all HTTP requests in a RESTful way.
-func HandleResource[Rsc IdentifiableResource, RP ResourceProvider[Rsc]](urlPath string, rp RP) (path string, handler http.HandlerFunc) {
-	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll)
+func HandleResource[Rsc IdentifiableResource, RP ResourceProvider[Rsc]](urlPath string, rp RP, mids ...func(http.HandlerFunc) http.HandlerFunc) (path string, handler http.HandlerFunc) {
+	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll, mids...)
 }
 
-func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create CreateFn[Rsc], get GetFn[IdentifiableResource, Rsc], updateFn UpdateFn[Rsc], deleteFn DeleteFn[IdentifiableResource], list ListFn[Rsc]) (path string, handler http.HandlerFunc) {
-	return urlPath, func(w http.ResponseWriter, r *http.Request) {
+func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create CreateFn[Rsc], get GetFn[IdentifiableResource, Rsc], updateFn UpdateFn[Rsc], deleteFn DeleteFn[IdentifiableResource], list ListFn[Rsc], mids ...func(http.HandlerFunc) http.HandlerFunc) (path string, handler http.HandlerFunc) {
+	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			handleCreate(r.Method, create)(w, r)
@@ -77,6 +77,14 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create Cre
 			badMethodHandler(w, r)
 		}
 	}
+
+	for i := len(mids) - 1; i >= 0; i-- {
+		// we wrap the handler in the middlewares
+		handler = mids[i](handler)
+
+	}
+
+	return urlPath, handler
 }
 
 func preprocessRequest(w http.ResponseWriter, r *http.Request, method string, header http.Header) (accept, contentType string, err error) {

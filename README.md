@@ -62,6 +62,10 @@ type Lister[Rsc any] interface {
 
 ## TODO
 
+- [x] middleware support
 - [ ] I'd like to have more composability in the resource provider (some are read-only, some can't list, some are write only…), haven't figured out the right way to design that, yet.
 - [ ] it should work for nested resources
 - [ ] improve the error API
+- [ ] support for hypermedia discoverability
+- [ ] support for multiple data representation
+

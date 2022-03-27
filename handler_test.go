@@ -14,9 +14,10 @@ import (
 
 func TestHandleResourceWithPath(t *testing.T) {
 	up := NewUserProvider()
-	http.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up))
 
-	s := httptest.NewServer(http.DefaultServeMux)
+	mux := http.NewServeMux()
+	mux.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up))
+	s := httptest.NewServer(mux)
 
 	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
 	b, err := json.Marshal(u)
@@ -180,6 +181,44 @@ func TestHandleResourceWithPath(t *testing.T) {
 			t.Fatal("delete status is not 204")
 		}
 	})
+}
+
+func TestMiddleware(t *testing.T) {
+	up := NewUserProvider()
+	var callNum int
+	middleware := func(f http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			callNum++
+			f(w, r)
+		}
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up, middleware))
+	s := httptest.NewServer(mux)
+
+	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
+	b, err := json.Marshal(u)
+	panicErr(t, err)
+
+	c := s.Client()
+	t.Run("create", func(t *testing.T) {
+		respCreate, err := c.Post(s.URL+"/users/", "text/json", bytes.NewReader(b))
+		panicErr(t, err)
+		defer respCreate.Body.Close()
+		if respCreate.StatusCode != http.StatusCreated {
+			t.Fatal("post status code is not 201")
+		}
+
+		var uCreated User
+		err = json.NewDecoder(respCreate.Body).Decode(&uCreated)
+		panicErr(t, err)
+		if uCreated != u {
+			t.Fatal("user created != from original")
+		}
+	})
+	if callNum != 1 {
+		t.Fatalf("middleware registered %d calls", callNum)
+	}
 }
 
 type User struct {
