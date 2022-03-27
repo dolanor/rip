@@ -1,9 +1,7 @@
-package rip_test
+package rip
 
 import (
 	"testing"
-
-	"github.com/dolanor/rip"
 )
 
 func TestChooseHeaderValue(t *testing.T) {
@@ -20,7 +18,7 @@ func TestChooseHeaderValue(t *testing.T) {
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			got, err := rip.BestHeaderValue(c.in, rip.AvailableEncodings)
+			got, err := bestHeaderValue(c.in, AvailableEncodings)
 			if err != nil {
 				t.Fatal(err)
 			}

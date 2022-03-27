@@ -15,7 +15,7 @@ func main() {
 
 	up := NewUserProvider()
 	http.HandleFunc("/greet", rip.Handle(http.MethodPost, Greet))
-	http.HandleFunc(rip.HandleResourceWithPath[*User, *UserProvider]("/users/", up))
+	http.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up))
 	http.HandleFunc("/", handleRoot)
 
 	fmt.Println("listening on " + hostPort)

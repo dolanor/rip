@@ -9,72 +9,78 @@ import (
 	"strings"
 )
 
-type Txn[Req, Res any] func(ctx context.Context, req Req) (Res, error)
+// RequestResponseFunc is a function that takes a ctx and a request, and it can return a response or an err.
+type RequestResponseFunc[Request, Response any] func(ctx context.Context, request Request) (response Response, err error)
 
-type CreateFn[Res any] func(ctx context.Context, res Res) (Res, error)
-type ResFn[ID ResourceIdentifier, Res any] func(ctx context.Context, id ID) (Res, error)
-type GetFn[ID ResourceIdentifier, Res any] func(ctx context.Context, id ID) (Res, error)
-type UpdateFn[Res any] func(ctx context.Context, res Res) error
-type DeleteFn[ID ResourceIdentifier] func(ctx context.Context, id ResourceIdentifier) error
-type ListFn[Res any] func(ctx context.Context) ([]Res, error)
+type CreateFn[Rsc any] func(ctx context.Context, res Rsc) (Rsc, error)
+type ResFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
+type GetFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
+type UpdateFn[Rsc any] func(ctx context.Context, res Rsc) error
+type DeleteFn[ID IdentifiableResource] func(ctx context.Context, id IdentifiableResource) error
+type ListFn[Rsc any] func(ctx context.Context) ([]Rsc, error)
 
-// TODO add ListFn to deal with list (pagination, etc)
-
-type Creater[Res ResourceIdentifier] interface {
-	Create(ctx context.Context, res Res) (Res, error)
+// Creater creates a resource that can be identified.
+type Creater[Rsc IdentifiableResource] interface {
+	Create(ctx context.Context, res Rsc) (Rsc, error)
 }
 
-type Getter[Res ResourceIdentifier] interface {
-	Get(ctx context.Context, id ResourceIdentifier) (Res, error)
+// Getter gets a resource with its id.
+type Getter[Rsc IdentifiableResource] interface {
+	Get(ctx context.Context, id IdentifiableResource) (Rsc, error)
 }
 
-type Updater[Res ResourceIdentifier] interface {
-	Update(ctx context.Context, res Res) error
+// Updater updates an identifiable resource.
+type Updater[Rsc IdentifiableResource] interface {
+	Update(ctx context.Context, res Rsc) error
 }
 
-type Deleter[Res ResourceIdentifier] interface {
-	Delete(ctx context.Context, id ResourceIdentifier) error
+// Deleter deletes a resource with its id.
+type Deleter[Rsc IdentifiableResource] interface {
+	Delete(ctx context.Context, id IdentifiableResource) error
 }
 
-type Lister[Res any] interface {
-	ListAll(ctx context.Context) ([]Res, error)
+// Lister lists a group of resources.
+type Lister[Rsc any] interface {
+	ListAll(ctx context.Context) ([]Rsc, error)
 }
 
-type ResourceProvider[Res ResourceIdentifier] interface {
-	Creater[Res]
-	Getter[Res]
-	Updater[Res]
-	Deleter[Res]
-	Lister[Res]
+// ResourceProvider provides identifiable resources.
+type ResourceProvider[Rsc IdentifiableResource] interface {
+	Creater[Rsc]
+	Getter[Rsc]
+	Updater[Rsc]
+	Deleter[Rsc]
+	Lister[Rsc]
 }
 
-func HandleResourceWithPath[Res ResourceIdentifier, RP ResourceProvider[Res]](urlPath string, rp RP) (path string, handler http.HandlerFunc) {
+// HandleResource associates an urlPath with a resource provider, and handles all HTTP requests in a RESTful way.
+func HandleResource[Rsc IdentifiableResource, RP ResourceProvider[Rsc]](urlPath string, rp RP) (path string, handler http.HandlerFunc) {
 	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll)
 }
 
-func handleResourceWithPath[Res ResourceIdentifier](urlPath string, create CreateFn[Res], get GetFn[ResourceIdentifier, Res], updateFn UpdateFn[Res], deleteFn DeleteFn[ResourceIdentifier], list ListFn[Res]) (path string, handler http.HandlerFunc) {
+func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create CreateFn[Rsc], get GetFn[IdentifiableResource, Rsc], updateFn UpdateFn[Rsc], deleteFn DeleteFn[IdentifiableResource], list ListFn[Rsc]) (path string, handler http.HandlerFunc) {
 	return urlPath, func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			HandleCreate(r.Method, create)(w, r)
+			handleCreate(r.Method, create)(w, r)
 		case http.MethodGet:
 			if urlPath == r.URL.Path {
-				HandleListAll(urlPath, r.Method, list)(w, r)
+				handleListAll(urlPath, r.Method, list)(w, r)
 				return
 			}
-			HandleGet(urlPath, r.Method, get)(w, r)
+			handleGet(urlPath, r.Method, get)(w, r)
 		case http.MethodPut:
-			UpdatePathID(urlPath, r.Method, updateFn)(w, r)
+			updatePathID(urlPath, r.Method, updateFn)(w, r)
 		case http.MethodDelete:
-			DeletePathID(urlPath, r.Method, deleteFn)(w, r)
+			deletePathID(urlPath, r.Method, deleteFn)(w, r)
 		default:
 			badMethodHandler(w, r)
 		}
 	}
 }
 
-func ProcessRequest(w http.ResponseWriter, r *http.Request, method string, header http.Header) (accept, contentType string, err error) {
-	accept, err = BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+func preprocessRequest(w http.ResponseWriter, r *http.Request, method string, header http.Header) (accept, contentType string, err error) {
+	accept, err = bestHeaderValue(r.Header["Accept"], AvailableEncodings)
 	if err != nil {
 		return "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad accept header format: %v", err)}
 	}
@@ -82,7 +88,7 @@ func ProcessRequest(w http.ResponseWriter, r *http.Request, method string, heade
 		return "", "", Error{Status: http.StatusMethodNotAllowed, Message: "bad method"}
 	}
 
-	contentType, err = BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
+	contentType, err = bestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
 	if err != nil {
 		return "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
 	}
@@ -112,52 +118,52 @@ func checkPathID(requestPath, prefixPath string, id string) error {
 	return nil
 }
 
-// Decode use the content type to decode the data from r into v.
-func Decode[T any](r io.Reader, contentType string) (T, error) {
+// decode use the content type to decode the data from r into v.
+func decode[T any](r io.Reader, contentType string) (T, error) {
 	var t T
-	err := ContentTypeDecoder(r, contentType).Decode(&t)
+	err := contentTypeDecoder(r, contentType).Decode(&t)
 	return t, err
 }
 
-func UpdatePathID[Res ResourceIdentifier](urlPath, method string, f UpdateFn[Res]) http.HandlerFunc {
+func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, contentType, err := ProcessRequest(w, r, method, r.Header)
+		accept, contentType, err := preprocessRequest(w, r, method, r.Header)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
-		res, err := Decode[Res](r.Body, contentType)
+		res, err := decode[Rsc](r.Body, contentType)
 		if err != nil {
-			WriteError(w, accept, fmt.Errorf("bad input format: %w", err))
+			writeError(w, accept, fmt.Errorf("bad input format: %w", err))
 			return
 		}
 
 		err = checkPathID(r.URL.Path, urlPath, res.IDString())
 		if err != nil {
-			WriteError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
+			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
 			return
 		}
 
 		err = f(r.Context(), res)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
-		err = AcceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept).Encode(res)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 	}
 }
 
-func DeletePathID(urlPath, method string, f DeleteFn[ResourceIdentifier]) http.HandlerFunc {
+func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := ProcessRequest(w, r, method, r.Header)
+		accept, _, err := preprocessRequest(w, r, method, r.Header)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
@@ -165,7 +171,7 @@ func DeletePathID(urlPath, method string, f DeleteFn[ResourceIdentifier]) http.H
 
 		resID := resID(r.URL.Path, urlPath, id)
 		if err != nil {
-			WriteError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
+			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
 			return
 		}
 
@@ -175,11 +181,11 @@ func DeletePathID(urlPath, method string, f DeleteFn[ResourceIdentifier]) http.H
 			var e Error
 			if errors.As(err, &e) {
 				if e.Code != ErrorCodeNotFound {
-					WriteError(w, accept, e)
+					writeError(w, accept, e)
 					return
 				}
 			} else {
-				WriteError(w, accept, err)
+				writeError(w, accept, err)
 				return
 			}
 		}
@@ -188,7 +194,8 @@ func DeletePathID(urlPath, method string, f DeleteFn[ResourceIdentifier]) http.H
 	}
 }
 
-type ResourceIdentifier interface {
+// IdentifiableResource is a resource that can be identifiable by an string.
+type IdentifiableResource interface {
 	IDString() string
 	IDFromString(s string)
 }
@@ -203,11 +210,11 @@ func (i stringID) IDString() string {
 	return string(i)
 }
 
-func HandleGet[Res ResourceIdentifier](urlPath, method string, f GetFn[ResourceIdentifier, Res]) http.HandlerFunc {
+func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[IdentifiableResource, Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := ProcessRequest(w, r, method, r.Header)
+		accept, _, err := preprocessRequest(w, r, method, r.Header)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
@@ -218,56 +225,56 @@ func HandleGet[Res ResourceIdentifier](urlPath, method string, f GetFn[ResourceI
 
 		res, err := f(r.Context(), &resID)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
-		err = AcceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept).Encode(res)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
 	}
 }
 
-func HandleListAll[Res any](urlPath, method string, f ListFn[Res]) http.HandlerFunc {
+func handleListAll[Rsc any](urlPath, method string, f ListFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := ProcessRequest(w, r, method, r.Header)
+		accept, _, err := preprocessRequest(w, r, method, r.Header)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
 		rscs, err := f(r.Context())
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 
-		err = AcceptEncoder(w, accept).Encode(rscs)
+		err = acceptEncoder(w, accept).Encode(rscs)
 		if err != nil {
-			WriteError(w, accept, err)
+			writeError(w, accept, err)
 			return
 		}
 	}
 }
 
-func HandleCreate[Res any](method string, f CreateFn[Res]) http.HandlerFunc {
+func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
 			return
 		}
 
-		contentType, err := BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
 		}
 
-		var res Res
-		err = ContentTypeDecoder(r.Body, contentType).Decode(&res)
+		var res Rsc
+		err = contentTypeDecoder(r.Body, contentType).Decode(&res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -276,7 +283,7 @@ func HandleCreate[Res any](method string, f CreateFn[Res]) http.HandlerFunc {
 		res, err = f(r.Context(), res)
 		if err != nil {
 			switch e := err.(type) {
-			case NotFoundError:
+			case notFoundError:
 				http.Error(w, e.Error(), http.StatusNotFound)
 				return
 			}
@@ -284,14 +291,14 @@ func HandleCreate[Res any](method string, f CreateFn[Res]) http.HandlerFunc {
 			return
 		}
 
-		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header["Accept"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		err = AcceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -300,21 +307,22 @@ func HandleCreate[Res any](method string, f CreateFn[Res]) http.HandlerFunc {
 	}
 }
 
-func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
+// Handle is a generic HTTP handler that takes a
+func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
 			return
 		}
 
-		contentType, err := BestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
 		}
 
 		var req Req
-		err = ContentTypeDecoder(r.Body, contentType).Decode(&req)
+		err = contentTypeDecoder(r.Body, contentType).Decode(&req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -323,7 +331,7 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 		res, err := f(r.Context(), req)
 		if err != nil {
 			switch e := err.(type) {
-			case NotFoundError:
+			case notFoundError:
 				http.Error(w, e.Error(), http.StatusNotFound)
 				return
 			}
@@ -331,12 +339,12 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 			return
 		}
 
-		accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header["Accept"], AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
 		}
-		err = AcceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -345,11 +353,11 @@ func Handle[Req, Res any](method string, f Txn[Req, Res]) http.HandlerFunc {
 }
 
 func badMethodHandler(w http.ResponseWriter, r *http.Request) {
-	accept, err := BestHeaderValue(r.Header["Accept"], AvailableEncodings)
+	accept, err := bestHeaderValue(r.Header["Accept"], AvailableEncodings)
 	if err != nil {
-		WriteError(w, accept, fmt.Errorf("bad accept header format: %w", err))
+		writeError(w, accept, fmt.Errorf("bad accept header format: %w", err))
 		return
 	}
 
-	WriteError(w, accept, Error{Status: http.StatusMethodNotAllowed, Message: "bad method"})
+	writeError(w, accept, Error{Status: http.StatusMethodNotAllowed, Message: "bad method"})
 }

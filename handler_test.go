@@ -14,7 +14,7 @@ import (
 
 func TestHandleResourceWithPath(t *testing.T) {
 	up := NewUserProvider()
-	http.HandleFunc(rip.HandleResourceWithPath[*User, *UserProvider]("/users/", up))
+	http.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up))
 
 	s := httptest.NewServer(http.DefaultServeMux)
 
@@ -210,7 +210,7 @@ func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, ider rip.ResourceIdentifier) (*User, error) {
+func (up UserProvider) Get(ctx context.Context, ider rip.IdentifiableResource) (*User, error) {
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
 		return &User{}, rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
@@ -218,7 +218,7 @@ func (up UserProvider) Get(ctx context.Context, ider rip.ResourceIdentifier) (*U
 	return &u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, ider rip.ResourceIdentifier) error {
+func (up *UserProvider) Delete(ctx context.Context, ider rip.IdentifiableResource) error {
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
 		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}

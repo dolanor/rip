@@ -23,7 +23,7 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%d - %s", e.Code, e.Message)
 }
 
-func WriteError(w http.ResponseWriter, accept string, err error) {
+func writeError(w http.ResponseWriter, accept string, err error) {
 	var e Error
 	if !errors.As(err, &e) {
 		e = Error{
@@ -37,49 +37,43 @@ func WriteError(w http.ResponseWriter, accept string, err error) {
 
 	e.Message = err.Error()
 
-	var eee BadRequestError
-	if e.Code == ErrorCodeBadQArg || errors.As(err, &eee) {
+	var bre badRequestError
+	if e.Code == ErrorCodeBadQArg || errors.As(err, &bre) {
 		e.Status = http.StatusBadRequest
 	}
-	var ee NotFoundError
-	if e.Code == ErrorCodeNotFound || errors.As(err, &ee) {
+	var nfe notFoundError
+	if e.Code == ErrorCodeNotFound || errors.As(err, &nfe) {
 		e.Status = http.StatusNotFound
 	}
 
 	w.WriteHeader(e.Status)
-	err = AcceptEncoder(w, accept).Encode(e)
+	err = acceptEncoder(w, accept).Encode(e)
 	// We can't do anything, we need to make the HTTP server intercept the panic
 	if err != nil {
 		panic(err)
 	}
 }
 
-type NotFoundError struct {
+type notFoundError struct {
 	Resource string
 }
 
-func (e NotFoundError) Error() string {
+func (e notFoundError) Error() string {
 	return "resource not found: " + e.Resource
 }
 
-type BadRequestError struct {
+type badRequestError struct {
 	origin error
 }
 
-func (e BadRequestError) Error() string {
+func (e badRequestError) Error() string {
 	return "bad request: " + e.origin.Error()
 }
 
-func (e BadRequestError) Unwrap() error {
+func (e badRequestError) Unwrap() error {
 	err := errors.Unwrap(e.origin)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func BadRequestErr(err error) error {
-	var e BadRequestError
-	e.origin = fmt.Errorf("BAD: %w", err)
-	return e
 }

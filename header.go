@@ -7,22 +7,22 @@ import (
 	"strings"
 )
 
-type HeaderQ struct {
+type headerQ struct {
 	Value string
 	Q     float32
 }
 
-func BestHeaderValue(header []string, serverPreferences []string) (string, error) {
-	clientPreferences, err := HeaderValues(header)
+func bestHeaderValue(header []string, serverPreferences []string) (string, error) {
+	clientPreferences, err := headerValues(header)
 	if err != nil {
 		return "", err
 	}
 
-	best := MatchHeaderValue(clientPreferences, serverPreferences)
+	best := matchHeaderValue(clientPreferences, serverPreferences)
 	return best, nil
 }
 
-func MatchHeaderValue(clientPreferences []HeaderQ, serverPreferences []string) string {
+func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) string {
 	for _, c := range clientPreferences {
 		for _, s := range serverPreferences {
 			// we found a match
@@ -34,14 +34,14 @@ func MatchHeaderValue(clientPreferences []HeaderQ, serverPreferences []string) s
 	return ""
 }
 
-func HeaderValues(header []string) ([]HeaderQ, error) {
-	var hqs []HeaderQ
+func headerValues(header []string) ([]headerQ, error) {
+	var hqs []headerQ
 	for _, h := range header {
 		for _, aQStrs := range strings.Split(h, ",") {
 			aQStrs = strings.TrimSpace(aQStrs)
 			aQ := strings.Split(aQStrs, ";")
 			if len(aQ) == 1 {
-				hq := HeaderQ{Value: aQ[0], Q: 1.0}
+				hq := headerQ{Value: aQ[0], Q: 1.0}
 				hqs = append(hqs, hq)
 			} else {
 				var hasQ bool
@@ -59,11 +59,11 @@ func HeaderValues(header []string) ([]HeaderQ, error) {
 						err := fmt.Errorf("parsing q value of %v: %w", aQStrs, err)
 						return hqs, Error{Code: ErrorCodeBadQArg, Message: err.Error()}
 					}
-					hq := HeaderQ{Value: aQ[0], Q: float32(q)}
+					hq := headerQ{Value: aQ[0], Q: float32(q)}
 					hqs = append(hqs, hq)
 				}
 				if !hasQ {
-					hq := HeaderQ{Value: aQ[0], Q: 1.0}
+					hq := headerQ{Value: aQ[0], Q: 1.0}
 					hqs = append(hqs, hq)
 				}
 			}

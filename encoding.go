@@ -15,7 +15,7 @@ type Decoder interface {
 	Decode(v interface{}) error
 }
 
-func ContentTypeDecoder(r io.Reader, contentTypeHeader string) Decoder {
+func contentTypeDecoder(r io.Reader, contentTypeHeader string) Decoder {
 	// TODO use a map[string]Decoder to be able to extend it
 	switch contentTypeHeader {
 	case "text/xml":
@@ -31,7 +31,7 @@ type Encoder interface {
 	Encode(v interface{}) error
 }
 
-func AcceptEncoder(w io.Writer, acceptHeader string) Encoder {
+func acceptEncoder(w io.Writer, acceptHeader string) Encoder {
 	switch acceptHeader {
 	case "text/xml":
 		return xml.NewEncoder(w)

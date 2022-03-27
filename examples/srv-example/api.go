@@ -46,7 +46,7 @@ func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, ider rip.ResourceIdentifier) (*User, error) {
+func (up UserProvider) Get(ctx context.Context, ider rip.IdentifiableResource) (*User, error) {
 	log.Printf("GetUser: %+v", ider.IDString())
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
@@ -55,7 +55,7 @@ func (up UserProvider) Get(ctx context.Context, ider rip.ResourceIdentifier) (*U
 	return &u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, ider rip.ResourceIdentifier) error {
+func (up *UserProvider) Delete(ctx context.Context, ider rip.IdentifiableResource) error {
 	log.Printf("DeleteUser: %+v", ider.IDString())
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
