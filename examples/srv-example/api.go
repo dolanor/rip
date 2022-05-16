@@ -26,8 +26,9 @@ func (u User) IDString() string {
 	return u.Name
 }
 
-func (u *User) IDFromString(s string) {
+func (u *User) IDFromString(s string) error {
 	u.Name = s
+	return nil
 }
 
 type UserProvider struct {

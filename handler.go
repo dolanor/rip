@@ -205,13 +205,14 @@ func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http
 // IdentifiableResource is a resource that can be identifiable by an string.
 type IdentifiableResource interface {
 	IDString() string
-	IDFromString(s string)
+	IDFromString(s string) error
 }
 
 type stringID string
 
-func (i *stringID) IDFromString(s string) {
+func (i *stringID) IDFromString(s string) error {
 	*i = stringID(s)
+	return nil
 }
 
 func (i stringID) IDString() string {

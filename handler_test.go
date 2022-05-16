@@ -16,7 +16,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 	up := NewUserProvider()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up))
+	mux.HandleFunc(rip.HandleResource[*User]("/users/", up))
 	s := httptest.NewServer(mux)
 
 	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
@@ -193,7 +193,7 @@ func TestMiddleware(t *testing.T) {
 		}
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up, middleware))
+	mux.HandleFunc(rip.HandleResource[*User]("/users/", up, middleware))
 	s := httptest.NewServer(mux)
 
 	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
@@ -230,8 +230,10 @@ func (u User) IDString() string {
 	return u.Name
 }
 
-func (u *User) IDFromString(s string) {
+func (u *User) IDFromString(s string) error {
 	u.Name = s
+
+	return nil
 }
 
 type UserProvider struct {
