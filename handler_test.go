@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,167 +22,241 @@ func TestHandleResourceWithPath(t *testing.T) {
 	s := httptest.NewServer(mux)
 
 	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
-	b, err := json.Marshal(u)
-	panicErr(t, err)
 
 	c := s.Client()
-	t.Run("create", func(t *testing.T) {
-		respCreate, err := c.Post(s.URL+"/users/", "text/json", bytes.NewReader(b))
+	for name, codec := range rip.AvailableCodecs {
+		var b bytes.Buffer
+		err := codec.NewEncoder(&b).Encode(u)
 		panicErr(t, err)
-		defer respCreate.Body.Close()
-		if respCreate.StatusCode != http.StatusCreated {
-			t.Fatal("post status code is not 201")
-		}
+		t.Run(name, func(t *testing.T) {
+			t.Run("create", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodPost, s.URL+"/users/", &b)
+				panicErr(t, err)
+				req.Header["Content-Type"] = []string{name}
+				req.Header["Accept"] = []string{name}
 
-		var uCreated User
-		err = json.NewDecoder(respCreate.Body).Decode(&uCreated)
-		panicErr(t, err)
-		if uCreated != u {
-			t.Fatal("user created != from original")
-		}
-	})
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
 
-	t.Run("get", func(t *testing.T) {
-		resp, err := c.Get(s.URL + "/users/" + u.IDString())
-		panicErr(t, err)
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			t.Fatal("get status code is not 200")
-		}
+				if resp.StatusCode != http.StatusCreated {
+					b, err := ioutil.ReadAll(resp.Body)
+					t.Fatalf("post status code is not 201: body: %v: %s", err, string(b))
+				}
 
-		var uGet User
-		err = json.NewDecoder(resp.Body).Decode(&uGet)
-		panicErr(t, err)
-		if uGet != u {
-			t.Fatal("user created != from original")
-		}
-	})
+				var uCreated User
+				err = codec.NewDecoder(resp.Body).Decode(&uCreated)
+				panicErr(t, err)
+				if uCreated != u {
+					t.Fatal("user created != from original")
+				}
+			})
 
-	uUpdated := u
-	t.Run("update", func(t *testing.T) {
-		uUpdated.BirthDate = uUpdated.BirthDate.Add(2 * time.Hour)
-		b, err = json.Marshal(uUpdated)
-		panicErr(t, err)
+			t.Run("get", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.IDString(), nil)
+				panicErr(t, err)
+				req.Header["Accept"] = []string{name}
 
-		req, err := http.NewRequest(http.MethodPut, s.URL+"/users/"+u.IDString(), bytes.NewReader(b))
-		panicErr(t, err)
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
 
-		resp, err := c.Do(req)
-		panicErr(t, err)
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			t.Fatal("updated status code is not 200")
-		}
+				if resp.StatusCode != http.StatusOK {
+					t.Fatalf("get status code is not 200: body: %v: %s", err, string(b.String()))
+				}
 
-		err = json.NewDecoder(resp.Body).Decode(&uUpdated)
-		panicErr(t, err)
-		if uUpdated.BirthDate.Equal(u.BirthDate) {
-			t.Fatal("updated birthdate not different")
-		}
-	})
+				var uGet User
+				err = codec.NewDecoder(resp.Body).Decode(&uGet)
+				panicErr(t, err)
+				if uGet != u {
+					t.Fatal("user created != from original")
+				}
+			})
 
-	// Get after update
-	t.Run("get after update", func(t *testing.T) {
-		resp, err := c.Get(s.URL + "/users/" + u.IDString())
-		panicErr(t, err)
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			t.Fatal("get status code is not 200")
-		}
+			uUpdated := u
+			t.Run("update", func(t *testing.T) {
+				uUpdated.BirthDate = uUpdated.BirthDate.Add(2 * time.Hour)
+				err := codec.NewEncoder(&b).Encode(uUpdated)
+				panicErr(t, err)
 
-		var uGet User
-		err = json.NewDecoder(resp.Body).Decode(&uGet)
-		panicErr(t, err)
-		if uGet != uUpdated {
-			t.Fatal("user updated != from original")
-		}
-	})
+				req, err := http.NewRequest(http.MethodPut, s.URL+"/users/"+u.IDString(), &b)
+				panicErr(t, err)
+				req.Header["Content-Type"] = []string{name}
+				req.Header["Accept"] = []string{name}
 
-	t.Run("create other user", func(t *testing.T) {
-		u := User{Name: "Joe", BirthDate: time.Date(2008, time.November, 1, 23, 0, 0, 0, time.UTC)}
-		b, err := json.Marshal(u)
-		panicErr(t, err)
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					t.Fatal("updated status code is not 200")
+				}
 
-		respCreate, err := c.Post(s.URL+"/users/", "text/json", bytes.NewReader(b))
-		panicErr(t, err)
-		defer respCreate.Body.Close()
-		if respCreate.StatusCode != http.StatusCreated {
-			t.Fatal("post status code is not 201")
-		}
+				err = codec.NewDecoder(resp.Body).Decode(&uUpdated)
+				panicErr(t, err)
+				if uUpdated.BirthDate.Equal(u.BirthDate) {
+					t.Fatal("updated birthdate not different")
+				}
+			})
 
-		var uCreated User
-		err = json.NewDecoder(respCreate.Body).Decode(&uCreated)
-		panicErr(t, err)
-		if uCreated != u {
-			t.Fatal("user created != from original")
-		}
-	})
+			// Get after update
+			t.Run("get after update", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.IDString(), nil)
+				panicErr(t, err)
+				req.Header["Accept"] = []string{name}
 
-	t.Run("list", func(t *testing.T) {
-		resp, err := c.Get(s.URL + "/users/")
-		panicErr(t, err)
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			t.Fatal("get status code is not 200")
-		}
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					t.Fatal("get status code is not 200")
+				}
 
-		var users []User
-		err = json.NewDecoder(resp.Body).Decode(&users)
-		panicErr(t, err)
-		if len(users) != 2 {
-			t.Fatal("list does not contain 2 elements")
-		}
-	})
+				var uGet User
+				err = codec.NewDecoder(resp.Body).Decode(&uGet)
+				panicErr(t, err)
+				if uGet != uUpdated {
+					t.Fatal("user updated != from original")
+				}
+			})
 
-	t.Run("delete", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.IDString(), nil)
-		panicErr(t, err)
+			t.Run("create other user", func(t *testing.T) {
+				u := User{Name: "Joe", BirthDate: time.Date(2008, time.November, 1, 23, 0, 0, 0, time.UTC)}
+				err := codec.NewEncoder(&b).Encode(u)
+				panicErr(t, err)
 
-		resp, err := c.Do(req)
-		panicErr(t, err)
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusNoContent {
-			t.Fatal("delete status is not 204")
-		}
-	})
+				req, err := http.NewRequest(http.MethodPost, s.URL+"/users/", &b)
+				panicErr(t, err)
+				req.Header["Content-Type"] = []string{name}
+				req.Header["Accept"] = []string{name}
 
-	t.Run("get after delete", func(t *testing.T) {
-		resp, err := c.Get(s.URL + "/users/" + u.IDString())
-		panicErr(t, err)
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusNotFound {
-			t.Fatal("get status code after delete is not 404")
-		}
-	})
+				respCreate, err := c.Do(req)
+				panicErr(t, err)
+				defer respCreate.Body.Close()
+				if respCreate.StatusCode != http.StatusCreated {
+					t.Fatal("post status code is not 201")
+				}
 
-	t.Run("list after delete", func(t *testing.T) {
-		resp, err := c.Get(s.URL + "/users/")
-		panicErr(t, err)
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			t.Fatal("get status code is not 200")
-		}
+				var uCreated User
+				err = codec.NewDecoder(respCreate.Body).Decode(&uCreated)
+				panicErr(t, err)
+				if uCreated != u {
+					t.Fatal("user created != from original")
+				}
+			})
 
-		var users []User
-		err = json.NewDecoder(resp.Body).Decode(&users)
-		panicErr(t, err)
-		if len(users) != 1 {
-			t.Fatal("list does not contain 1 element")
-		}
-	})
+			t.Run("list", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/", nil)
+				panicErr(t, err)
+				req.Header["Accept"] = []string{name}
 
-	t.Run("delete again (check idempotency)", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.IDString(), nil)
-		panicErr(t, err)
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					t.Fatal("get status code is not 200")
+				}
 
-		resp, err := c.Do(req)
-		panicErr(t, err)
-		defer resp.Body.Close()
-		t.Log(resp.StatusCode)
-		if resp.StatusCode != http.StatusNoContent {
-			t.Fatal("delete status is not 204")
-		}
-	})
+				var users []User
+				dec := codec.NewDecoder(resp.Body)
+				switch name {
+				case "text/xml":
+					// the curren XML impl doesn't create an array of users
+					// it just streams more values.
+					// FIXME make XML create a top array value
+					for {
+						var user User
+						err = dec.Decode(&user)
+						if err == io.EOF {
+							break
+						}
+						panicErr(t, err)
+						users = append(users, user)
+					}
+				case "text/json":
+					err = dec.Decode(&users)
+					panicErr(t, err)
+				}
+				if len(users) != 2 {
+					t.Fatal("list does not contain 2 elements")
+				}
+			})
+
+			t.Run("delete", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.IDString(), nil)
+				panicErr(t, err)
+
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusNoContent {
+					t.Fatal("delete status is not 204")
+				}
+			})
+
+			t.Run("get after delete", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.IDString(), nil)
+				panicErr(t, err)
+				req.Header["Accept"] = []string{name}
+
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusNotFound {
+					t.Fatal("get status code after delete is not 404")
+				}
+			})
+
+			t.Run("list after delete", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/", nil)
+				panicErr(t, err)
+				req.Header["Accept"] = []string{name}
+
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					t.Fatal("get status code is not 200")
+				}
+
+				var users []User
+				dec := codec.NewDecoder(resp.Body)
+				switch name {
+				case "text/xml":
+					// the current XML impl doesn't create an array of users
+					// it just streams more values.
+					// FIXME make XML create a top array value
+					for {
+						var user User
+						err = dec.Decode(&user)
+						if err == io.EOF {
+							break
+						}
+						panicErr(t, err)
+						users = append(users, user)
+					}
+				case "text/json":
+					err = dec.Decode(&users)
+					panicErr(t, err)
+				}
+				if len(users) != 1 {
+					t.Fatal("list does not contain 1 element contains:", len(users))
+				}
+			})
+
+			t.Run("delete again (check idempotency)", func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.IDString(), nil)
+				panicErr(t, err)
+				req.Header["Accept"] = []string{name}
+
+				resp, err := c.Do(req)
+				panicErr(t, err)
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusNoContent {
+					t.Fatal("delete status is not 204")
+				}
+			})
+		})
+	}
 }
 
 func TestMiddleware(t *testing.T) {

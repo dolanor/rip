@@ -11,33 +11,54 @@ var AvailableEncodings = []string{
 	"text/xml",
 }
 
+var AvailableCodecs = map[string]Codec{
+	"text/json": {NewEncoder: WrapEncoder(json.NewEncoder), NewDecoder: WrapDecoder(json.NewDecoder)},
+	"text/xml":  {NewEncoder: WrapEncoder(xml.NewEncoder), NewDecoder: WrapDecoder(xml.NewDecoder)},
+}
+
+type Codec struct {
+	NewEncoder NewEncoder
+	NewDecoder NewDecoder
+}
+
+func WrapDecoder[D Decoder, F func(r io.Reader) D](f F) func(r io.Reader) Decoder {
+	return func(r io.Reader) Decoder {
+		return f(r)
+	}
+}
+
+func WrapEncoder[E Encoder, F func(w io.Writer) E](f F) func(w io.Writer) Encoder {
+	return func(w io.Writer) Encoder {
+		return f(w)
+	}
+}
+
+type NewDecoder func(r io.Reader) Decoder
+
 type Decoder interface {
 	Decode(v interface{}) error
 }
 
 func contentTypeDecoder(r io.Reader, contentTypeHeader string) Decoder {
-	// TODO use a map[string]Decoder to be able to extend it
-	switch contentTypeHeader {
-	case "text/xml":
-		return xml.NewDecoder(r)
-	case "text/json":
-		fallthrough
-	default:
+	decoder, ok := AvailableCodecs[contentTypeHeader]
+	if !ok {
 		return json.NewDecoder(r)
 	}
+
+	return decoder.NewDecoder(r)
 }
+
+type NewEncoder func(w io.Writer) Encoder
 
 type Encoder interface {
 	Encode(v interface{}) error
 }
 
 func acceptEncoder(w io.Writer, acceptHeader string) Encoder {
-	switch acceptHeader {
-	case "text/xml":
-		return xml.NewEncoder(w)
-	case "text/json":
-		fallthrough
-	default:
+	encoder, ok := AvailableCodecs[acceptHeader]
+	if !ok {
 		return json.NewEncoder(w)
 	}
+
+	return encoder.NewEncoder(w)
 }
