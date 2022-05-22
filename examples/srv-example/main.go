@@ -2,20 +2,26 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"io"
 	"net/http"
 	"os"
 
 	"github.com/dolanor/rip"
+	"github.com/gorilla/handlers"
 )
 
+func logHandler(w io.Writer) func(f http.HandlerFunc) http.HandlerFunc {
+	return func(f http.HandlerFunc) http.HandlerFunc {
+		return handlers.LoggingHandler(w, f).ServeHTTP
+	}
+}
+
 func main() {
-	log.SetPrefix("DBGTHE: APP: ")
 	hostPort := os.ExpandEnv("$HOST:$PORT")
 
 	up := NewUserProvider()
 	http.HandleFunc("/greet", rip.Handle(http.MethodPost, Greet))
-	http.HandleFunc(rip.HandleResource[*User, *UserProvider]("/users/", up))
+	http.HandleFunc(rip.HandleResource[*User]("/users/", up, logHandler(os.Stdout)))
 	http.HandleFunc("/", handleRoot)
 
 	fmt.Println("listening on " + hostPort)
