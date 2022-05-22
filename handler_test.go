@@ -355,17 +355,19 @@ func (up *UserProvider) Update(ctx context.Context, u *User) error {
 	return nil
 }
 
-func (up UserProvider) ListAll(ctx context.Context) ([]*User, error) {
+func (up *UserProvider) ListAll(ctx context.Context) ([]*User, error) {
 	var users []*User
 	for _, u := range up.mem {
 		// we copy to avoid referring the same pointer that would get updated
 		u := u
 		users = append(users, &u)
 	}
+
 	return users, nil
 }
 
 func panicErr(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Fatal(err)
 	}
