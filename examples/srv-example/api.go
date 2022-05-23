@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/dolanor/rip"
@@ -18,62 +20,80 @@ func Greet(ctx context.Context, name string) (string, error) {
 }
 
 type User struct {
+	ID        int       `json:"id" xml:"id"`
 	Name      string    `json:"name" xml:"name"`
 	BirthDate time.Time `json:"birth_date" xml:"birth_date"`
 }
 
 func (u User) IDString() string {
-	return u.Name
+	return strconv.Itoa(u.ID)
 }
 
 func (u *User) IDFromString(s string) error {
-	u.Name = s
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return err
+	}
+	u.ID = n
 	return nil
 }
 
 type UserProvider struct {
-	mem map[string]User
+	mem map[int]*User
 }
 
 func NewUserProvider() *UserProvider {
 	return &UserProvider{
-		mem: map[string]User{},
+		mem: map[int]*User{},
 	}
 }
 
 func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 	log.Printf("SaveUser: %+v", *u)
-	up.mem[u.Name] = *u
+	id := rand.Intn(1000)
+	u.ID = id
+
+	up.mem[u.ID] = u
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, ider rip.IdentifiableResource) (*User, error) {
-	log.Printf("GetUser: %+v", ider.IDString())
-	u, ok := up.mem[ider.IDString()]
+func (up UserProvider) Get(ctx context.Context, res rip.IdentifiableResource) (*User, error) {
+	log.Printf("GetUser: %+v", res.IDString())
+	id, err := strconv.Atoi(res.IDString())
+	if err != nil {
+		return nil, err
+	}
+
+	u, ok := up.mem[id]
 	if !ok {
 		return &User{}, rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
 	}
-	return &u, nil
+	return u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, ider rip.IdentifiableResource) error {
-	log.Printf("DeleteUser: %+v", ider.IDString())
-	_, ok := up.mem[ider.IDString()]
+func (up *UserProvider) Delete(ctx context.Context, res rip.IdentifiableResource) error {
+	log.Printf("DeleteUser: %+v", res.IDString())
+	id, err := strconv.Atoi(res.IDString())
+	if err != nil {
+		return err
+	}
+
+	_, ok := up.mem[id]
 	if !ok {
 		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
 	}
 
-	delete(up.mem, ider.IDString())
+	delete(up.mem, id)
 	return nil
 }
 
 func (up *UserProvider) Update(ctx context.Context, u *User) error {
 	log.Printf("UpdateUser: %+v", u.IDString())
-	_, ok := up.mem[u.Name]
+	_, ok := up.mem[u.ID]
 	if !ok {
 		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
 	}
-	up.mem[u.Name] = *u
+	up.mem[u.ID] = u
 
 	return nil
 }
@@ -83,7 +103,7 @@ func (up UserProvider) ListAll(ctx context.Context) ([]*User, error) {
 	var users []*User
 	for _, u := range up.mem {
 		u := u
-		users = append(users, &u)
+		users = append(users, u)
 	}
 	return users, nil
 }
