@@ -87,26 +87,6 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create Cre
 	return urlPath, handler
 }
 
-func preprocessRequest(w http.ResponseWriter, r *http.Request, method string, header http.Header) (accept, contentType string, err error) {
-	accept, err = bestHeaderValue(r.Header["Accept"], AvailableEncodings)
-	if err != nil {
-		return "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad accept header format: %v", err)}
-	}
-	if r.Method != method {
-		return "", "", Error{Status: http.StatusMethodNotAllowed, Message: "bad method"}
-	}
-
-	contentType, err = bestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
-	if err != nil {
-		return "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
-	}
-
-	// TODO check for the suffix, if .xml, .json, .html, etc
-	// if it exists, it overwrites the "Content-Type" because it means the end-user used the URL bar to choose the format.
-
-	return "", contentType, nil
-}
-
 func resID(requestPath, prefixPath string, id string) stringID {
 	pathID := strings.TrimPrefix(requestPath, prefixPath)
 
@@ -135,7 +115,7 @@ func decode[T any](r io.Reader, contentType string) (T, error) {
 
 func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, contentType, err := preprocessRequest(w, r, method, r.Header)
+		accept, contentType, err := preprocessRequest(r.Method, method, r.Header)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -169,7 +149,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 
 func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := preprocessRequest(w, r, method, r.Header)
+		accept, _, err := preprocessRequest(r.Method, method, r.Header)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -221,7 +201,7 @@ func (i stringID) IDString() string {
 
 func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[IdentifiableResource, Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := preprocessRequest(w, r, method, r.Header)
+		accept, _, err := preprocessRequest(r.Method, method, r.Header)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -249,7 +229,7 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[Identif
 
 func handleListAll[Rsc any](urlPath, method string, f ListFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := preprocessRequest(w, r, method, r.Header)
+		accept, _, err := preprocessRequest(r.Method, method, r.Header)
 		if err != nil {
 			writeError(w, accept, err)
 			return
