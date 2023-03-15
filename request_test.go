@@ -12,8 +12,10 @@ func TestPreprocessRequest(t *testing.T) {
 		"Accept":       []string{"text/json; q=0.9", "text/xml"},
 		"Content-Type": []string{"text/json"},
 	}
+	rURLPath := "/whatever/resource/id"
 
-	accept, contentType, err := preprocessRequest(rMethod, hMethod, h)
+	// TODO: add some .xml/.json/.html
+	_, accept, contentType, err := preprocessRequest(rMethod, hMethod, h, rURLPath)
 	if err != nil {
 		t.Fatal(err)
 	}

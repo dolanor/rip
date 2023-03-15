@@ -115,7 +115,7 @@ func decode[T any](r io.Reader, contentType string) (T, error) {
 
 func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, contentType, err := preprocessRequest(r.Method, method, r.Header)
+		cleanedPath, accept, contentType, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -127,7 +127,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 			return
 		}
 
-		err = checkPathID(r.URL.Path, urlPath, res.IDString())
+		err = checkPathID(cleanedPath, urlPath, res.IDString())
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
 			return
@@ -149,15 +149,15 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 
 func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := preprocessRequest(r.Method, method, r.Header)
+		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
 			writeError(w, accept, err)
 			return
 		}
 
-		id := strings.TrimPrefix(r.URL.Path, urlPath)
+		id := strings.TrimPrefix(cleanedPath, urlPath)
 
-		resID := resID(r.URL.Path, urlPath, id)
+		resID := resID(cleanedPath, urlPath, id)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
 			return
@@ -201,13 +201,13 @@ func (i stringID) IDString() string {
 
 func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[IdentifiableResource, Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := preprocessRequest(r.Method, method, r.Header)
+		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
 			writeError(w, accept, err)
 			return
 		}
 
-		id := strings.TrimPrefix(r.URL.Path, urlPath)
+		id := strings.TrimPrefix(cleanedPath, urlPath)
 
 		var resID stringID
 		resID.IDFromString(id)
@@ -229,7 +229,7 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[Identif
 
 func handleListAll[Rsc any](urlPath, method string, f ListFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, _, err := preprocessRequest(r.Method, method, r.Header)
+		_, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
 			writeError(w, accept, err)
 			return

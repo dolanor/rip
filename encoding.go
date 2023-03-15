@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 var AvailableEncodings = []string{
