@@ -1,0 +1,19 @@
+<html>
+	<head>
+		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
+	</head>
+	<body>
+		<h2>{{ .Name }}</h2>
+
+		<div hx-put="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-target="this" hx-swap="outerHTML">
+			{{- range $v := .Fields }}
+			<div >
+				<label>{{ $v.Key }}</label>: {{ $v.Value }}
+				<input type="text" name="{{ $v.Key }}" value="{{ $v.Value }}">
+			</div>
+			{{- end }}
+
+			<button hx-get="/{{ .Name | toLower | toPlural}}/{{ .ID }}" class="btn btn-primary">Click to edit</button></div>
+		</div>
+	</body>
+</html>

@@ -1,10 +1,11 @@
 package rip
 
 import (
+	_ "embed"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
-	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"reflect"
@@ -22,48 +23,85 @@ var AvailableCodecs = map[string]Codec{
 	"text/html": {NewEncoder: WrapEncoder(NewHTMLEncoder), NewDecoder: WrapDecoder(NewHTMLDecoder)},
 }
 
+type HTMLFormEncoder struct {
+	w io.Writer
+}
+
+func (e HTMLFormEncoder) Encode(v interface{}) error {
+	return HTMLEncode(e.w, true, v)
+}
+
 type HTMLEncoder struct {
 	w io.Writer
 }
 
+//go:embed resource.gotpl
+var resourceTmpl string
+
+//go:embed resource_form.gotpl
+var resourceFormTmpl string
+
 func (e HTMLEncoder) Encode(v interface{}) error {
+	return HTMLEncode(e.w, false, v)
+}
+
+func HTMLEncode(w io.Writer, edit bool, v interface{}) error {
 	s := reflect.ValueOf(v)
 	if s.Kind() == reflect.Pointer {
 		s = s.Elem()
 	}
 	t := s.Type()
 	name := t.Name()
+	//log.Println("encode: name:", name)
 
-	rw, ok := e.w.(http.ResponseWriter)
+	rw, ok := w.(http.ResponseWriter)
 	if ok {
 		// We force Content-Type to HTML
 		rw.Header().Set("Content-Type", "text/html")
 	}
 
-	// TODO: replace with template
-	_, err := e.w.Write([]byte(fmt.Sprintf(`<h2>%s</h2>`, name)))
-	if err != nil {
-		return err
+	type field struct {
+		Key   string
+		Value any
 	}
-	_, err = e.w.Write([]byte(`<div hx-target="this" hx-swap="outerHTML">`))
-	if err != nil {
-		return err
+
+	type resource struct {
+		ID     string
+		Name   string
+		Fields []field
+	}
+
+	res := resource{
+		Name: name,
 	}
 	for i := 0; i < s.NumField(); i++ {
 		f := s.Field(i)
 		fName := t.Field(i).Name
 		//fType := f.Type()
 		fVal := f.Interface()
-
-		_, err = e.w.Write([]byte(fmt.Sprintf(`%s<div><label>%s</label>: %v</div>`, "\n", fName, fVal)))
-		if err != nil {
-			return err
-		}
-
+		//log.Printf("fieldX : %s: %+v || %+v", fName, f.Type(), f.Interface())
+		res.Fields = append(res.Fields, field{fName, fVal})
 	}
 
-	// TODO: replace with template
-	_, err = e.w.Write([]byte(`<button hx-get="/users/2/edit" class="btn btn-primary">Click to edit</button></div>`))
+	tpl := template.New("resource").Funcs(template.FuncMap{
+		"toLower": strings.ToLower,
+		// FIXME: use real plural i18n lib
+		"toPlural": func(s string) string {
+			return s + "s"
+		},
+	})
+
+	tmplSrc := resourceTmpl
+	if edit {
+		tmplSrc = resourceFormTmpl
+	}
+
+	tpl, err := tpl.Parse(tmplSrc)
+	if err != nil {
+		return err
+	}
+
+	err = tpl.Execute(w, res)
 	if err != nil {
 		return err
 	}
