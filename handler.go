@@ -139,7 +139,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 			return
 		}
 
-		err = acceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept, EditOff).Encode(res)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -218,7 +218,7 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[Identif
 			return
 		}
 
-		err = acceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept, EditOff).Encode(res)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -241,7 +241,7 @@ func handleListAll[Rsc any](urlPath, method string, f ListFn[Rsc]) http.HandlerF
 			return
 		}
 
-		err = acceptEncoder(w, accept).Encode(rscs)
+		err = acceptEncoder(w, accept, EditOff).Encode(rscs)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -287,7 +287,7 @@ func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		err = acceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept, EditOff).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -333,7 +333,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
 		}
-		err = acceptEncoder(w, accept).Encode(res)
+		err = acceptEncoder(w, accept, EditOff).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

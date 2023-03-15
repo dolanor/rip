@@ -28,25 +28,25 @@ type HTMLFormEncoder struct {
 	w io.Writer
 }
 
+func NewHTMLFormEncoder(w io.Writer) *HTMLFormEncoder {
+	return &HTMLFormEncoder{
+		w: w,
+	}
+}
+
 func (e HTMLFormEncoder) Encode(v interface{}) error {
-	return HTMLEncode(e.w, true, v)
+	return HTMLEncode(e.w, EditOn, v)
 }
 
 type HTMLEncoder struct {
 	w io.Writer
 }
 
-//go:embed resource.gotpl
-var resourceTmpl string
-
-//go:embed resource_form.gotpl
-var resourceFormTmpl string
-
 func (e HTMLEncoder) Encode(v interface{}) error {
-	return HTMLEncode(e.w, false, v)
+	return HTMLEncode(e.w, EditOff, v)
 }
 
-func HTMLEncode(w io.Writer, edit bool, v interface{}) error {
+func HTMLEncode(w io.Writer, edit EditMode, v interface{}) error {
 	s := reflect.ValueOf(v)
 	if s.Kind() == reflect.Pointer {
 		s = s.Elem()
@@ -110,6 +110,12 @@ func HTMLEncode(w io.Writer, edit bool, v interface{}) error {
 	return nil
 }
 
+//go:embed resource.gotpl
+var resourceTmpl string
+
+//go:embed resource_form.gotpl
+var resourceFormTmpl string
+
 func NewHTMLEncoder(w io.Writer) *HTMLEncoder {
 	return &HTMLEncoder{
 		w: w,
@@ -168,10 +174,21 @@ type Encoder interface {
 	Encode(v interface{}) error
 }
 
-func acceptEncoder(w io.Writer, acceptHeader string) Encoder {
+type EditMode bool
+
+const (
+	EditOff EditMode = false
+	EditOn  EditMode = true
+)
+
+func acceptEncoder(w io.Writer, acceptHeader string, edit EditMode) Encoder {
 	encoder, ok := AvailableCodecs[acceptHeader]
 	if !ok {
 		return json.NewEncoder(w)
+	}
+
+	if acceptHeader == "text/html" && edit {
+		return NewHTMLFormEncoder(w)
 	}
 
 	return encoder.NewEncoder(w)

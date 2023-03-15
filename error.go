@@ -47,7 +47,7 @@ func writeError(w http.ResponseWriter, accept string, err error) {
 	}
 
 	w.WriteHeader(e.Status)
-	err = acceptEncoder(w, accept).Encode(e)
+	err = acceptEncoder(w, accept, EditOff).Encode(e)
 	// We can't do anything, we need to make the HTTP server intercept the panic
 	if err != nil {
 		panic(err)
