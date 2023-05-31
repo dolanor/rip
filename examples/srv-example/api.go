@@ -43,8 +43,11 @@ type UserProvider struct {
 }
 
 func NewUserProvider() *UserProvider {
+	u := User{ID: 1, Name: "Jean"}
 	return &UserProvider{
-		mem: map[int]*User{},
+		mem: map[int]*User{
+			u.ID: &u,
+		},
 	}
 }
 
