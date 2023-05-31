@@ -12,12 +12,14 @@ import (
 // RequestResponseFunc is a function that takes a ctx and a request, and it can return a response or an err.
 type RequestResponseFunc[Request, Response any] func(ctx context.Context, request Request) (response Response, err error)
 
-type CreateFn[Rsc any] func(ctx context.Context, res Rsc) (Rsc, error)
-type ResFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
-type GetFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
-type UpdateFn[Rsc any] func(ctx context.Context, res Rsc) error
-type DeleteFn[ID IdentifiableResource] func(ctx context.Context, id IdentifiableResource) error
-type ListFn[Rsc any] func(ctx context.Context) ([]Rsc, error)
+type (
+	CreateFn[Rsc any]                       func(ctx context.Context, res Rsc) (Rsc, error)
+	ResFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
+	GetFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
+	UpdateFn[Rsc any]                       func(ctx context.Context, res Rsc) error
+	DeleteFn[ID IdentifiableResource]       func(ctx context.Context, id IdentifiableResource) error
+	ListFn[Rsc any]                         func(ctx context.Context) ([]Rsc, error)
+)
 
 // Creater creates a resource that can be identified.
 type Creater[Rsc IdentifiableResource] interface {
@@ -81,7 +83,6 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create Cre
 	for i := len(mids) - 1; i >= 0; i-- {
 		// we wrap the handler in the middlewares
 		handler = mids[i](handler)
-
 	}
 
 	return urlPath, handler
@@ -223,7 +224,6 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[Identif
 			writeError(w, accept, err)
 			return
 		}
-
 	}
 }
 
@@ -292,7 +292,6 @@ func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 	}
 }
 
