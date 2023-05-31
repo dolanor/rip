@@ -122,6 +122,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 			return
 		}
 
+		// TODO: use the correct encoder (www-urlform?)
 		res, err := decode[Rsc](r.Body, contentType)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("bad input format: %w", err))
@@ -202,6 +203,12 @@ func (i stringID) IDString() string {
 
 func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[IdentifiableResource, Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vals := r.URL.Query()
+		editMode := EditOff
+		if vals.Get("mode") == "edit" {
+			editMode = EditOn
+		}
+
 		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
 			writeError(w, accept, err)
@@ -219,7 +226,7 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[Identif
 			return
 		}
 
-		err = acceptEncoder(w, accept, EditOff).Encode(res)
+		err = acceptEncoder(w, accept, editMode).Encode(res)
 		if err != nil {
 			writeError(w, accept, err)
 			return
