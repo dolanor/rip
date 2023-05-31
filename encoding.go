@@ -13,15 +13,15 @@ import (
 )
 
 var AvailableEncodings = []string{
-	"text/json",
+	"application/json",
 	"text/xml",
 	"text/html",
 }
 
 var AvailableCodecs = map[string]Codec{
-	"text/json": {NewEncoder: WrapEncoder(json.NewEncoder), NewDecoder: WrapDecoder(json.NewDecoder)},
 	"text/xml":  {NewEncoder: WrapEncoder(xml.NewEncoder), NewDecoder: WrapDecoder(xml.NewDecoder)},
 	"text/html": {NewEncoder: WrapEncoder(NewHTMLEncoder), NewDecoder: WrapDecoder(NewHTMLDecoder)},
+	"application/json":                  {NewEncoder: WrapEncoder(json.NewEncoder), NewDecoder: WrapDecoder(json.NewDecoder)},
 }
 
 type HTMLFormEncoder struct {
