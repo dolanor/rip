@@ -7,7 +7,7 @@ import (
 )
 
 func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string) (cleanedPath string, accept, contentType string, err error) {
-	accept, err = bestHeaderValue(header["Accept"], AvailableEncodings)
+	accept, err = bestHeaderValue(header, "Accept", AvailableEncodings)
 	if err != nil {
 		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad accept header format: %v", err)}
 	}
@@ -15,7 +15,7 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		return "", "", "", Error{Status: http.StatusMethodNotAllowed, Message: "bad method"}
 	}
 
-	contentType, err = bestHeaderValue(header["Content-Type"], AvailableEncodings)
+	contentType, err = bestHeaderValue(header, "Content-Type", AvailableEncodings)
 	if err != nil {
 		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
 	}
@@ -42,6 +42,6 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		cleanedPath = strings.Join(splits[:len(splits)-1], ".")
 	}
 
-	//TODO add test for accept ""
+	// TODO add test for accept ""
 	return cleanedPath, accept, contentType, nil
 }

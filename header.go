@@ -2,6 +2,7 @@ package rip
 
 import (
 	"fmt"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,19 +13,30 @@ type headerQ struct {
 	Q     float32
 }
 
-func bestHeaderValue(header []string, serverPreferences []string) (string, error) {
-	clientPreferences, err := headerValues(header)
+func bestHeaderValue(header http.Header, headerName string, serverPreferences []string) (string, error) {
+	clientPreferences, err := headerValues(header[headerName])
 	if err != nil {
 		return "", err
 	}
 
-	best, ok := matchHeaderValue(clientPreferences, serverPreferences)
-	if !ok {
-		// FIXME : use a pkg error
-		return "text/html", nil
-		//return "", errors.New("no client preferences value found")
+	var best string
+	var ok bool
+	if len(clientPreferences) == 0 {
+		// check in request Content-Type
+		clientPreferences, err = headerValues(header["Content-Type"])
+		if err != nil {
+			return "", err
+		}
 	}
-	return best, nil
+
+	best, ok = matchHeaderValue(clientPreferences, serverPreferences)
+	if ok {
+		return best, nil
+	}
+
+	// FIXME : use a pkg error
+	return "text/html", nil
+	// return "", errors.New("no client preferences value found")
 }
 
 func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) (string, bool) {

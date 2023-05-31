@@ -263,7 +263,7 @@ func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header, "Content-Type", AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -287,7 +287,7 @@ func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header["Accept"], AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header, "Accept", AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -310,7 +310,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header["Content-Type"], AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header, "Content-Type", AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -334,7 +334,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header["Accept"], AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header, "Accept", AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -348,7 +348,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 }
 
 func badMethodHandler(w http.ResponseWriter, r *http.Request) {
-	accept, err := bestHeaderValue(r.Header["Accept"], AvailableEncodings)
+	accept, err := bestHeaderValue(r.Header, "Accept", AvailableEncodings)
 	if err != nil {
 		writeError(w, accept, fmt.Errorf("bad accept header format: %w", err))
 		return
