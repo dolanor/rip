@@ -14,13 +14,25 @@ type headerQ struct {
 }
 
 func bestHeaderValue(header http.Header, headerName string, serverPreferences []string) (string, error) {
+	// By default, we choose application/json
+	// TODO maybe switch to text/html if it's implemented
+	defaultClientPref := []headerQ{{Value: "application/json", Q: 1}}
 	clientPreferences, err := headerValues(header[headerName])
 	if err != nil {
 		return "", err
 	}
 
-	var best string
-	var ok bool
+	if len(clientPreferences) > 0 &&
+		clientPreferences[0].Value == "*/*" {
+		// If the first type is a catch all and there is a second, we'll select the second
+		if len(clientPreferences) > 1 {
+			clientPreferences = clientPreferences[1:]
+		} else {
+			// Otherwise, we just declare we have no preferences
+			clientPreferences = []headerQ{}
+		}
+	}
+
 	if len(clientPreferences) == 0 {
 		// check in request Content-Type
 		clientPreferences, err = headerValues(header["Content-Type"])
@@ -29,7 +41,11 @@ func bestHeaderValue(header http.Header, headerName string, serverPreferences []
 		}
 	}
 
-	best, ok = matchHeaderValue(clientPreferences, serverPreferences)
+	if len(clientPreferences) == 0 {
+		clientPreferences = defaultClientPref
+	}
+
+	best, ok := matchHeaderValue(clientPreferences, serverPreferences)
 	if ok {
 		return best, nil
 	}
