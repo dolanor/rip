@@ -3,17 +3,20 @@
 		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
 	</head>
 	<body>
+		{{ range . }}
 		<h2>{{ .Name }}</h2>
 
-		<div hx-put="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-target="this" hx-swap="outerHTML">
+		<form id="user" hx-put="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-target="this" hx-swap="outerHTML">
 			{{- range $v := .Fields }}
 			<div >
-				<label>{{ $v.Key }}</label>: {{ $v.Value }}
+				<label>{{ $v.Key }}</label>:
 				<input type="text" name="{{ $v.Key }}" value="{{ $v.Value }}">
 			</div>
 			{{- end }}
 
-			<button hx-get="/{{ .Name | toLower | toPlural}}/{{ .ID }}" class="btn btn-primary">Click to edit</button></div>
-		</div>
+			<button class="btn btn-primary">Submit</button>
+			<button hx-get="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}'class="btn">Cancel</button>
+		</form>
+		{{ end }}
 	</body>
 </html>
