@@ -18,20 +18,25 @@ func bestHeaderValue(header []string, serverPreferences []string) (string, error
 		return "", err
 	}
 
-	best := matchHeaderValue(clientPreferences, serverPreferences)
+	best, ok := matchHeaderValue(clientPreferences, serverPreferences)
+	if !ok {
+		// FIXME : use a pkg error
+		return "text/html", nil
+		//return "", errors.New("no client preferences value found")
+	}
 	return best, nil
 }
 
-func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) string {
+func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) (string, bool) {
 	for _, c := range clientPreferences {
 		for _, s := range serverPreferences {
 			// we found a match
 			if c.Value == s {
-				return s
+				return s, true
 			}
 		}
 	}
-	return ""
+	return "", false
 }
 
 func headerValues(header []string) ([]headerQ, error) {
