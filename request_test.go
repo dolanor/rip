@@ -9,8 +9,8 @@ func TestPreprocessRequest(t *testing.T) {
 	rMethod := http.MethodPost
 	hMethod := http.MethodPost
 	h := http.Header{
-		"Accept":       []string{"text/json; q=0.9", "text/xml"},
-		"Content-Type": []string{"text/json"},
+		"Accept":       []string{"application/json; q=0.9", "text/xml"},
+		"Content-Type": []string{"application/json"},
 	}
 	rURLPath := "/whatever/resource/id"
 
@@ -21,7 +21,7 @@ func TestPreprocessRequest(t *testing.T) {
 	}
 	switch {
 	case accept != "text/xml",
-		contentType != "text/json":
+		contentType != "application/json":
 		t.Fatal("could not find correct accept/content type")
 	}
 }

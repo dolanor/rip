@@ -172,7 +172,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 						panicErr(t, err)
 						users = append(users, user)
 					}
-				case "text/json":
+				case "application/json":
 					err = dec.Decode(&users)
 					panicErr(t, err)
 				}
@@ -234,7 +234,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 						panicErr(t, err)
 						users = append(users, user)
 					}
-				case "text/json":
+				case "application/json":
 					err = dec.Decode(&users)
 					panicErr(t, err)
 				}
@@ -278,9 +278,10 @@ func TestMiddleware(t *testing.T) {
 
 	c := s.Client()
 	t.Run("create", func(t *testing.T) {
-		respCreate, err := c.Post(s.URL+"/users/", "text/json", bytes.NewReader(b))
+		respCreate, err := c.Post(s.URL+"/users/", "application/json", bytes.NewReader(b))
 		panicErr(t, err)
 		defer respCreate.Body.Close()
+
 		if respCreate.StatusCode != http.StatusCreated {
 			t.Fatal("post status code is not 201")
 		}

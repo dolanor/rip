@@ -33,7 +33,7 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		accept = "text/html"
 		hasExt = true
 	case "json":
-		accept = "text/json"
+		accept = "application/json"
 		hasExt = true
 	}
 
