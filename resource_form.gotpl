@@ -13,7 +13,7 @@
 {{ end }}
 
 {{ define "resource" }}
-		<form id="user" hx-put="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-target="this" hx-swap="outerHTML">
+		<form id="user" hx-put="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-swap="outerHTML">
 			{{- range $v := .Fields }}
 			<div >
 				<label>{{ $v.Key }}</label>:

@@ -141,10 +141,6 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 			return
 		}
 
-		// we want to display the RO resource data
-		if accept == "application/x-www-form-urlencoded" {
-			accept = "text/html"
-		}
 
 		err = acceptEncoder(w, accept, EditOff).Encode(res)
 		if err != nil {
