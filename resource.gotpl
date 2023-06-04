@@ -4,21 +4,17 @@
 		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
 	</head>
 	<body>
-		{{ range . }}
-		<h2>{{ .Name }}</h2>
-			{{ template "resource" . }}
+		{{ range $k, $v := . }}
+		<h2 class="resource-name">{{ .Name }}</h2>
+			{{ $name := .Name }}
+			<div id="resource-{{ $k }}" hx-target="this" hx-select="#resource-{{ $k }}" hx-swap="outerHTML">
+				{{- range $v := .Fields }}
+				<div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div>
+				{{- end }}
+
+				<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?mode=edit" class="btn btn-primary">Click to edit</button></div>
+			</div>
 		{{ end }}
 	</body>
 </html>
-{{ end }}
-
-{{ define "resource" }}
-{{ $name := .Name }}
-<div id="resource"  hx-target="this" hx-swap="outerHTML">
-	{{- range $v := .Fields }}
-	<div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div>
-	{{- end }}
-
-	<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?mode=edit" class="btn btn-primary">Click to edit</button></div>
-</div>
 {{ end }}
