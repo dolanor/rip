@@ -83,6 +83,9 @@ func HTMLEncode(w io.Writer, edit EditMode, v interface{}) error {
 		"toPlural": func(s string) string {
 			return s + "s"
 		},
+		"editModeQueryParam": func() string {
+			return editModeQueryParam
+		},
 	})
 
 	tmplSrc := resourceTmpl
@@ -207,6 +210,8 @@ type NewEncoder func(w io.Writer) Encoder
 type Encoder interface {
 	Encode(v interface{}) error
 }
+
+const editModeQueryParam = "mode=edit"
 
 type EditMode bool
 

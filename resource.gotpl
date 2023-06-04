@@ -12,7 +12,7 @@
 				<div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div>
 				{{- end }}
 
-				<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?mode=edit" class="btn btn-primary">Click to edit</button></div>
+				<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?{{ editModeQueryParam }}" class="btn btn-primary">Click to edit</button></div>
 			</div>
 		{{ end }}
 	</body>
