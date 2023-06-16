@@ -6,7 +6,7 @@
 	<body>
 		{{ range $k, $v := . }}
 		<h2 id="resource-name">{{ .Name }}</h2>
-		<form id="resource-{{ $k }}" hx-put="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select="#resource-{{ $k }}" hx-swap="outerHTML">
+		<form id="resource-{{ .ID }}" hx-put="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select="#resource-{{ .ID }}" hx-swap="outerHTML">
 			{{- range $f := $v.Fields }}
 			<div >
 				<label>{{ $f.Key }}</label>:
