@@ -119,8 +119,8 @@ type resource struct {
 
 func expandFields(s reflect.Value) resource {
 	t := s.Type()
-	name := t.Name()
 	// log.Println("encode: name:", name)
+	_, name, _ := strings.Cut(t.String(), ".")
 	if s.Kind() == reflect.Pointer {
 		s = s.Elem()
 		t = s.Type()
