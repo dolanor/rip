@@ -98,7 +98,7 @@ func HTMLEncode(w io.Writer, edit EditMode, v interface{}) error {
 		return err
 	}
 
-	err = tpl.ExecuteTemplate(w, "resource_header", resources)
+	err = tpl.ExecuteTemplate(w, "resource", resources)
 	if err != nil {
 		return err
 	}
