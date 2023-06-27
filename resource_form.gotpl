@@ -14,10 +14,12 @@
 		<form class="resource" id="resource-{{ .ID }}" hx-{{ $method }}="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".resource" hx-swap="outerHTML">
 		{{ end }}
 			{{- range $f := $v.Fields }}
+				{{ if or (ne $f.Key "ID") (ne ($f.Value | toString) "0") }}
 			<div >
 				<label>{{ $f.Key }}</label>:
 				<input type="text" name="{{ $f.Key }}" value="{{ $f.Value }}">
 			</div>
+				{{ end }}
 			{{- end }}
 
 			<button class="btn btn-primary">Submit</button>

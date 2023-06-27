@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -85,6 +86,9 @@ func HTMLEncode(w io.Writer, edit EditMode, v interface{}) error {
 		},
 		"editModeQueryParam": func() string {
 			return editModeQueryParam
+		},
+		"toString": func(a any) string {
+			return fmt.Sprintf("%v", a)
 		},
 	})
 
