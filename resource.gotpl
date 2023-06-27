@@ -5,7 +5,7 @@
 	</head>
 	<body>
 		{{ range $k, $v := . }}
-		<h2 class="resource-name">{{ .Name }}</h2>
+		<h2 id="resource-name"><a href="../{{ .Name | toLower | toPlural }}">{{ .Name }}</a></h2>
 			{{ $name := .Name }}
 			<a href="/{{ $name | toLower | toPlural }}/new?mode=edit" class="btn btn-primary">+</a>
 			<div class="resource" id="resource-{{ .ID }}" hx-target="this" hx-select=".resource" hx-swap="outerHTML">

@@ -5,7 +5,7 @@
 	</head>
 	<body>
 		{{ range $k, $v := . }}
-		<h2 id="resource-name">{{ .Name }}</h2>
+		<h2 id="resource-name"><a href="../{{ .Name | toLower | toPlural }}">{{ .Name }}</a></h2>
 		{{ $method := "put" }}
 		{{ if eq .ID 0 }}
 			{{ $method = "post" }}
