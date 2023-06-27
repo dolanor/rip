@@ -9,7 +9,7 @@ import (
 type ErrorCode int
 
 const (
-	ErrorCodeNotFound ErrorCode = 404
+	ErrorCodeNotFound ErrorCode = http.StatusNotFound
 	ErrorCodeBadQArg  ErrorCode = 499
 )
 
