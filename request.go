@@ -35,6 +35,9 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 	case "json":
 		accept = "application/json"
 		hasExt = true
+	case "yaml":
+		accept = "application/yaml"
+		hasExt = true
 	}
 
 	cleanedPath = urlPath

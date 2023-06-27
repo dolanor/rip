@@ -7,11 +7,13 @@ import (
 	"io"
 
 	"github.com/ajg/form"
+	"gopkg.in/yaml.v3"
 )
 
 var AvailableEncodings = []string{
 	"application/json",
 	"text/xml",
+	"application/yaml",
 	"text/html",
 	"application/x-www-form-urlencoded",
 }
@@ -19,6 +21,7 @@ var AvailableEncodings = []string{
 var AvailableCodecs = map[string]Codec{
 	"application/json":                  {NewEncoder: WrapEncoder(json.NewEncoder), NewDecoder: WrapDecoder(json.NewDecoder)},
 	"text/xml":                          {NewEncoder: WrapEncoder(xml.NewEncoder), NewDecoder: WrapDecoder(xml.NewDecoder)},
+	"application/yaml":                  {NewEncoder: WrapEncoder(yaml.NewEncoder), NewDecoder: WrapDecoder(yaml.NewDecoder)},
 	"text/html":                         {NewEncoder: WrapEncoder(NewHTMLEncoder), NewDecoder: WrapDecoder(NewHTMLDecoder)},
 	"application/x-www-form-urlencoded": {NewEncoder: WrapEncoder(NewHTMLFormEncoder), NewDecoder: WrapDecoder(form.NewDecoder)},
 }

@@ -18,7 +18,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 	up := NewUserProvider()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(rip.HandleResource[*User]("/users/", up))
+	mux.HandleFunc(rip.HandleResource("/users/", up))
 	s := httptest.NewServer(mux)
 
 	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
@@ -182,12 +182,13 @@ func TestHandleResourceWithPath(t *testing.T) {
 						panicErr(t, err)
 						users = append(users, user)
 					}
-				case "application/json":
+				default:
 					err = dec.Decode(&users)
 					panicErr(t, err)
+
 				}
 				if len(users) != 2 {
-					t.Fatal("list does not contain 2 elements")
+					t.Fatal("list does not contain 2 elements, contains:", len(users))
 				}
 			})
 
@@ -244,7 +245,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 						panicErr(t, err)
 						users = append(users, user)
 					}
-				case "application/json":
+				default:
 					err = dec.Decode(&users)
 					panicErr(t, err)
 				}
