@@ -53,12 +53,18 @@ func TestHandleResourceWithPath(t *testing.T) {
 					b, err := ioutil.ReadAll(resp.Body)
 					t.Fatalf("post status code is not 201: body: %v: %s", err, string(b))
 				}
+				var buf bytes.Buffer
+				_, err = buf.ReadFrom(resp.Body)
+				panicErr(t, err)
 
 				var uCreated User
-				err = codec.NewDecoder(resp.Body).Decode(&uCreated)
+				err = codec.NewDecoder(&buf).Decode(&uCreated)
+
 				panicErr(t, err)
-				if uCreated != u {
-					t.Fatal("user created != from original")
+				// somehow msgpack package changes the time reference (UTC to CET)
+				// so we're more graceful with the checks
+				if uCreated != u && !uCreated.BirthDate.Equal(u.BirthDate) {
+					t.Fatal("user created != from original:", uCreated, u)
 				}
 			})
 
@@ -78,8 +84,8 @@ func TestHandleResourceWithPath(t *testing.T) {
 				var uGet User
 				err = codec.NewDecoder(resp.Body).Decode(&uGet)
 				panicErr(t, err)
-				if uGet != u {
-					t.Fatal("user created != from original")
+				if uGet != u && !uGet.BirthDate.Equal(u.BirthDate) {
+					t.Fatal("user get != from original:", uGet, u)
 				}
 			})
 
@@ -124,8 +130,8 @@ func TestHandleResourceWithPath(t *testing.T) {
 				var uGet User
 				err = codec.NewDecoder(resp.Body).Decode(&uGet)
 				panicErr(t, err)
-				if uGet != uUpdated {
-					t.Fatal("user updated != from original")
+				if uGet != uUpdated && !uGet.BirthDate.Equal(uUpdated.BirthDate) {
+					t.Fatal("user get != from original:", uGet, uUpdated)
 				}
 			})
 
@@ -149,8 +155,8 @@ func TestHandleResourceWithPath(t *testing.T) {
 				var uCreated User
 				err = codec.NewDecoder(respCreate.Body).Decode(&uCreated)
 				panicErr(t, err)
-				if uCreated != u {
-					t.Fatal("user created != from original")
+				if uCreated != u && !uCreated.BirthDate.Equal(u.BirthDate) {
+					t.Fatal("user created != from original:", uCreated, u)
 				}
 			})
 

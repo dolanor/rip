@@ -20,7 +20,7 @@ type HTMLDecoder struct {
 }
 
 func (e HTMLDecoder) Decode(v interface{}) error {
-	return errors.New("not implemented")
+	return errors.New("html decoder not implemented")
 }
 
 func NewHTMLDecoder(r io.Reader) *HTMLDecoder {

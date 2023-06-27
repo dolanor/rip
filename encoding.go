@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/ajg/form"
+	"github.com/vmihailenco/msgpack/v5"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,6 +17,7 @@ var AvailableEncodings = []string{
 	"application/yaml",
 	"text/html",
 	"application/x-www-form-urlencoded",
+	"application/msgpack",
 }
 
 var AvailableCodecs = map[string]Codec{
@@ -24,6 +26,7 @@ var AvailableCodecs = map[string]Codec{
 	"application/yaml":                  {NewEncoder: WrapEncoder(yaml.NewEncoder), NewDecoder: WrapDecoder(yaml.NewDecoder)},
 	"text/html":                         {NewEncoder: WrapEncoder(NewHTMLEncoder), NewDecoder: WrapDecoder(NewHTMLDecoder)},
 	"application/x-www-form-urlencoded": {NewEncoder: WrapEncoder(NewHTMLFormEncoder), NewDecoder: WrapDecoder(form.NewDecoder)},
+	"application/msgpack":               {NewEncoder: WrapEncoder(msgpack.NewEncoder), NewDecoder: WrapDecoder(msgpack.NewDecoder)},
 }
 
 type Codec struct {
