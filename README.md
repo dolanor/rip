@@ -38,6 +38,11 @@ type IdentifiableResource interface {
 }
 ```
 
+Right now, it can talk several encoding in reading and writing: JSON, XML, YAML, msgpack, HTML and HTML form.
+Based on `Accept` and `Content-Type` headers, you can be asymmetrical in encoding: send JSON and read XML.
+
+HTML/HTML Forms allows you to edit your resources directly from your web browser. It's very basic for now.
+
 ⚠️: Disclaimer, the API is not stable yet, use or contribute at your own risks
 
 
