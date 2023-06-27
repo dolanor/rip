@@ -184,7 +184,7 @@ func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http
 	}
 }
 
-// IdentifiableResource is a resource that can be identifiable by an string.
+// IdentifiableResource is a resource that can be identified by an string.
 type IdentifiableResource interface {
 	IDString() string
 	IDFromString(s string) error
