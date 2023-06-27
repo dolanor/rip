@@ -6,19 +6,26 @@
 	<body>
 		{{ range $k, $v := . }}
 		<h2 id="resource-name"><a href="../{{ .Name | toLower | toPlural }}">{{ .Name }}</a></h2>
-		{{ $method := "put" }}
-		{{ if eq .ID 0 }}
+			{{ $method := "put" }}
+			{{ if eq .ID 0 }}
 			{{ $method = "post" }}
 		<form class="resource" id="resource-{{ .ID }}" method="{{ $method }}" target="/{{ .Name | toLower | toPlural}}/">
-		{{ else }}
+			{{ else }}
 		<form class="resource" id="resource-{{ .ID }}" hx-{{ $method }}="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".resource" hx-swap="outerHTML">
-		{{ end }}
+			{{ end }}
 			{{- range $f := $v.Fields }}
-				{{ if or (ne $f.Key "ID") (ne ($f.Value | toString) "0") }}
+				{{ if ne $f.Key "ID" }}
+					{{ if ne ($f.Value | toString) "0" }}
 			<div >
 				<label>{{ $f.Key }}</label>:
 				<input type="text" name="{{ $f.Key }}" value="{{ $f.Value }}">
 			</div>
+					{{ end }}
+				{{ else }}
+					{{ if ne ($f.Value | toString) "0" }}
+			<a href="{{ $f.Value }}"><div><label>{{ $f.Key }}</label>: {{ $f.Value }}</div></a>
+				<input type="hidden" name="{{ $f.Key }}" value="{{ $f.Value }}">
+					{{ end }}
 				{{ end }}
 			{{- end }}
 
