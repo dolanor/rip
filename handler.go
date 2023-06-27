@@ -141,7 +141,6 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 			return
 		}
 
-
 		err = acceptEncoder(w, accept, EditOff).Encode(res)
 		if err != nil {
 			writeError(w, accept, err)
@@ -257,7 +256,7 @@ func handleListAll[Rsc any](urlPath, method string, f ListFn[Rsc]) http.HandlerF
 	}
 }
 
-func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
+func handleCreate[Rsc IdentifiableResource](method string, f CreateFn[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
@@ -277,6 +276,11 @@ func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
 			return
 		}
 
+		var newResource bool
+		if res.IDString() == "0" {
+			newResource = true
+		}
+
 		res, err = f(r.Context(), res)
 		if err != nil {
 			switch e := err.(type) {
@@ -294,7 +298,12 @@ func handleCreate[Rsc any](method string, f CreateFn[Rsc]) http.HandlerFunc {
 			return
 		}
 
+		if newResource {
+			http.Redirect(w, r, "/users/"+res.IDString(), http.StatusSeeOther)
+			return
+		}
 		w.WriteHeader(http.StatusCreated)
+
 		err = acceptEncoder(w, accept, EditOff).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

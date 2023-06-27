@@ -7,7 +7,7 @@
 		{{ range $k, $v := . }}
 		<h2 class="resource-name">{{ .Name }}</h2>
 			{{ $name := .Name }}
-			<div id="resource-{{ .ID }}" hx-target="this" hx-select="#resource-{{ .ID }}" hx-swap="outerHTML">
+			<div class="resource" id="resource-{{ .ID }}" hx-target="this" hx-select=".resource" hx-swap="outerHTML">
 				{{- range $v := .Fields }}
 				<div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div>
 				{{- end }}
