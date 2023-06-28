@@ -2,23 +2,30 @@
 <html>
 	<head>
 		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
+		<style type="text/css">
+.label {
+	font-weight: bold;
+}
+		</style>
 	</head>
 	<body>
-		{{ range $k, $v := . }}
-		<h2 id="resource-name"><a href="../{{ .Name | toLower | toPlural }}">{{ .Name }}</a></h2>
+		<h2 id="resource-name"><a href="../{{ .ResourceName | toLower | toPlural }}/">{{ .ResourceName }}</a> <a href="/{{ .ResourceName | toLower | toPlural }}/new?mode=edit" class="btn btn-primary">+</a></h2>
+		
+		{{ range $k, $v := .Resources }}
 			{{ $name := .Name }}
-			<a href="/{{ $name | toLower | toPlural }}/new?mode=edit" class="btn btn-primary">+</a>
-			<div class="resource" id="resource-{{ .ID }}" hx-target="this" hx-select=".resource" hx-swap="outerHTML">
+			<p>
+				<div class="resource" id="resource-{{ .ID }}" hx-target="this" hx-select=".resource" hx-swap="outerHTML">
 				{{- range $v := .Fields }}
 					{{ if eq $v.Key "ID" }}
-				<a href="{{ $v.Value }}"><div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div></a>
+					<div><label class="label">{{ $v.Key }}</label>: <a href="{{ $v.Value }}">{{ $v.Value }}</a></div>
 					{{ else }}
-				<div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div>
+					<div><label class="label">{{ $v.Key }}</label>: {{ $v.Value }}</div>
 					{{ end }}
 				{{- end }}
 
-				<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?{{ editModeQueryParam }}" class="btn btn-primary">Click to edit</button>
-			</div>
+					<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?{{ editModeQueryParam }}" class="btn btn-primary">Click to edit</button>
+				</div>
+			</p>
 		{{ end }}
 	</body>
 </html>

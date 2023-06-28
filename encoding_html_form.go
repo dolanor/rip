@@ -52,17 +52,28 @@ func HTMLEncode(w io.Writer, edit EditMode, v interface{}) error {
 	}
 
 	var resources []resource
+	var resourceName string
 	if s.Kind() == reflect.Slice {
 		for i := 0; i < s.Len(); i++ {
 			s := s.Index(i)
 
 			res := expandFields(s)
-
+			if resourceName == "" {
+				resourceName = res.Name
+			}
 			resources = append(resources, res)
 		}
 	} else {
 		res := expandFields(s)
+		if resourceName == "" {
+			resourceName = res.Name
+		}
 		resources = append(resources, res)
+	}
+
+	pd := pageData{
+		ResourceName: resourceName,
+		Resources:    resources,
 	}
 
 	rw, ok := w.(http.ResponseWriter)
@@ -95,7 +106,7 @@ func HTMLEncode(w io.Writer, edit EditMode, v interface{}) error {
 		return err
 	}
 
-	err = tpl.ExecuteTemplate(w, "resource", resources)
+	err = tpl.ExecuteTemplate(w, "resource", pd)
 	if err != nil {
 		return err
 	}
@@ -112,6 +123,13 @@ type resource struct {
 	ID     any
 	Name   string
 	Fields []field
+}
+
+type pageData struct {
+	PagePath     string
+	ResourceName string
+
+	Resources []resource
 }
 
 func expandFields(s reflect.Value) resource {

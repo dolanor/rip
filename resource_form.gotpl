@@ -4,11 +4,11 @@
 		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
 	</head>
 	<body>
-		{{ range $k, $v := . }}
-		<h2 id="resource-name"><a href="../{{ .Name | toLower | toPlural }}">{{ .Name }}</a></h2>
+		<h2 id="resource-name"><a href="../{{ .ResourceName | toLower | toPlural }}">{{ .ResourceName }}</a></h2>
+		{{ range $k, $v := .Resources }}
 			{{ $method := "put" }}
 			{{ if eq .ID 0 }}
-			{{ $method = "post" }}
+				{{ $method = "post" }}
 		<form class="resource" id="resource-{{ .ID }}" method="{{ $method }}" target="/{{ .Name | toLower | toPlural}}/">
 			{{ else }}
 		<form class="resource" id="resource-{{ .ID }}" hx-{{ $method }}="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".resource" hx-swap="outerHTML">
