@@ -9,7 +9,14 @@
 		</style>
 	</head>
 	<body>
-		<h2 id="resource-name"><a href="../{{ .ResourceName | toLower | toPlural }}/">{{ .ResourceName }}</a> <a href="/{{ .ResourceName | toLower | toPlural }}/new?mode=edit" class="btn btn-primary">+</a></h2>
+		<h2 id="resource-name">
+			<a href="../{{ .ResourceName | toLower | toPlural }}/">{{ .ResourceName }}</a>
+			<form method="get" action="/{{ .ResourceName | toLower | toPlural }}/new?mode=edit">
+				<input type="hidden" name="mode" value="edit">
+				<input type="hidden" name="new" value="true">
+				<button type="submit">+</button>
+			</form>
+		</h2>
 		
 		{{ range $k, $v := .Resources }}
 			{{ $name := .Name }}
