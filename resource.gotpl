@@ -11,9 +11,8 @@
 	<body>
 		<h2 id="resource-name">
 			<a href="../{{ .ResourceName | toLower | toPlural }}/">{{ .ResourceName }}</a>
-			<form method="get" action="/{{ .ResourceName | toLower | toPlural }}/new?mode=edit">
+			<form method="get" action="/{{ .ResourceName | toLower | toPlural }}/?mode=edit">
 				<input type="hidden" name="mode" value="edit">
-				<input type="hidden" name="new" value="true">
 				<button type="submit">+</button>
 			</form>
 		</h2>

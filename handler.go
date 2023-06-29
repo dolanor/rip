@@ -66,7 +66,13 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create Cre
 		case http.MethodPost:
 			handleCreate(r.Method, create)(w, r)
 		case http.MethodGet:
-			if urlPath == r.URL.Path {
+			_, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath)
+			if err != nil {
+				writeError(w, accept, err)
+				return
+			}
+
+			if urlPath == r.URL.Path && editMode == EditOff {
 				handleListAll(urlPath, r.Method, list)(w, r)
 				return
 			}
@@ -201,21 +207,32 @@ func (i stringID) IDString() string {
 	return string(i)
 }
 
+func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string) (id string, accept string, editMode EditMode, err error) {
+	vals := r.URL.Query()
+	editMode = EditOff
+	if vals.Get("mode") == "edit" {
+		editMode = EditOn
+	}
+
+	cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
+	if err != nil {
+		return id, accept, editMode, err
+	}
+
+	id = strings.TrimPrefix(cleanedPath, urlPath)
+	if id == "" {
+		id = "new"
+	}
+	return id, accept, editMode, nil
+}
+
 func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[IdentifiableResource, Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vals := r.URL.Query()
-		editMode := EditOff
-		if vals.Get("mode") == "edit" {
-			editMode = EditOn
-		}
-
-		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
+		id, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath)
 		if err != nil {
 			writeError(w, accept, err)
 			return
 		}
-
-		id := strings.TrimPrefix(cleanedPath, urlPath)
 
 		var resID stringID
 		resID.IDFromString(id)
