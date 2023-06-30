@@ -10,7 +10,7 @@
 	</head>
 	<body>
 		<h2 id="resource-name">
-			<a href="../{{ .ResourceName | toLower | toPlural }}/">{{ .ResourceName }}</a>
+			<a href="../{{ .ResourceName | toLower | toPlural }}/">{{ .ResourceName | toPlural }}</a>
 			<form method="get" action="/{{ .ResourceName | toLower | toPlural }}/?mode=edit">
 				<input type="hidden" name="mode" value="edit">
 				<button type="submit">+</button>
