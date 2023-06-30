@@ -165,14 +165,14 @@ func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http
 
 		id := strings.TrimPrefix(cleanedPath, urlPath)
 
-		resID := resID(cleanedPath, urlPath, id)
+		rID := resID(cleanedPath, urlPath, id)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
 			return
 		}
 
 		// we don't need the returning resource, it's mostly a no-op
-		err = f(r.Context(), &resID)
+		err = f(r.Context(), &rID)
 		if err != nil {
 			var e Error
 			if errors.As(err, &e) {
@@ -286,8 +286,7 @@ func handleCreate[Rsc IdentifiableResource](method string, f CreateFn[Rsc]) http
 			return
 		}
 
-		var res Rsc
-		err = contentTypeDecoder(r.Body, contentType).Decode(&res)
+		res, err := decode[Rsc](r.Body, contentType)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -343,8 +342,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 			return
 		}
 
-		var req Req
-		err = contentTypeDecoder(r.Body, contentType).Decode(&req)
+		req, err := decode[Req](r.Body, contentType)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
