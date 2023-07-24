@@ -23,25 +23,25 @@ const (
 //go:embed resource_form.gotpl
 var resourceFormTmpl string
 
-type HTMLFormEncoder struct {
+type htmlFormEncoder struct {
 	w io.Writer
 }
 
-func NewHTMLFormEncoder(w io.Writer) *HTMLFormEncoder {
-	return &HTMLFormEncoder{
+func newHTMLFormEncoder(w io.Writer) *htmlFormEncoder {
+	return &htmlFormEncoder{
 		w: w,
 	}
 }
 
-func (e HTMLFormEncoder) Encode(v interface{}) error {
+func (e htmlFormEncoder) Encode(v interface{}) error {
 	return HTMLEncode(e.w, EditOn, v)
 }
 
-type HTMLEncoder struct {
+type htmlEncoder struct {
 	w io.Writer
 }
 
-func (e HTMLEncoder) Encode(v interface{}) error {
+func (e htmlEncoder) Encode(v interface{}) error {
 	return HTMLEncode(e.w, EditOff, v)
 }
 

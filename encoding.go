@@ -24,8 +24,8 @@ var AvailableCodecs = map[string]Codec{
 	"application/json":                  {NewEncoder: WrapEncoder(json.NewEncoder), NewDecoder: WrapDecoder(json.NewDecoder)},
 	"text/xml":                          {NewEncoder: WrapEncoder(xml.NewEncoder), NewDecoder: WrapDecoder(xml.NewDecoder)},
 	"application/yaml":                  {NewEncoder: WrapEncoder(yaml.NewEncoder), NewDecoder: WrapDecoder(yaml.NewDecoder)},
-	"text/html":                         {NewEncoder: WrapEncoder(NewHTMLEncoder), NewDecoder: WrapDecoder(NewHTMLDecoder)},
-	"application/x-www-form-urlencoded": {NewEncoder: WrapEncoder(NewHTMLFormEncoder), NewDecoder: WrapDecoder(form.NewDecoder)},
+	"text/html":                         {NewEncoder: WrapEncoder(newHTMLEncoder), NewDecoder: WrapDecoder(newHTMLDecoder)},
+	"application/x-www-form-urlencoded": {NewEncoder: WrapEncoder(newHTMLFormEncoder), NewDecoder: WrapDecoder(form.NewDecoder)},
 	"application/msgpack":               {NewEncoder: WrapEncoder(msgpack.NewEncoder), NewDecoder: WrapDecoder(msgpack.NewDecoder)},
 }
 
@@ -74,7 +74,7 @@ func acceptEncoder(w io.Writer, acceptHeader string, edit EditMode) Encoder {
 	}
 
 	if acceptHeader == "text/html" && edit {
-		return NewHTMLFormEncoder(w)
+		return newHTMLFormEncoder(w)
 	}
 
 	return encoder.NewEncoder(w)

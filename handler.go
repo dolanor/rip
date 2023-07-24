@@ -12,15 +12,6 @@ import (
 // RequestResponseFunc is a function that takes a ctx and a request, and it can return a response or an err.
 type RequestResponseFunc[Request, Response any] func(ctx context.Context, request Request) (response Response, err error)
 
-type (
-	CreateFn[Rsc any]                       func(ctx context.Context, res Rsc) (Rsc, error)
-	ResFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
-	GetFn[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
-	UpdateFn[Rsc any]                       func(ctx context.Context, res Rsc) error
-	DeleteFn[ID IdentifiableResource]       func(ctx context.Context, id IdentifiableResource) error
-	ListFn[Rsc any]                         func(ctx context.Context) ([]Rsc, error)
-)
-
 // Creater creates a resource that can be identified.
 type Creater[Rsc IdentifiableResource] interface {
 	Create(ctx context.Context, res Rsc) (Rsc, error)
@@ -60,7 +51,15 @@ func HandleResource[Rsc IdentifiableResource, RP ResourceProvider[Rsc]](urlPath 
 	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll, mids...)
 }
 
-func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create CreateFn[Rsc], get GetFn[IdentifiableResource, Rsc], updateFn UpdateFn[Rsc], deleteFn DeleteFn[IdentifiableResource], list ListFn[Rsc], mids ...func(http.HandlerFunc) http.HandlerFunc) (path string, handler http.HandlerFunc) {
+type (
+	createFunc[Rsc any]                       func(ctx context.Context, res Rsc) (Rsc, error)
+	getFunc[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
+	updateFunc[Rsc any]                       func(ctx context.Context, res Rsc) error
+	deleteFunc[ID IdentifiableResource]       func(ctx context.Context, id IdentifiableResource) error
+	listFunc[Rsc any]                         func(ctx context.Context) ([]Rsc, error)
+)
+
+func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create createFunc[Rsc], get getFunc[IdentifiableResource, Rsc], update updateFunc[Rsc], deleteFn deleteFunc[IdentifiableResource], list listFunc[Rsc], mids ...func(http.HandlerFunc) http.HandlerFunc) (path string, handler http.HandlerFunc) {
 	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -78,7 +77,7 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create Cre
 			}
 			handleGet(urlPath, r.Method, get)(w, r)
 		case http.MethodPut:
-			updatePathID(urlPath, r.Method, updateFn)(w, r)
+			updatePathID(urlPath, r.Method, update)(w, r)
 		case http.MethodDelete:
 			deletePathID(urlPath, r.Method, deleteFn)(w, r)
 		default:
@@ -120,7 +119,7 @@ func decode[T any](r io.Reader, contentType string) (T, error) {
 	return t, err
 }
 
-func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[Rsc]) http.HandlerFunc {
+func updatePathID[Rsc IdentifiableResource](urlPath, method string, f updateFunc[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cleanedPath, accept, contentType, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
@@ -155,7 +154,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f UpdateFn[R
 	}
 }
 
-func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http.HandlerFunc {
+func deletePathID(urlPath, method string, f deleteFunc[IdentifiableResource]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
@@ -192,7 +191,10 @@ func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http
 
 // IdentifiableResource is a resource that can be identified by an string.
 type IdentifiableResource interface {
+	// IDString returns an ID in form of a string.
 	IDString() string
+
+	// IDFromString serialize an ID from s.
 	IDFromString(s string) error
 }
 
@@ -226,7 +228,7 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 	return id, accept, editMode, nil
 }
 
-func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[IdentifiableResource, Rsc]) http.HandlerFunc {
+func handleGet[Rsc IdentifiableResource](urlPath, method string, f getFunc[IdentifiableResource, Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath)
 		if err != nil {
@@ -251,7 +253,7 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f GetFn[Identif
 	}
 }
 
-func handleListAll[Rsc any](urlPath, method string, f ListFn[Rsc]) http.HandlerFunc {
+func handleListAll[Rsc any](urlPath, method string, f listFunc[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
@@ -273,7 +275,7 @@ func handleListAll[Rsc any](urlPath, method string, f ListFn[Rsc]) http.HandlerF
 	}
 }
 
-func handleCreate[Rsc IdentifiableResource](method string, f CreateFn[Rsc]) http.HandlerFunc {
+func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)

@@ -1,23 +1,14 @@
-package main
+package memuser
 
 import (
 	"context"
 	"log"
 	"math/rand"
-	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/dolanor/rip"
 )
-
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World\n"))
-}
-
-func Greet(ctx context.Context, name string) (string, error) {
-	return "Hello " + name, nil
-}
 
 type User struct {
 	ID        int       `json:"id" xml:"id"`

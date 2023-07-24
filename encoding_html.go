@@ -9,22 +9,22 @@ import (
 //go:embed resource.gotpl
 var resourceTmpl string
 
-func NewHTMLEncoder(w io.Writer) *HTMLEncoder {
-	return &HTMLEncoder{
+func newHTMLEncoder(w io.Writer) *htmlEncoder {
+	return &htmlEncoder{
 		w: w,
 	}
 }
 
-type HTMLDecoder struct {
+type htmlDecoder struct {
 	r io.Reader
 }
 
-func (e HTMLDecoder) Decode(v interface{}) error {
+func (e htmlDecoder) Decode(v interface{}) error {
 	return errors.New("html decoder not implemented")
 }
 
-func NewHTMLDecoder(r io.Reader) *HTMLDecoder {
-	return &HTMLDecoder{
+func newHTMLDecoder(r io.Reader) *htmlDecoder {
+	return &htmlDecoder{
 		r: r,
 	}
 }
