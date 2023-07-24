@@ -34,7 +34,7 @@ func newHTMLFormEncoder(w io.Writer) *htmlFormEncoder {
 }
 
 func (e htmlFormEncoder) Encode(v interface{}) error {
-	return HTMLEncode(e.w, EditOn, v)
+	return htmlEncode(e.w, EditOn, v)
 }
 
 type htmlEncoder struct {
@@ -42,10 +42,10 @@ type htmlEncoder struct {
 }
 
 func (e htmlEncoder) Encode(v interface{}) error {
-	return HTMLEncode(e.w, EditOff, v)
+	return htmlEncode(e.w, EditOff, v)
 }
 
-func HTMLEncode(w io.Writer, edit EditMode, v interface{}) error {
+func htmlEncode(w io.Writer, edit EditMode, v interface{}) error {
 	s := reflect.ValueOf(v)
 	if s.Kind() == reflect.Pointer {
 		s = s.Elem()

@@ -30,11 +30,11 @@ var AvailableCodecs = map[string]Codec{
 }
 
 type Codec struct {
-	NewEncoder NewEncoder
-	NewDecoder NewDecoder
+	NewEncoder NewEncoderFunc
+	NewDecoder NewDecoderFunc
 }
 
-type NewDecoder func(r io.Reader) Decoder
+type NewDecoderFunc func(r io.Reader) Decoder
 
 type Decoder interface {
 	Decode(v interface{}) error
@@ -49,19 +49,19 @@ func contentTypeDecoder(r io.Reader, contentTypeHeader string) Decoder {
 	return decoder.NewDecoder(r)
 }
 
-type NewEncoder func(w io.Writer) Encoder
+type NewEncoderFunc func(w io.Writer) Encoder
 
 type Encoder interface {
 	Encode(v interface{}) error
 }
 
-func WrapDecoder[D Decoder, F func(r io.Reader) D](f F) func(r io.Reader) Decoder {
+func WrapDecoder[D Decoder, F func(r io.Reader) D](f F) NewDecoderFunc {
 	return func(r io.Reader) Decoder {
 		return f(r)
 	}
 }
 
-func WrapEncoder[E Encoder, F func(w io.Writer) E](f F) func(w io.Writer) Encoder {
+func WrapEncoder[E Encoder, F func(w io.Writer) E](f F) NewEncoderFunc {
 	return func(w io.Writer) Encoder {
 		return f(w)
 	}

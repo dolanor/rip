@@ -12,38 +12,38 @@ import (
 // RequestResponseFunc is a function that takes a ctx and a request, and it can return a response or an err.
 type RequestResponseFunc[Request, Response any] func(ctx context.Context, request Request) (response Response, err error)
 
-// Creater creates a resource that can be identified.
-type Creater[Rsc IdentifiableResource] interface {
+// ResourceCreater creates a resource that can be identified.
+type ResourceCreater[Rsc IdentifiableResource] interface {
 	Create(ctx context.Context, res Rsc) (Rsc, error)
 }
 
-// Getter gets a resource with its id.
-type Getter[Rsc IdentifiableResource] interface {
+// ResourceGetter gets a resource with its id.
+type ResourceGetter[Rsc IdentifiableResource] interface {
 	Get(ctx context.Context, id IdentifiableResource) (Rsc, error)
 }
 
-// Updater updates an identifiable resource.
-type Updater[Rsc IdentifiableResource] interface {
+// ResourceUpdater updates an identifiable resource.
+type ResourceUpdater[Rsc IdentifiableResource] interface {
 	Update(ctx context.Context, res Rsc) error
 }
 
-// Deleter deletes a resource with its id.
-type Deleter[Rsc IdentifiableResource] interface {
+// ResourceDeleter deletes a resource with its id.
+type ResourceDeleter[Rsc IdentifiableResource] interface {
 	Delete(ctx context.Context, id IdentifiableResource) error
 }
 
-// Lister lists a group of resources.
-type Lister[Rsc any] interface {
+// ResourceLister lists a group of resources.
+type ResourceLister[Rsc any] interface {
 	ListAll(ctx context.Context) ([]Rsc, error)
 }
 
 // ResourceProvider provides identifiable resources.
 type ResourceProvider[Rsc IdentifiableResource] interface {
-	Creater[Rsc]
-	Getter[Rsc]
-	Updater[Rsc]
-	Deleter[Rsc]
-	Lister[Rsc]
+	ResourceCreater[Rsc]
+	ResourceGetter[Rsc]
+	ResourceUpdater[Rsc]
+	ResourceDeleter[Rsc]
+	ResourceLister[Rsc]
 }
 
 // HandleResource associates an urlPath with a resource provider, and handles all HTTP requests in a RESTful way.
