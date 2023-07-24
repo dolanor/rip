@@ -6,6 +6,8 @@ import (
 	"errors"
 	"io"
 	"net/http"
+
+	"github.com/dolanor/gene/maps"
 )
 
 var ErrNoEncoderAvailable = errors.New("codec not available")
@@ -27,6 +29,11 @@ var AvailableEncodings = []string{
 }
 
 var availableCodecs = map[string]Codec{}
+
+func AvailableCodecs() map[string]Codec {
+	codecs := maps.Clone(availableCodecs)
+	return codecs
+}
 
 func RegisterCodec(mime string, codec Codec) {
 	availableCodecs[mime] = codec

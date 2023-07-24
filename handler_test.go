@@ -3,6 +3,7 @@ package rip
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"github.com/dolanor/rip/encoding"
+	"github.com/vmihailenco/msgpack/v5"
+	"gopkg.in/yaml.v3"
 )
 
 func TestHandleResourceWithPath(t *testing.T) {
@@ -25,7 +28,12 @@ func TestHandleResourceWithPath(t *testing.T) {
 	c := s.Client()
 
 	// FIXME: delete that copy when the html implem is done
-	availableCodecs := map[string]encoding.Codec{}
+	encoding.RegisterCodec("application/json", encoding.WrapCodec(json.NewEncoder, json.NewDecoder))
+	encoding.RegisterCodec("application/yaml", encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder))
+	encoding.RegisterCodec("application/msgpack", encoding.WrapCodec(msgpack.NewEncoder, msgpack.NewDecoder))
+	encoding.RegisterCodec("text/xml", encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder))
+
+	availableCodecs := encoding.AvailableCodecs()
 	for k, v := range availableCodecs {
 		if k == "text/html" || k == "application/x-www-form-urlencoded" {
 			continue
@@ -77,7 +85,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				defer resp.Body.Close()
 
 				if resp.StatusCode != http.StatusOK {
-					t.Fatalf("get status code is not 200: body: %v: %s", err, string(b.String()))
+					t.Fatalf("get status code is not 200: %d. body: %v: %s", resp.StatusCode, err, string(b.String()))
 				}
 
 				var uGet user
@@ -103,7 +111,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				panicErr(t, err)
 				defer resp.Body.Close()
 				if resp.StatusCode != http.StatusOK {
-					t.Fatal("updated status code is not 200")
+					t.Fatal("updated status code is not 200:", resp.StatusCode)
 				}
 
 				err = codec.NewDecoder(resp.Body).Decode(&uUpdated)
@@ -123,7 +131,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				panicErr(t, err)
 				defer resp.Body.Close()
 				if resp.StatusCode != http.StatusOK {
-					t.Fatal("get status code is not 200")
+					t.Fatal("get status code is not 200:", resp.StatusCode)
 				}
 
 				var uGet user
@@ -148,7 +156,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				panicErr(t, err)
 				defer respCreate.Body.Close()
 				if respCreate.StatusCode != http.StatusCreated {
-					t.Fatal("post status code is not 201")
+					t.Fatal("post status code is not 201:", respCreate.StatusCode)
 				}
 
 				var uCreated user
@@ -168,7 +176,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				panicErr(t, err)
 				defer resp.Body.Close()
 				if resp.StatusCode != http.StatusOK {
-					t.Fatal("get status code is not 200")
+					t.Fatal("get status code is not 200:", resp.StatusCode)
 				}
 
 				var users []user
@@ -204,8 +212,8 @@ func TestHandleResourceWithPath(t *testing.T) {
 				resp, err := c.Do(req)
 				panicErr(t, err)
 				defer resp.Body.Close()
-				if resp.StatusCode != http.StatusNoContent {
-					t.Fatal("delete status is not 204")
+				if resp.StatusCode != http.StatusOK {
+					t.Fatal("delete status is not 200:", resp.StatusCode)
 				}
 			})
 
@@ -218,7 +226,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				panicErr(t, err)
 				defer resp.Body.Close()
 				if resp.StatusCode != http.StatusNotFound {
-					t.Fatal("get status code after delete is not 404")
+					t.Fatal("get status code after delete is not 404:", resp.StatusCode)
 				}
 			})
 
@@ -231,7 +239,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				panicErr(t, err)
 				defer resp.Body.Close()
 				if resp.StatusCode != http.StatusOK {
-					t.Fatal("get status code is not 200")
+					t.Fatal("get status code is not 200:", resp.StatusCode)
 				}
 
 				var users []user
@@ -267,8 +275,8 @@ func TestHandleResourceWithPath(t *testing.T) {
 				resp, err := c.Do(req)
 				panicErr(t, err)
 				defer resp.Body.Close()
-				if resp.StatusCode != http.StatusNoContent {
-					t.Fatal("delete status is not 204")
+				if resp.StatusCode != http.StatusOK {
+					t.Fatal("delete status is not 200:", resp.StatusCode)
 				}
 			})
 		})
@@ -284,6 +292,8 @@ func TestMiddleware(t *testing.T) {
 			f(w, r)
 		}
 	}
+	encoding.RegisterCodec("application/json", encoding.WrapCodec(json.NewEncoder, json.NewDecoder))
+
 	mux := http.NewServeMux()
 	mux.HandleFunc(HandleResource[*user]("/users/", up, middleware))
 	s := httptest.NewServer(mux)
@@ -299,7 +309,7 @@ func TestMiddleware(t *testing.T) {
 		defer respCreate.Body.Close()
 
 		if respCreate.StatusCode != http.StatusCreated {
-			t.Fatal("post status code is not 201")
+			t.Fatal("post status code is not 201:", respCreate.StatusCode)
 		}
 
 		var uCreated user
