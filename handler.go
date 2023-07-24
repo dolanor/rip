@@ -186,7 +186,7 @@ func deletePathID(urlPath, method string, f DeleteFn[IdentifiableResource]) http
 			}
 		}
 
-		w.WriteHeader(http.StatusNoContent)
+		http.Redirect(w, r, urlPath, http.StatusSeeOther)
 	}
 }
 

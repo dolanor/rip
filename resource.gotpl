@@ -30,6 +30,7 @@
 				{{- end }}
 
 					<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?{{ editModeQueryParam }}" class="btn btn-primary">Click to edit</button>
+					<button hx-delete="/{{ $name | toLower | toPlural}}/{{ .ID }}" hx-confirm="Are you sure you want to delete it?" class="btn btn-primary">&#128465;</button>
 				</div>
 			</p>
 		{{ end }}
