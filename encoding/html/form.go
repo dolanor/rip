@@ -1,4 +1,4 @@
-package rip
+package html
 
 import (
 	_ "embed"
@@ -9,43 +9,43 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/ajg/form"
+	"github.com/dolanor/rip/encoding"
+)
+
+func init() {
+	encoding.RegisterCodec("application/x-www-form-urlencoded", encoding.Codec{NewEncoder: encoding.WrapEncoder(NewFormEncoder), NewDecoder: encoding.WrapDecoder(form.NewDecoder)})
+}
+
+// editMode is a duplicate of rip.EditMode that allows to break a dependency cycle
+type editMode bool
+
+const (
+	editOff editMode = false
+	editOn  editMode = true
 )
 
 const editModeQueryParam = "mode=edit"
 
-type EditMode bool
-
-const (
-	EditOff EditMode = false
-	EditOn  EditMode = true
-)
-
 //go:embed resource_form.gotpl
 var resourceFormTmpl string
 
-type htmlFormEncoder struct {
+type FormEncoder struct {
 	w io.Writer
 }
 
-func newHTMLFormEncoder(w io.Writer) *htmlFormEncoder {
-	return &htmlFormEncoder{
+func NewFormEncoder(w io.Writer) *FormEncoder {
+	return &FormEncoder{
 		w: w,
 	}
 }
 
-func (e htmlFormEncoder) Encode(v interface{}) error {
-	return htmlEncode(e.w, EditOn, v)
+func (e FormEncoder) Encode(v interface{}) error {
+	return htmlEncode(e.w, editOn, v)
 }
 
-type htmlEncoder struct {
-	w io.Writer
-}
-
-func (e htmlEncoder) Encode(v interface{}) error {
-	return htmlEncode(e.w, EditOff, v)
-}
-
-func htmlEncode(w io.Writer, edit EditMode, v interface{}) error {
+func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 	s := reflect.ValueOf(v)
 	if s.Kind() == reflect.Pointer {
 		s = s.Elem()

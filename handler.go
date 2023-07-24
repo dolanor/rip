@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/dolanor/rip/encoding"
 )
 
 // RequestResponseFunc is a function that takes a ctx and a request, and it can return a response or an err.
@@ -71,7 +73,7 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create cre
 				return
 			}
 
-			if urlPath == r.URL.Path && editMode == EditOff {
+			if urlPath == r.URL.Path && editMode == encoding.EditOff {
 				handleListAll(urlPath, r.Method, list)(w, r)
 				return
 			}
@@ -115,7 +117,7 @@ func checkPathID(requestPath, prefixPath string, id string) error {
 // decode use the content type to decode the data from r into v.
 func decode[T any](r io.Reader, contentType string) (T, error) {
 	var t T
-	err := contentTypeDecoder(r, contentType).Decode(&t)
+	err := encoding.ContentTypeDecoder(r, contentType).Decode(&t)
 	return t, err
 }
 
@@ -146,7 +148,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f updateFunc
 			return
 		}
 
-		err = acceptEncoder(w, accept, EditOff).Encode(res)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(res)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -209,11 +211,11 @@ func (i stringID) IDString() string {
 	return string(i)
 }
 
-func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string) (id string, accept string, editMode EditMode, err error) {
+func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string) (id string, accept string, editMode encoding.EditMode, err error) {
 	vals := r.URL.Query()
-	editMode = EditOff
+	editMode = encoding.EditOff
 	if vals.Get("mode") == "edit" {
-		editMode = EditOn
+		editMode = encoding.EditOn
 	}
 
 	cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
@@ -245,7 +247,7 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f getFunc[Ident
 			return
 		}
 
-		err = acceptEncoder(w, accept, editMode).Encode(res)
+		err = encoding.AcceptEncoder(w, accept, editMode).Encode(res)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -267,7 +269,7 @@ func handleListAll[Rsc any](urlPath, method string, f listFunc[Rsc]) http.Handle
 			return
 		}
 
-		err = acceptEncoder(w, accept, EditOff).Encode(rscs)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(rscs)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -282,7 +284,7 @@ func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) ht
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header, "Content-Type", AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header, "Content-Type", encoding.AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -310,7 +312,7 @@ func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) ht
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header, "Accept", AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -322,7 +324,7 @@ func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) ht
 		}
 		w.WriteHeader(http.StatusCreated)
 
-		err = acceptEncoder(w, accept, EditOff).Encode(res)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -338,7 +340,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header, "Content-Type", AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header, "Content-Type", encoding.AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -361,12 +363,12 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header, "Accept", AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableEncodings)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
 		}
-		err = acceptEncoder(w, accept, EditOff).Encode(res)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(res)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -375,7 +377,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 }
 
 func badMethodHandler(w http.ResponseWriter, r *http.Request) {
-	accept, err := bestHeaderValue(r.Header, "Accept", AvailableEncodings)
+	accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableEncodings)
 	if err != nil {
 		writeError(w, accept, fmt.Errorf("bad accept header format: %w", err))
 		return

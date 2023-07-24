@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/dolanor/rip/encoding"
 )
 
 type ErrorCode int
@@ -47,7 +49,7 @@ func writeError(w http.ResponseWriter, accept string, err error) {
 	}
 
 	w.WriteHeader(e.Status)
-	err = acceptEncoder(w, accept, EditOff).Encode(e)
+	err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(e)
 	// We can't do anything, we need to make the HTTP server intercept the panic
 	if err != nil {
 		panic(err)

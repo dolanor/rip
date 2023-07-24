@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dolanor/rip"
-	"github.com/dolanor/rip/examples/srv-example/memuser"
 	"github.com/gorilla/handlers"
+
+	"github.com/dolanor/rip"
+	_ "github.com/dolanor/rip/encoding/html"
+	"github.com/dolanor/rip/examples/srv-example/memuser"
 )
 
 const (

@@ -1,4 +1,4 @@
-package rip_test
+package rip
 
 import (
 	"bytes"
@@ -10,23 +10,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dolanor/rip"
+	"github.com/dolanor/rip/encoding"
 )
 
 func TestHandleResourceWithPath(t *testing.T) {
-	up := NewUserProvider()
+	up := newUserProvider()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(rip.HandleResource("/users/", up))
+	mux.HandleFunc(HandleResource("/users/", up))
 	s := httptest.NewServer(mux)
 
-	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
+	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
 
 	c := s.Client()
 
 	// FIXME: delete that copy when the html implem is done
-	availableCodecs := map[string]rip.Codec{}
-	for k, v := range rip.AvailableCodecs {
+	availableCodecs := map[string]encoding.Codec{}
+	for k, v := range availableCodecs {
 		if k == "text/html" || k == "application/x-www-form-urlencoded" {
 			continue
 		}
@@ -56,7 +56,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				_, err = buf.ReadFrom(resp.Body)
 				panicErr(t, err)
 
-				var uCreated User
+				var uCreated user
 				err = codec.NewDecoder(&buf).Decode(&uCreated)
 
 				panicErr(t, err)
@@ -80,7 +80,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 					t.Fatalf("get status code is not 200: body: %v: %s", err, string(b.String()))
 				}
 
-				var uGet User
+				var uGet user
 				err = codec.NewDecoder(resp.Body).Decode(&uGet)
 				panicErr(t, err)
 				if uGet != u && !uGet.BirthDate.Equal(u.BirthDate) {
@@ -126,7 +126,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 					t.Fatal("get status code is not 200")
 				}
 
-				var uGet User
+				var uGet user
 				err = codec.NewDecoder(resp.Body).Decode(&uGet)
 				panicErr(t, err)
 				if uGet != uUpdated && !uGet.BirthDate.Equal(uUpdated.BirthDate) {
@@ -135,7 +135,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 			})
 
 			t.Run("create other user", func(t *testing.T) {
-				u := User{Name: "Joe", BirthDate: time.Date(2008, time.November, 1, 23, 0, 0, 0, time.UTC)}
+				u := user{Name: "Joe", BirthDate: time.Date(2008, time.November, 1, 23, 0, 0, 0, time.UTC)}
 				err := codec.NewEncoder(&b).Encode(u)
 				panicErr(t, err)
 
@@ -151,7 +151,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 					t.Fatal("post status code is not 201")
 				}
 
-				var uCreated User
+				var uCreated user
 				err = codec.NewDecoder(respCreate.Body).Decode(&uCreated)
 				panicErr(t, err)
 				if uCreated != u && !uCreated.BirthDate.Equal(u.BirthDate) {
@@ -171,7 +171,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 					t.Fatal("get status code is not 200")
 				}
 
-				var users []User
+				var users []user
 				dec := codec.NewDecoder(resp.Body)
 				switch name {
 				case "text/xml":
@@ -179,7 +179,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 					// it just streams more values.
 					// FIXME make XML create a top array value
 					for {
-						var user User
+						var user user
 						err = dec.Decode(&user)
 						if err == io.EOF {
 							break
@@ -234,7 +234,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 					t.Fatal("get status code is not 200")
 				}
 
-				var users []User
+				var users []user
 				dec := codec.NewDecoder(resp.Body)
 				switch name {
 				case "text/xml":
@@ -242,7 +242,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 					// it just streams more values.
 					// FIXME make XML create a top array value
 					for {
-						var user User
+						var user user
 						err = dec.Decode(&user)
 						if err == io.EOF {
 							break
@@ -276,7 +276,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
-	up := NewUserProvider()
+	up := newUserProvider()
 	var callNum int
 	middleware := func(f http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -285,10 +285,10 @@ func TestMiddleware(t *testing.T) {
 		}
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc(rip.HandleResource[*User]("/users/", up, middleware))
+	mux.HandleFunc(HandleResource[*user]("/users/", up, middleware))
 	s := httptest.NewServer(mux)
 
-	u := User{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
+	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
 	b, err := json.Marshal(u)
 	panicErr(t, err)
 
@@ -302,7 +302,7 @@ func TestMiddleware(t *testing.T) {
 			t.Fatal("post status code is not 201")
 		}
 
-		var uCreated User
+		var uCreated user
 		err = json.NewDecoder(respCreate.Body).Decode(&uCreated)
 		panicErr(t, err)
 		if uCreated != u {

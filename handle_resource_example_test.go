@@ -1,16 +1,14 @@
-package rip_test
+package rip
 
 import (
 	"context"
 	"net/http"
 	"time"
-
-	"github.com/dolanor/rip"
 )
 
 func Example() {
-	up := NewUserProvider()
-	http.HandleFunc(rip.HandleResource("/users/", up))
+	up := newUserProvider()
+	http.HandleFunc(HandleResource("/users/", up))
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
@@ -18,66 +16,66 @@ func Example() {
 	}
 }
 
-type User struct {
+type user struct {
 	Name      string    `json:"name" xml:"name"`
 	BirthDate time.Time `json:"birth_date" xml:"birth_date"`
 }
 
-func (u User) IDString() string {
+func (u user) IDString() string {
 	return u.Name
 }
 
-func (u *User) IDFromString(s string) error {
+func (u *user) IDFromString(s string) error {
 	u.Name = s
 
 	return nil
 }
 
 type UserProvider struct {
-	mem map[string]User
+	mem map[string]user
 }
 
-func NewUserProvider() *UserProvider {
+func newUserProvider() *UserProvider {
 	return &UserProvider{
-		mem: map[string]User{},
+		mem: map[string]user{},
 	}
 }
 
-func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
+func (up *UserProvider) Create(ctx context.Context, u *user) (*user, error) {
 	up.mem[u.Name] = *u
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, ider rip.IdentifiableResource) (*User, error) {
+func (up UserProvider) Get(ctx context.Context, ider IdentifiableResource) (*user, error) {
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
-		return &User{}, rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
+		return &user{}, Error{Code: ErrorCodeNotFound, Message: "user not found"}
 	}
 	return &u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, ider rip.IdentifiableResource) error {
+func (up *UserProvider) Delete(ctx context.Context, ider IdentifiableResource) error {
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
-		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
+		return Error{Code: ErrorCodeNotFound, Message: "user not found"}
 	}
 
 	delete(up.mem, ider.IDString())
 	return nil
 }
 
-func (up *UserProvider) Update(ctx context.Context, u *User) error {
+func (up *UserProvider) Update(ctx context.Context, u *user) error {
 	_, ok := up.mem[u.Name]
 	if !ok {
-		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
+		return Error{Code: ErrorCodeNotFound, Message: "user not found"}
 	}
 	up.mem[u.Name] = *u
 
 	return nil
 }
 
-func (up *UserProvider) ListAll(ctx context.Context) ([]*User, error) {
-	var users []*User
+func (up *UserProvider) ListAll(ctx context.Context) ([]*user, error) {
+	var users []*user
 	for _, u := range up.mem {
 		// we copy to avoid referring the same pointer that would get updated
 		u := u
