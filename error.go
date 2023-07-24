@@ -1,6 +1,7 @@
 package rip
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -47,9 +48,19 @@ func writeError(w http.ResponseWriter, accept string, err error) {
 	if e.Code == ErrorCodeNotFound || errors.As(err, &nfe) {
 		e.Status = http.StatusNotFound
 	}
+	if errors.Is(err, encoding.ErrNoEncoderAvailable) {
+		e.Status = http.StatusNotAcceptable
+	}
+
+	encoder := encoding.AcceptEncoder(w, accept, encoding.EditOff)
+	if e.Status == http.StatusNotAcceptable {
+		// if we have encoding problems, we will use json as default
+		// to serialize the error to user
+		encoder = json.NewEncoder(w)
+	}
 
 	w.WriteHeader(e.Status)
-	err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(e)
+	err = encoder.Encode(e)
 	// We can't do anything, we need to make the HTTP server intercept the panic
 	if err != nil {
 		panic(err)

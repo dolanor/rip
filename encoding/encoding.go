@@ -3,12 +3,12 @@ package encoding
 import (
 	_ "embed"
 	"encoding/json"
-	"encoding/xml"
+	"errors"
 	"io"
-
-	"github.com/vmihailenco/msgpack/v5"
-	"gopkg.in/yaml.v3"
+	"net/http"
 )
+
+var ErrNoEncoderAvailable = errors.New("codec not available")
 
 type EditMode bool
 
@@ -26,12 +26,7 @@ var AvailableEncodings = []string{
 	"application/msgpack",
 }
 
-var availableCodecs = map[string]Codec{
-	"application/json":    {NewEncoder: WrapEncoder(json.NewEncoder), NewDecoder: WrapDecoder(json.NewDecoder)},
-	"text/xml":            {NewEncoder: WrapEncoder(xml.NewEncoder), NewDecoder: WrapDecoder(xml.NewDecoder)},
-	"application/yaml":    {NewEncoder: WrapEncoder(yaml.NewEncoder), NewDecoder: WrapDecoder(yaml.NewDecoder)},
-	"application/msgpack": {NewEncoder: WrapEncoder(msgpack.NewEncoder), NewDecoder: WrapDecoder(msgpack.NewDecoder)},
-}
+var availableCodecs = map[string]Codec{}
 
 func RegisterCodec(mime string, codec Codec) {
 	availableCodecs[mime] = codec
@@ -75,15 +70,34 @@ func WrapEncoder[E Encoder, F func(w io.Writer) E](f F) NewEncoderFunc {
 	}
 }
 
-func AcceptEncoder(w io.Writer, acceptHeader string, edit EditMode) Encoder {
-	encoder, ok := availableCodecs[acceptHeader]
-	if !ok {
-		return json.NewEncoder(w)
+func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.Reader) D](encoderFunc EFunc, decoderFunc DFunc) Codec {
+	return Codec{
+		NewEncoder: func(w io.Writer) Encoder { return encoderFunc(w) },
+		NewDecoder: func(r io.Reader) Decoder { return decoderFunc(r) },
 	}
+}
 
+func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode) Encoder {
+	// TODO: add some hook to be able to tune this from the codec package
 	if acceptHeader == "text/html" && edit {
 		return availableCodecs["application/x-www-form-urlencoded"].NewEncoder(w)
 	}
 
+	encoder, ok := availableCodecs[acceptHeader]
+	if !ok {
+
+		encoder, ok := availableCodecs["default"]
+		if !ok {
+			return &noEncoder{}
+		}
+		return encoder.NewEncoder(w)
+	}
+
 	return encoder.NewEncoder(w)
+}
+
+type noEncoder struct{}
+
+func (e *noEncoder) Encode(v interface{}) error {
+	return ErrNoEncoderAvailable
 }

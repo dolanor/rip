@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ajg/form"
+
 	"github.com/dolanor/rip/encoding"
 )
 
