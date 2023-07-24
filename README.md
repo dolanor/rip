@@ -1,4 +1,4 @@
-# RIP ⚰ [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/dolanor/rip)
+# RIP ⚰ [![Go Reference](https://pkg.go.dev/badge/github.com/dolanor/rip.svg)](https://pkg.go.dev/github.com/dolanor/rip)
 
 REST in peace
 
