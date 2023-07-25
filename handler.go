@@ -48,7 +48,13 @@ type ResourceProvider[Rsc IdentifiableResource] interface {
 	ResourceLister[Rsc]
 }
 
-// HandleResource associates an urlPath with a resource provider, and handles all HTTP requests in a RESTful way.
+// HandleResource associates an urlPath with a resource provider, and handles all HTTP requests in a RESTful way:
+//
+//	POST   /resources/    : creates the resource
+//	GET    /resources/:id : get the resource
+//	PUT    /resources/:id : updates the resource (needs to pass the full resource data)
+//	DELETE /resources/:id : deletes the resource
+//	GET    /resources/    : lists the resources
 func HandleResource[Rsc IdentifiableResource, RP ResourceProvider[Rsc]](urlPath string, rp RP, mids ...func(http.HandlerFunc) http.HandlerFunc) (path string, handler http.HandlerFunc) {
 	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll, mids...)
 }
@@ -332,8 +338,8 @@ func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) ht
 	}
 }
 
-// Handle is a generic HTTP handler that takes a
-func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.HandlerFunc {
+// Handle is a generic HTTP handler that maps an HTTP method to a RequestResponseFunc f.
+func Handle[Request, Response any](method string, f RequestResponseFunc[Request, Response]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
@@ -346,7 +352,7 @@ func Handle[Req, Rsp any](method string, f RequestResponseFunc[Req, Rsp]) http.H
 			return
 		}
 
-		req, err := decode[Req](r.Body, contentType)
+		req, err := decode[Request](r.Body, contentType)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

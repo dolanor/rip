@@ -9,13 +9,19 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
+// ErrorCode maps errors from the ResourceProvider implementation to HTTP
+// status code.
 type ErrorCode int
 
 const (
+	// ErrorCodeNotFound happens when a resource with an id is not found.
 	ErrorCodeNotFound ErrorCode = http.StatusNotFound
-	ErrorCodeBadQArg  ErrorCode = 499
+
+	// ErrorCodeBadQArg happens when a user gives a wrongly formatted header `; q=X.Y` argument.
+	ErrorCodeBadQArg ErrorCode = 499
 )
 
+// Error is the error returned by rip.
 type Error struct {
 	Status  int
 	Code    ErrorCode
