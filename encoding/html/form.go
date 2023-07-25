@@ -145,19 +145,26 @@ func expandFields(s reflect.Value) resource {
 	res := resource{
 		Name: name,
 	}
-	for i := 0; i < s.NumField(); i++ {
-		f := s.Field(i)
-		fName := t.Field(i).Name
-		// fType := f.Type()
-		fVal := f.Interface()
-		if f.Type() == reflect.TypeOf(time.Time{}) {
-			fVal = f.Interface().(time.Time).Format(time.RFC3339)
+	switch s.Kind() {
+	case reflect.String:
+		res.Fields = append(res.Fields, field{"value", s.String()})
+	case reflect.Struct:
+		for i := 0; i < s.NumField(); i++ {
+			f := s.Field(i)
+			fName := t.Field(i).Name
+			// fType := f.Type()
+			fVal := f.Interface()
+			if f.Type() == reflect.TypeOf(time.Time{}) {
+				fVal = f.Interface().(time.Time).Format(time.RFC3339)
+			}
+			// log.Printf("fieldX : %s: %+v || %+v", fName, f.Type(), f.Interface())
+			if fName == "ID" {
+				res.ID = fVal
+			}
+			res.Fields = append(res.Fields, field{fName, fVal})
 		}
-		// log.Printf("fieldX : %s: %+v || %+v", fName, f.Type(), f.Interface())
-		if fName == "ID" {
-			res.ID = fVal
-		}
-		res.Fields = append(res.Fields, field{fName, fVal})
+	default:
+		panic("reflect type not handled, yet: " + s.Kind().String())
 	}
 
 	return res

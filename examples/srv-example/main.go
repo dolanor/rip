@@ -29,7 +29,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func Greet(ctx context.Context, name string) (string, error) {
-	return "Hello " + name, nil
+	return "Hello, " + name, nil
 }
 
 func main() {
