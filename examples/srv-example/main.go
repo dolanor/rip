@@ -11,6 +11,7 @@ import (
 
 	"github.com/dolanor/rip"
 	_ "github.com/dolanor/rip/encoding/html"
+	_ "github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/examples/srv-example/memuser"
 )
 
