@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
-
-	"github.com/gorilla/handlers"
 
 	"github.com/dolanor/rip"
 	_ "github.com/dolanor/rip/encoding/html"
@@ -21,16 +19,11 @@ const (
 
 func logHandler(w io.Writer) func(f http.HandlerFunc) http.HandlerFunc {
 	return func(f http.HandlerFunc) http.HandlerFunc {
-		return handlers.LoggingHandler(w, f).ServeHTTP
+		return func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("%s %s %d", r.Method, r.URL.Path, r.ContentLength)
+			f(w, r)
+		}
 	}
-}
-
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World\n"))
-}
-
-func Greet(ctx context.Context, name string) (string, error) {
-	return "Hello, " + name, nil
 }
 
 func main() {
@@ -41,8 +34,6 @@ func main() {
 
 	up := memuser.NewUserProvider()
 	http.HandleFunc(rip.HandleResource("/users/", up, logHandler(os.Stdout)))
-	http.HandleFunc("/greet", rip.Handle(http.MethodPost, Greet))
-	http.HandleFunc("/", handleRoot)
 
 	fmt.Println("listening on " + hostPort)
 	err := http.ListenAndServe(hostPort, nil)
