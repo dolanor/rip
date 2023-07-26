@@ -17,6 +17,11 @@ import (
 )
 
 func TestHandleResourceWithPath(t *testing.T) {
+	encoding.RegisterCodec("application/json", encoding.WrapCodec(json.NewEncoder, json.NewDecoder))
+	encoding.RegisterCodec("application/yaml", encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder))
+	encoding.RegisterCodec("application/msgpack", encoding.WrapCodec(msgpack.NewEncoder, msgpack.NewDecoder))
+	encoding.RegisterCodec("text/xml", encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder))
+
 	up := newUserProvider()
 
 	mux := http.NewServeMux()
@@ -27,19 +32,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 
 	c := s.Client()
 
-	// FIXME: delete that copy when the html implem is done
-	encoding.RegisterCodec("application/json", encoding.WrapCodec(json.NewEncoder, json.NewDecoder))
-	encoding.RegisterCodec("application/yaml", encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder))
-	encoding.RegisterCodec("application/msgpack", encoding.WrapCodec(msgpack.NewEncoder, msgpack.NewDecoder))
-	encoding.RegisterCodec("text/xml", encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder))
-
 	availableCodecs := encoding.AvailableCodecs()
-	for k, v := range availableCodecs {
-		if k == "text/html" || k == "application/x-www-form-urlencoded" {
-			continue
-		}
-		availableCodecs[k] = v
-	}
 
 	for name, codec := range availableCodecs {
 		var b bytes.Buffer

@@ -11,15 +11,15 @@ import (
 func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string) (cleanedPath string, accept, contentType string, err error) {
 	accept, err = bestHeaderValue(header, "Accept", encoding.AvailableEncodings)
 	if err != nil {
-		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad accept header format: %v", err)}
+		return "", "", "", ripError{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad accept header format: %v", err)}
 	}
 	if reqMethod != handlerMethod {
-		return "", "", "", Error{Status: http.StatusMethodNotAllowed, Message: "bad method"}
+		return "", "", "", ripError{Status: http.StatusMethodNotAllowed, Message: "bad method"}
 	}
 
 	contentType, err = bestHeaderValue(header, "Content-Type", encoding.AvailableEncodings)
 	if err != nil {
-		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
+		return "", "", "", ripError{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
 	}
 
 	// TODO check for the suffix, if .xml, .json, .html, etc

@@ -21,21 +21,29 @@ const (
 	ErrorCodeBadQArg ErrorCode = 499
 )
 
-// Error is the error returned by rip.
-type Error struct {
+var (
+	ErrNotFound = ripError{
+		Code:    ErrorCodeNotFound,
+		Status:  http.StatusNotFound,
+		Message: "resource not found",
+	}
+)
+
+// ripError is the error returned by rip.
+type ripError struct {
 	Status  int
 	Code    ErrorCode
 	Message string
 }
 
-func (e Error) Error() string {
+func (e ripError) Error() string {
 	return fmt.Sprintf("%d - %s", e.Code, e.Message)
 }
 
 func writeError(w http.ResponseWriter, accept string, err error) {
-	var e Error
+	var e ripError
 	if !errors.As(err, &e) {
-		e = Error{
+		e = ripError{
 			Message: err.Error(),
 		}
 	}

@@ -114,7 +114,7 @@ func checkPathID(requestPath, prefixPath string, id string) error {
 	rID := resID(requestPath, prefixPath, id)
 
 	if rID.IDString() != id {
-		return Error{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", rID.IDString(), id)}
+		return ripError{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", rID.IDString(), id)}
 	}
 
 	return nil
@@ -181,7 +181,7 @@ func deletePathID(urlPath, method string, f deleteFunc[IdentifiableResource]) ht
 		// we don't need the returning resource, it's mostly a no-op
 		err = f(r.Context(), &rID)
 		if err != nil {
-			var e Error
+			var e ripError
 			if errors.As(err, &e) {
 				if e.Code != ErrorCodeNotFound {
 					writeError(w, accept, e)
@@ -389,5 +389,5 @@ func badMethodHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeError(w, accept, Error{Status: http.StatusMethodNotAllowed, Message: "bad method"})
+	writeError(w, accept, ripError{Status: http.StatusMethodNotAllowed, Message: "bad method"})
 }

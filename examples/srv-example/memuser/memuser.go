@@ -63,7 +63,7 @@ func (up UserProvider) Get(ctx context.Context, res rip.IdentifiableResource) (*
 
 	u, ok := up.mem[id]
 	if !ok {
-		return &User{}, rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
+		return &User{}, rip.ErrNotFound
 	}
 	return u, nil
 }
@@ -77,7 +77,7 @@ func (up *UserProvider) Delete(ctx context.Context, res rip.IdentifiableResource
 
 	_, ok := up.mem[id]
 	if !ok {
-		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
+		return rip.ErrNotFound
 	}
 
 	delete(up.mem, id)
@@ -88,7 +88,7 @@ func (up *UserProvider) Update(ctx context.Context, u *User) error {
 	log.Printf("UpdateUser: %+v", u.IDString())
 	_, ok := up.mem[u.ID]
 	if !ok {
-		return rip.Error{Code: rip.ErrorCodeNotFound, Message: "user not found"}
+		return rip.ErrNotFound
 	}
 	up.mem[u.ID] = u
 

@@ -49,7 +49,7 @@ func (up *UserProvider) Create(ctx context.Context, u *user) (*user, error) {
 func (up UserProvider) Get(ctx context.Context, ider IdentifiableResource) (*user, error) {
 	u, ok := up.mem[ider.IDString()]
 	if !ok {
-		return &user{}, Error{Code: ErrorCodeNotFound, Message: "user not found"}
+		return &user{}, ErrNotFound
 	}
 	return &u, nil
 }
@@ -57,7 +57,7 @@ func (up UserProvider) Get(ctx context.Context, ider IdentifiableResource) (*use
 func (up *UserProvider) Delete(ctx context.Context, ider IdentifiableResource) error {
 	_, ok := up.mem[ider.IDString()]
 	if !ok {
-		return Error{Code: ErrorCodeNotFound, Message: "user not found"}
+		return ErrNotFound
 	}
 
 	delete(up.mem, ider.IDString())
@@ -67,7 +67,7 @@ func (up *UserProvider) Delete(ctx context.Context, ider IdentifiableResource) e
 func (up *UserProvider) Update(ctx context.Context, u *user) error {
 	_, ok := up.mem[u.Name]
 	if !ok {
-		return Error{Code: ErrorCodeNotFound, Message: "user not found"}
+		return ErrNotFound
 	}
 	up.mem[u.Name] = *u
 
