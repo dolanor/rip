@@ -1,4 +1,4 @@
-# RIP ⚰ [![Go Reference](https://pkg.go.dev/badge/github.com/dolanor/rip.svg)](https://pkg.go.dev/github.com/dolanor/rip)
+# RIP ⚰ [![Go Reference](https://pkg.go.dev/badge/github.com/dolanor/rip.svg)](https://pkg.go.dev/github.com/dolanor/rip) [![Go Report Card](https://goreportcard.com/badge/github.com/dolanor/rip)](https://goreportcard.com/report/github.com/dolanor/rip)
 
 REST in peace
 
@@ -13,6 +13,9 @@ Let's get the best of both worlds with **GENERICS** 🎆 *everybody screams* �
 The idea would be to use the classic `net/http` package with handlers created from Go types.
 
 ```go
+http.HandleFunc(rip.HandleResource[User]("/users", NewUserProvider())
+
+// in Go 1.21, you can skip the type specification
 http.HandleFunc(rip.HandleResource("/users", NewUserProvider())
 ```
 
@@ -47,6 +50,25 @@ HTML/HTML Forms allows you to edit your resources directly from your web browser
 
 
 \* *Final code may differ from actual shown footage*
+
+## Play with it
+
+```console
+go run github.com/dolanor/rip/examples/srv-example@latest
+// open your browser to http://localhost:8888 and start editing users
+```
+
+## Features
+
+- support for multiple encoding automatically selected with `Accept` and `Content-Type` headers, or resource extension `/resources/1.json`
+  - JSON
+  - YAML
+  - XML
+  - msgpack
+  - HTML (read version)
+  - HTML forms (write version)
+- middlewares
+- automatic generation of HTML forms for live editing of resources
 
 ## TODO
 
