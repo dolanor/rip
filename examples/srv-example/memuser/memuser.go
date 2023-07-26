@@ -11,9 +11,10 @@ import (
 )
 
 type User struct {
-	ID        int       `json:"id" xml:"id"`
-	Name      string    `json:"name" xml:"name"`
-	BirthDate time.Time `json:"birth_date" xml:"birth_date"`
+	ID           int       `json:"id" xml:"id"`
+	BirthDate    time.Time `json:"birth_date" xml:"birth_date"`
+	Name         string    `json:"name" xml:"name"`
+	EmailAddress string    `json:"email_address" xml:"email_address"`
 }
 
 func (u User) IDString() string {
@@ -34,7 +35,7 @@ type UserProvider struct {
 }
 
 func NewUserProvider() *UserProvider {
-	u := User{ID: 1, Name: "Jean"}
+	u := User{ID: 1, Name: "Jean", EmailAddress: "jean@example.com", BirthDate: time.Date(1900, time.November, 15, 0, 0, 0, 0, time.UTC)}
 	return &UserProvider{
 		mem: map[int]*User{
 			u.ID: &u,

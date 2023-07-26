@@ -17,8 +17,9 @@ func Example() {
 }
 
 type user struct {
-	Name      string    `json:"name" xml:"name"`
-	BirthDate time.Time `json:"birth_date" xml:"birth_date"`
+	Name         string    `json:"name" xml:"name"`
+	EmailAddress string    `json:"email_address" xml:"email_address"`
+	BirthDate    time.Time `json:"birth_date" xml:"birth_date"`
 }
 
 func (u user) IDString() string {
