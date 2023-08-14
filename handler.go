@@ -67,7 +67,7 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create cre
 	return urlPath, handler
 }
 
-func resID(requestPath, prefixPath string, id string) stringID {
+func resID(requestPath, prefixPath string) stringID {
 	pathID := strings.TrimPrefix(requestPath, prefixPath)
 
 	var resID stringID
@@ -77,7 +77,7 @@ func resID(requestPath, prefixPath string, id string) stringID {
 }
 
 func checkPathID(requestPath, prefixPath string, id string) error {
-	rID := resID(requestPath, prefixPath, id)
+	rID := resID(requestPath, prefixPath)
 
 	if rID.IDString() != id {
 		return ripError{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", rID.IDString(), id)}
@@ -136,9 +136,7 @@ func deletePathID(urlPath, method string, f deleteFunc[IdentifiableResource]) ht
 			return
 		}
 
-		id := strings.TrimPrefix(cleanedPath, urlPath)
-
-		rID := resID(cleanedPath, urlPath, id)
+		rID := resID(cleanedPath, urlPath)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
 			return
