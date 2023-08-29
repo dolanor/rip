@@ -36,6 +36,7 @@ func main() {
 	http.HandleFunc(rip.HandleResource("/users/", up, logHandler(os.Stdout)))
 
 	fmt.Println("listening on " + hostPort)
+	go browse(hostPort)
 	err := http.ListenAndServe(hostPort, nil)
 	if err != nil {
 		panic(err)

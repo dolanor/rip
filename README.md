@@ -55,7 +55,7 @@ HTML/HTML Forms allows you to edit your resources directly from your web browser
 
 ```console
 go run github.com/dolanor/rip/examples/srv-example@latest
-// open your browser to http://localhost:8888 and start editing users
+// open your browser to http://localhost:8888/users/ and start editing users
 ```
 
 ## Features
