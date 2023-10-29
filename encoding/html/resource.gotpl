@@ -17,6 +17,7 @@
 			</form>
 		</h2>
 		
+		<!-- TODO use fieldset -->
 		{{ range $k, $v := .Resources }}
 			{{ $name := .Name }}
 			<p>
@@ -25,7 +26,11 @@
 					{{ if eq $v.Key "ID" }}
 					<div><label class="label">{{ $v.Key }}</label>: <a href="{{ $v.Value }}">{{ $v.Value }}</a></div>
 					{{ else }}
+						{{ if eq $v.Type "time.Time" }}
+					<div><label class="label">{{ $v.Key }}</label>: <time datetime="{{ $v.Value }}">{{$v.Value}}<time></div>
+						{{ else }}
 					<div><label class="label">{{ $v.Key }}</label>: {{ $v.Value }}</div>
+						{{ end }}
 					{{ end }}
 				{{- end }}
 

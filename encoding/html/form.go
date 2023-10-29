@@ -118,6 +118,7 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 type field struct {
 	Key   string
 	Value any
+	Type  string
 }
 
 type resource struct {
@@ -147,13 +148,19 @@ func expandFields(s reflect.Value) resource {
 	}
 	switch s.Kind() {
 	case reflect.String:
-		res.Fields = append(res.Fields, field{"value", s.String()})
+		res.Fields = append(res.Fields, field{"value", s.String(), "string"})
 	case reflect.Struct:
 		for i := 0; i < s.NumField(); i++ {
 			f := s.Field(i)
 			fName := t.Field(i).Name
 			// fType := f.Type()
 			fVal := f.Interface()
+
+			fTypeStr := ""
+			switch f.Type() {
+			case reflect.TypeOf(time.Time{}):
+				fTypeStr = "time.Time"
+			}
 			if f.Type() == reflect.TypeOf(time.Time{}) {
 				fVal = f.Interface().(time.Time).Format(time.RFC3339)
 			}
@@ -161,7 +168,7 @@ func expandFields(s reflect.Value) resource {
 			if fName == "ID" {
 				res.ID = fVal
 			}
-			res.Fields = append(res.Fields, field{fName, fVal})
+			res.Fields = append(res.Fields, field{fName, fVal, fTypeStr})
 		}
 	default:
 		panic("reflect type not handled, yet: " + s.Kind().String())
