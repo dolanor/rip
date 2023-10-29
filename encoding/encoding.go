@@ -6,9 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
-
-	"github.com/dolanor/gene/maps"
 )
 
 var ErrNoEncoderAvailable = errors.New("codec not available")
