@@ -14,6 +14,10 @@ import (
 // RequestResponseFunc is a function that takes a ctx and a request, and it can return a response or an err.
 type RequestResponseFunc[Request, Response any] func(ctx context.Context, request Request) (response Response, err error)
 
+// Middleware is an HTTP Middleware that you can add to your handler to handle specific actions like
+// logging, authentication, authorization, metrics, ….
+type Middleware func(http.HandlerFunc) http.HandlerFunc
+
 // HandleResource associates an urlPath with a resource provider, and handles all HTTP requests in a RESTful way:
 //
 //	POST   /resources/    : creates the resource
@@ -21,8 +25,11 @@ type RequestResponseFunc[Request, Response any] func(ctx context.Context, reques
 //	PUT    /resources/:id : updates the resource (needs to pass the full resource data)
 //	DELETE /resources/:id : deletes the resource
 //	GET    /resources/    : lists the resources
-func HandleResource[Rsc IdentifiableResource, RP ResourceProvider[Rsc]](urlPath string, rp RP, mids ...func(http.HandlerFunc) http.HandlerFunc) (path string, handler http.HandlerFunc) {
-	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll, mids...)
+func HandleResource[
+	Rsc IdentifiableResource,
+	RP ResourceProvider[Rsc],
+](urlPath string, rp RP, middlewares ...Middleware) (path string, handler http.HandlerFunc) {
+	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll, middlewares...)
 }
 
 type (
@@ -33,7 +40,7 @@ type (
 	listFunc[Rsc any]                         func(ctx context.Context) ([]Rsc, error)
 )
 
-func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create createFunc[Rsc], get getFunc[IdentifiableResource, Rsc], update updateFunc[Rsc], deleteFn deleteFunc[IdentifiableResource], list listFunc[Rsc], mids ...func(http.HandlerFunc) http.HandlerFunc) (path string, handler http.HandlerFunc) {
+func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create createFunc[Rsc], get getFunc[IdentifiableResource, Rsc], update updateFunc[Rsc], deleteFn deleteFunc[IdentifiableResource], list listFunc[Rsc], mids ...Middleware) (path string, handler http.HandlerFunc) {
 	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
