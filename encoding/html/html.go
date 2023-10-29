@@ -9,7 +9,12 @@ import (
 )
 
 func init() {
-	encoding.RegisterCodec("text/html", encoding.Codec{NewEncoder: encoding.WrapEncoder(NewEncoder), NewDecoder: encoding.WrapDecoder(NewDecoder)})
+	codec := encoding.Codec{
+		NewEncoder: encoding.WrapEncoder(NewEncoder),
+		NewDecoder: encoding.WrapDecoder(NewDecoder),
+	}
+
+	encoding.RegisterCodec(codec, "text/html")
 }
 
 //go:embed resource.gotpl

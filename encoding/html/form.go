@@ -16,7 +16,12 @@ import (
 )
 
 func init() {
-	encoding.RegisterCodec("application/x-www-form-urlencoded", encoding.Codec{NewEncoder: encoding.WrapEncoder(NewFormEncoder), NewDecoder: encoding.WrapDecoder(form.NewDecoder)})
+	codec := encoding.Codec{
+		NewEncoder: encoding.WrapEncoder(NewFormEncoder),
+		NewDecoder: encoding.WrapDecoder(form.NewDecoder),
+	}
+
+	encoding.RegisterCodec(codec, "application/x-www-form-urlencoded")
 }
 
 // editMode is a duplicate of rip.EditMode that allows to break a dependency cycle

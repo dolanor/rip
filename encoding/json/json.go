@@ -7,6 +7,10 @@ import (
 )
 
 func init() {
+	codec := encoding.Codec{
+		NewEncoder: encoding.WrapEncoder(json.NewEncoder),
+		NewDecoder: encoding.WrapDecoder(json.NewDecoder),
+	}
 
-	encoding.RegisterCodec("application/json", encoding.Codec{NewEncoder: encoding.WrapEncoder(json.NewEncoder), NewDecoder: encoding.WrapDecoder(json.NewDecoder)})
+	encoding.RegisterCodec(codec, "application/json")
 }

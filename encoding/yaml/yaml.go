@@ -7,6 +7,10 @@ import (
 )
 
 func init() {
+	codec := encoding.Codec{
+		NewEncoder: encoding.WrapEncoder(yaml.NewEncoder),
+		NewDecoder: encoding.WrapDecoder(yaml.NewDecoder),
+	}
 
-	encoding.RegisterCodec("application/yaml", encoding.Codec{NewEncoder: encoding.WrapEncoder(yaml.NewEncoder), NewDecoder: encoding.WrapDecoder(yaml.NewDecoder)})
+	encoding.RegisterCodec(codec, "application/yaml")
 }

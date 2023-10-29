@@ -7,6 +7,10 @@ import (
 )
 
 func init() {
+	codec := encoding.Codec{
+		NewEncoder: encoding.WrapEncoder(xml.NewEncoder),
+		NewDecoder: encoding.WrapDecoder(xml.NewDecoder),
+	}
 
-	encoding.RegisterCodec("text/xml", encoding.Codec{NewEncoder: encoding.WrapEncoder(xml.NewEncoder), NewDecoder: encoding.WrapDecoder(xml.NewDecoder)})
+	encoding.RegisterCodec(codec, "text/xml", "application/xml")
 }

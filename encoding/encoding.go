@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -22,6 +23,7 @@ const (
 var AvailableEncodings = []string{
 	"application/json",
 	"text/xml",
+	"application/xml",
 	"application/yaml",
 	"text/html",
 	"application/x-www-form-urlencoded",
@@ -35,8 +37,10 @@ func AvailableCodecs() map[string]Codec {
 	return codecs
 }
 
-func RegisterCodec(mime string, codec Codec) {
-	availableCodecs[mime] = codec
+func RegisterCodec(codec Codec, mimes ...string) {
+	for _, mime := range mimes {
+		availableCodecs[mime] = codec
+	}
 }
 
 type Codec struct {

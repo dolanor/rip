@@ -7,6 +7,10 @@ import (
 )
 
 func init() {
+	codec := encoding.Codec{
+		NewEncoder: encoding.WrapEncoder(msgpack.NewEncoder),
+		NewDecoder: encoding.WrapDecoder(msgpack.NewDecoder),
+	}
 
-	encoding.RegisterCodec("application/msgpack", encoding.Codec{NewEncoder: encoding.WrapEncoder(msgpack.NewEncoder), NewDecoder: encoding.WrapDecoder(msgpack.NewDecoder)})
+	encoding.RegisterCodec(codec, "application/msgpack")
 }
