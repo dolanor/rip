@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"maps"
 	"net/http"
@@ -18,16 +17,6 @@ const (
 	EditOff EditMode = false
 	EditOn  EditMode = true
 )
-
-var AvailableEncodings = []string{
-	"application/json",
-	"text/xml",
-	"application/xml",
-	"application/yaml",
-	"text/html",
-	"application/x-www-form-urlencoded",
-	"application/msgpack",
-}
 
 var availableCodecs = map[string]Codec{}
 
@@ -90,7 +79,11 @@ func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.
 func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode) Encoder {
 	// TODO: add some hook to be able to tune this from the codec package
 	if acceptHeader == "text/html" && edit {
-		return availableCodecs["application/x-www-form-urlencoded"].NewEncoder(w)
+		formCodec, ok := availableCodecs["application/x-www-form-urlencoded"]
+		if !ok {
+			return &noEncoder{}
+		}
+		return formCodec.NewEncoder(w)
 	}
 
 	encoder, ok := availableCodecs[acceptHeader]
