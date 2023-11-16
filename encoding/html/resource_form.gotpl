@@ -1,6 +1,7 @@
 {{ define "resource" }}
 <html>
 	<head>
+		<meta charset="UTF-8">
 		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
 	</head>
 	<body>
