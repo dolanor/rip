@@ -17,10 +17,10 @@ import (
 )
 
 func TestHandleResourceWithPath(t *testing.T) {
-	encoding.RegisterCodec("application/json", encoding.WrapCodec(json.NewEncoder, json.NewDecoder))
-	encoding.RegisterCodec("application/yaml", encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder))
-	encoding.RegisterCodec("application/msgpack", encoding.WrapCodec(msgpack.NewEncoder, msgpack.NewDecoder))
-	encoding.RegisterCodec("text/xml", encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder))
+	encoding.RegisterCodec(encoding.WrapCodec(json.NewEncoder, json.NewDecoder), "application/json")
+	encoding.RegisterCodec(encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder), "application/yaml")
+	encoding.RegisterCodec(encoding.WrapCodec(msgpack.NewEncoder, msgpack.NewDecoder), "application/msgpack")
+	encoding.RegisterCodec(encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder), "text/xml")
 
 	up := newUserProvider()
 
@@ -32,7 +32,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 
 	c := s.Client()
 
-	availableCodecs := encoding.AvailableCodecs()
+	availableCodecs := encoding.AvailableCodecs().Codecs()
 
 	for name, codec := range availableCodecs {
 		var b bytes.Buffer
@@ -285,7 +285,7 @@ func TestMiddleware(t *testing.T) {
 			f(w, r)
 		}
 	}
-	encoding.RegisterCodec("application/json", encoding.WrapCodec(json.NewEncoder, json.NewDecoder))
+	encoding.RegisterCodec(encoding.WrapCodec(json.NewEncoder, json.NewDecoder), "application/json")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(HandleResource[*user]("/users/", up, middleware))

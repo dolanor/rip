@@ -241,7 +241,7 @@ func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) ht
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header, "Content-Type", encoding.AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header, "Content-Type", encoding.AvailableCodecs().OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -269,7 +269,7 @@ func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) ht
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableCodecs().OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -297,7 +297,7 @@ func Handle[Request, Response any](method string, f RequestResponseFunc[Request,
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header, "Content-Type", encoding.AvailableEncodings)
+		contentType, err := bestHeaderValue(r.Header, "Content-Type", encoding.AvailableCodecs().OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -320,7 +320,7 @@ func Handle[Request, Response any](method string, f RequestResponseFunc[Request,
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableEncodings)
+		accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableCodecs().OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -334,7 +334,7 @@ func Handle[Request, Response any](method string, f RequestResponseFunc[Request,
 }
 
 func badMethodHandler(w http.ResponseWriter, r *http.Request) {
-	accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableEncodings)
+	accept, err := bestHeaderValue(r.Header, "Accept", encoding.AvailableCodecs().OrderedMimeTypes)
 	if err != nil {
 		writeError(w, accept, fmt.Errorf("bad accept header format: %w", err))
 		return

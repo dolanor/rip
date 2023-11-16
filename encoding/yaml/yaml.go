@@ -12,5 +12,5 @@ func init() {
 		NewDecoder: encoding.WrapDecoder(yaml.NewDecoder),
 	}
 
-	encoding.RegisterCodec(codec, "application/yaml")
+	encoding.RegisterCodec(codec, "text/vnd.yaml", "text/yaml", "text/-xyaml", "application/x-yaml")
 }

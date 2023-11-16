@@ -12,5 +12,5 @@ func init() {
 		NewDecoder: encoding.WrapDecoder(xml.NewDecoder),
 	}
 
-	encoding.RegisterCodec(codec, "text/xml", "application/xml")
+	encoding.RegisterCodec(codec, "application/xml", "text/xml")
 }

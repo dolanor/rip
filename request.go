@@ -9,7 +9,7 @@ import (
 )
 
 func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string) (cleanedPath string, accept, contentType string, err error) {
-	accept, err = bestHeaderValue(header, "Accept", encoding.AvailableEncodings)
+	accept, err = bestHeaderValue(header, "Accept", encoding.AvailableCodecs().OrderedMimeTypes)
 	if err != nil {
 		return "", "", "", ripError{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad accept header format: %v", err)}
 	}
@@ -17,7 +17,7 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		return "", "", "", ripError{Status: http.StatusMethodNotAllowed, Message: "bad method"}
 	}
 
-	contentType, err = bestHeaderValue(header, "Content-Type", encoding.AvailableEncodings)
+	contentType, err = bestHeaderValue(header, "Content-Type", encoding.AvailableCodecs().OrderedMimeTypes)
 	if err != nil {
 		return "", "", "", ripError{Status: http.StatusUnsupportedMediaType, Message: fmt.Sprintf("bad content type header format: %v", err)}
 	}

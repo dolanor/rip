@@ -20,7 +20,7 @@ func TestChooseHeaderValue(t *testing.T) {
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			got, err := bestHeaderValue(c.in, "a", encoding.AvailableEncodings)
+			got, err := bestHeaderValue(c.in, "a", encoding.AvailableCodecs().OrderedMimeTypes)
 			if err != nil {
 				t.Fatal(err)
 			}
