@@ -54,9 +54,7 @@ func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 
 func (up UserProvider) Get(ctx context.Context, res rip.IdentifiableResource) (*User, error) {
 	log.Printf("GetUser: %+v", res.IDString())
-	if res.IDString() == "new" {
-		return &User{}, nil
-	}
+
 	id, err := strconv.Atoi(res.IDString())
 	if err != nil {
 		return nil, err
