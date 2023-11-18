@@ -7,6 +7,20 @@
 .label {
 	font-weight: bold;
 }
+
+.resource {
+	padding: 2rem 1rem;
+	border: 1rem solid #aaf;
+	border-image: repeating-linear-gradient(
+		45deg,
+		transparent,
+		transparent 5px,
+		#aaf 6px,
+		#aaf 15px,
+		transparent 16px,
+		transparent 20px
+	) 20/1rem;
+}
 		</style>
 	</head>
 	<body>
