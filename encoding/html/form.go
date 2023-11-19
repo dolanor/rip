@@ -141,7 +141,6 @@ type pageData struct {
 
 func expandFields(s reflect.Value) entity {
 	t := s.Type()
-	// log.Println("encode: name:", name)
 	_, name, _ := strings.Cut(t.String(), ".")
 	if s.Kind() == reflect.Pointer {
 		s = s.Elem()
@@ -158,7 +157,6 @@ func expandFields(s reflect.Value) entity {
 		for i := 0; i < s.NumField(); i++ {
 			f := s.Field(i)
 			fName := t.Field(i).Name
-			// fType := f.Type()
 			fVal := f.Interface()
 
 			fTypeStr := ""
@@ -169,7 +167,6 @@ func expandFields(s reflect.Value) entity {
 			if f.Type() == reflect.TypeOf(time.Time{}) {
 				fVal = f.Interface().(time.Time).Format(time.RFC3339)
 			}
-			// log.Printf("fieldX : %s: %+v || %+v", fName, f.Type(), f.Interface())
 			if fName == "ID" {
 				res.ID = fVal
 			}
