@@ -25,14 +25,14 @@ func TestHandleResourceWithPath(t *testing.T) {
 	up := newUserProvider()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(HandleResource("/users/", up))
+	mux.HandleFunc(HandleEntity("/users/", up))
 	s := httptest.NewServer(mux)
 
 	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
 
 	c := s.Client()
 
-	availableCodecs := encoding.AvailableCodecs().Codecs()
+	availableCodecs := encoding.AvailableCodecs().Codecs
 
 	for name, codec := range availableCodecs {
 		var b bytes.Buffer
@@ -288,7 +288,7 @@ func TestMiddleware(t *testing.T) {
 	encoding.RegisterCodec(encoding.WrapCodec(json.NewEncoder, json.NewDecoder), "application/json")
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(HandleResource[*user]("/users/", up, middleware))
+	mux.HandleFunc(HandleEntity[*user]("/users/", up, middleware))
 	s := httptest.NewServer(mux)
 
 	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}

@@ -34,8 +34,8 @@ const (
 
 const editModeQueryParam = "mode=edit"
 
-//go:embed resource_form.gotpl
-var resourceFormTmpl string
+//go:embed entity_form.gotpl
+var entityFormTmpl string
 
 type FormEncoder struct {
 	w io.Writer
@@ -57,29 +57,29 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 		s = s.Elem()
 	}
 
-	var resources []resource
-	var resourceName string
+	var entities []entity
+	var entityName string
 	if s.Kind() == reflect.Slice {
 		for i := 0; i < s.Len(); i++ {
 			s := s.Index(i)
 
 			res := expandFields(s)
-			if resourceName == "" {
-				resourceName = res.Name
+			if entityName == "" {
+				entityName = res.Name
 			}
-			resources = append(resources, res)
+			entities = append(entities, res)
 		}
 	} else {
 		res := expandFields(s)
-		if resourceName == "" {
-			resourceName = res.Name
+		if entityName == "" {
+			entityName = res.Name
 		}
-		resources = append(resources, res)
+		entities = append(entities, res)
 	}
 
 	pd := pageData{
-		ResourceName: resourceName,
-		Resources:    resources,
+		EntityName: entityName,
+		Entities:   entities,
 	}
 
 	rw, ok := w.(http.ResponseWriter)
@@ -88,7 +88,7 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 		rw.Header().Set("Content-Type", "text/html")
 	}
 
-	tpl := template.New("resource").Funcs(template.FuncMap{
+	tpl := template.New("entity").Funcs(template.FuncMap{
 		"toLower": strings.ToLower,
 		// FIXME: use real plural i18n lib
 		"toPlural": func(s string) string {
@@ -102,9 +102,9 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 		},
 	})
 
-	tmplSrc := resourceTmpl
+	tmplSrc := entityTmpl
 	if edit {
-		tmplSrc = resourceFormTmpl
+		tmplSrc = entityFormTmpl
 	}
 
 	tpl, err := tpl.Parse(tmplSrc)
@@ -112,7 +112,7 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 		return err
 	}
 
-	err = tpl.ExecuteTemplate(w, "resource", pd)
+	err = tpl.ExecuteTemplate(w, "entity", pd)
 	if err != nil {
 		return err
 	}
@@ -126,20 +126,20 @@ type field struct {
 	Type  string
 }
 
-type resource struct {
+type entity struct {
 	ID     any
 	Name   string
 	Fields []field
 }
 
 type pageData struct {
-	PagePath     string
-	ResourceName string
+	PagePath   string
+	EntityName string
 
-	Resources []resource
+	Entities []entity
 }
 
-func expandFields(s reflect.Value) resource {
+func expandFields(s reflect.Value) entity {
 	t := s.Type()
 	// log.Println("encode: name:", name)
 	_, name, _ := strings.Cut(t.String(), ".")
@@ -148,7 +148,7 @@ func expandFields(s reflect.Value) resource {
 		t = s.Type()
 	}
 
-	res := resource{
+	res := entity{
 		Name: name,
 	}
 	switch s.Kind() {

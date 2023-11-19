@@ -4,7 +4,7 @@ REST in peace
 
 ## Why?
 
-Creating RESTful API in Go is in a way simple and fun in the first time, but also repetitive and error prone the more resource you handle.  
+Creating RESTful API in Go is in a way simple and fun in the first time, but also repetitive and error prone the more resources you handle.  
 Copy pasting nearly the same code for each resource you want to GET or POST to except for the request and response types is not that cool, and `interface{}` neither.  
 Let's get the best of both worlds with **GENERICS** 🎆 *everybody screams* 😱  
 
@@ -13,29 +13,29 @@ Let's get the best of both worlds with **GENERICS** 🎆 *everybody screams* �
 The idea would be to use the classic `net/http` package with handlers created from Go types.
 
 ```go
-http.HandleFunc(rip.HandleResource[User]("/users", NewUserProvider())
+http.HandleFunc(rip.HandleEntity[User]("/users", NewUserProvider())
 
 // in Go 1.21, you can skip the type specification
-http.HandleFunc(rip.HandleResource("/users", NewUserProvider())
+http.HandleFunc(rip.HandleEntity("/users", NewUserProvider())
 ```
 
-given that `UserProvider` implements the `rip.ResourceProvider` interface
+given that `UserProvider` implements the `rip.EntityProvider` interface
 
 ```go
 // simplified version
-type ResourceProvider[Rsc IdentifiableResource] interface {
-	Create(ctx context.Context, res Rsc) (Rsc, error)
-	Get(ctx context.Context, id IdentifiableResource) (Rsc, error)
-	Update(ctx context.Context, res Rsc) error
-	Delete(ctx context.Context, id IdentifiableResource) error
-	ListAll(ctx context.Context) ([]Rsc, error)
+type EntityProvider[Ent Entity] interface {
+	Create(ctx context.Context, ent Ent) (Ent, error)
+	Get(ctx context.Context, id Entity) (Ent, error)
+	Update(ctx context.Context, ent Ent) error
+	Delete(ctx context.Context, id Entity) error
+	ListAll(ctx context.Context) ([]Ent, error)
 }
 ```
 
-and your resource implements the `IdentifiableResource` interface
+and your resource implements the `Entity` interface
 
 ```go
-type IdentifiableResource interface {
+type Entity interface {
 	IDString() string
 	IDFromString(s string) error
 }
@@ -60,7 +60,7 @@ go run github.com/dolanor/rip/examples/srv-example@latest
 
 ## Features
 
-- support for multiple encoding automatically selected with `Accept` and `Content-Type` headers, or resource extension `/resources/1.json`
+- support for multiple encoding automatically selected with `Accept` and `Content-Type` headers, or resource extension `/entities/1.json`
   - JSON
   - YAML
   - XML

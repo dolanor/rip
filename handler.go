@@ -12,36 +12,40 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
-// RequestResponseFunc is a function that takes a ctx and a request, and it can return a response or an err.
-type RequestResponseFunc[Request, Response any] func(ctx context.Context, request Request) (response Response, err error)
+// InputOutputFunc is a function that takes a ctx and an input, and it can return an output or an err.
+type InputOutputFunc[Input, Output any] func(ctx context.Context, in Input) (out Output, err error)
 
 // Middleware is an HTTP Middleware that you can add to your handler to handle specific actions like
 // logging, authentication, authorization, metrics, ….
 type Middleware func(http.HandlerFunc) http.HandlerFunc
 
-// HandleResource associates an urlPath with a resource provider, and handles all HTTP requests in a RESTful way:
+// HandleEntity associates an urlPath with an entity provider, and handles all HTTP requests in a RESTful way:
 //
-//	POST   /resources/    : creates the resource
-//	GET    /resources/:id : get the resource
-//	PUT    /resources/:id : updates the resource (needs to pass the full resource data)
-//	DELETE /resources/:id : deletes the resource
-//	GET    /resources/    : lists the resources
-func HandleResource[
-	Rsc IdentifiableResource,
-	RP ResourceProvider[Rsc],
-](urlPath string, rp RP, middlewares ...Middleware) (path string, handler http.HandlerFunc) {
-	return handleResourceWithPath(urlPath, rp.Create, rp.Get, rp.Update, rp.Delete, rp.ListAll, middlewares...)
+//	POST   /entities/    : creates the entity
+//	GET    /entities/:id : get the entity
+//	PUT    /entities/:id : updates the entity (needs to pass the full entity data)
+//	DELETE /entities/:id : deletes the entity
+//	GET    /entities/    : lists the entities
+func HandleEntity[
+	Ent Entity,
+	EP EntityProvider[Ent],
+](
+	urlPath string,
+	ep EP,
+	middlewares ...Middleware,
+) (path string, handler http.HandlerFunc) {
+	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.ListAll, middlewares...)
 }
 
 type (
-	createFunc[Rsc any]                       func(ctx context.Context, res Rsc) (Rsc, error)
-	getFunc[ID IdentifiableResource, Rsc any] func(ctx context.Context, id ID) (Rsc, error)
-	updateFunc[Rsc any]                       func(ctx context.Context, res Rsc) error
-	deleteFunc[ID IdentifiableResource]       func(ctx context.Context, id IdentifiableResource) error
-	listFunc[Rsc any]                         func(ctx context.Context) ([]Rsc, error)
+	createFunc[Ent any]         func(ctx context.Context, ent Ent) (Ent, error)
+	getFunc[ID Entity, Ent any] func(ctx context.Context, id ID) (Ent, error)
+	updateFunc[Ent any]         func(ctx context.Context, ent Ent) error
+	deleteFunc[ID Entity]       func(ctx context.Context, id Entity) error
+	listFunc[Ent any]           func(ctx context.Context) ([]Ent, error)
 )
 
-func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create createFunc[Rsc], get getFunc[IdentifiableResource, Rsc], update updateFunc[Rsc], deleteFn deleteFunc[IdentifiableResource], list listFunc[Rsc], mids ...Middleware) (path string, handler http.HandlerFunc) {
+func handleEntityWithPath[Ent Entity](urlPath string, create createFunc[Ent], get getFunc[Entity, Ent], update updateFunc[Ent], deleteFn deleteFunc[Entity], list listFunc[Ent], mids ...Middleware) (path string, handler http.HandlerFunc) {
 	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -88,7 +92,7 @@ func checkPathID(requestPath, prefixPath string, id string) error {
 	rID := resID(requestPath, prefixPath)
 
 	if rID.IDString() != id {
-		return ripError{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in resource (%s)", rID.IDString(), id)}
+		return ripError{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in entity (%s)", rID.IDString(), id)}
 	}
 
 	return nil
@@ -101,7 +105,7 @@ func decode[T any](r io.Reader, contentType string) (T, error) {
 	return t, err
 }
 
-func updatePathID[Rsc IdentifiableResource](urlPath, method string, f updateFunc[Rsc]) http.HandlerFunc {
+func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cleanedPath, accept, contentType, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
@@ -110,7 +114,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f updateFunc
 		}
 
 		// TODO: use the correct encoder (www-urlform?)
-		res, err := decode[Rsc](r.Body, contentType)
+		res, err := decode[Ent](r.Body, contentType)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("bad input format: %w", err))
 			return
@@ -118,7 +122,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f updateFunc
 
 		err = checkPathID(cleanedPath, urlPath, res.IDString())
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
+			writeError(w, accept, fmt.Errorf("incompatible entity id VS path ID: %w", err))
 			return
 		}
 
@@ -136,7 +140,7 @@ func updatePathID[Rsc IdentifiableResource](urlPath, method string, f updateFunc
 	}
 }
 
-func deletePathID(urlPath, method string, f deleteFunc[IdentifiableResource]) http.HandlerFunc {
+func deletePathID(urlPath, method string, f deleteFunc[Entity]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
@@ -146,11 +150,11 @@ func deletePathID(urlPath, method string, f deleteFunc[IdentifiableResource]) ht
 
 		rID := resID(cleanedPath, urlPath)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("incompatible resource id VS path ID: %w", err))
+			writeError(w, accept, fmt.Errorf("incompatible entity id VS path ID: %w", err))
 			return
 		}
 
-		// we don't need the returning resource, it's mostly a no-op
+		// we don't need the returning entity, it's mostly a no-op
 		err = f(r.Context(), &rID)
 		if err != nil {
 			var e ripError
@@ -188,7 +192,7 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 	return id, accept, editMode, nil
 }
 
-func handleGet[Rsc IdentifiableResource](urlPath, method string, f getFunc[IdentifiableResource, Rsc]) http.HandlerFunc {
+func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath)
 		if err != nil {
@@ -213,7 +217,7 @@ func handleGet[Rsc IdentifiableResource](urlPath, method string, f getFunc[Ident
 	}
 }
 
-func handleListAll[Rsc any](urlPath, method string, f listFunc[Rsc]) http.HandlerFunc {
+func handleListAll[Ent any](urlPath, method string, f listFunc[Ent]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path)
 		if err != nil {
@@ -221,13 +225,13 @@ func handleListAll[Rsc any](urlPath, method string, f listFunc[Rsc]) http.Handle
 			return
 		}
 
-		rscs, err := f(r.Context())
+		ents, err := f(r.Context())
 		if err != nil {
 			writeError(w, accept, err)
 			return
 		}
 
-		err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(rscs)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff).Encode(ents)
 		if err != nil {
 			writeError(w, accept, err)
 			return
@@ -235,7 +239,7 @@ func handleListAll[Rsc any](urlPath, method string, f listFunc[Rsc]) http.Handle
 	}
 }
 
-func handleCreate[Rsc IdentifiableResource](method, urlPath string, f createFunc[Rsc]) http.HandlerFunc {
+func handleCreate[Ent Entity](method, urlPath string, f createFunc[Ent]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
@@ -248,15 +252,15 @@ func handleCreate[Rsc IdentifiableResource](method, urlPath string, f createFunc
 			return
 		}
 
-		res, err := decode[Rsc](r.Body, contentType)
+		res, err := decode[Ent](r.Body, contentType)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		var newResource bool
+		var newEntity bool
 		if res.IDString() == "0" {
-			newResource = true
+			newEntity = true
 		}
 
 		res, err = f(r.Context(), res)
@@ -276,7 +280,7 @@ func handleCreate[Rsc IdentifiableResource](method, urlPath string, f createFunc
 			return
 		}
 
-		if newResource {
+		if newEntity {
 			http.Redirect(w, r, path.Join(urlPath, res.IDString()), http.StatusSeeOther)
 			return
 		}
@@ -291,7 +295,7 @@ func handleCreate[Rsc IdentifiableResource](method, urlPath string, f createFunc
 }
 
 // Handle is a generic HTTP handler that maps an HTTP method to a RequestResponseFunc f.
-func Handle[Request, Response any](method string, f RequestResponseFunc[Request, Response]) http.HandlerFunc {
+func Handle[Request, Response any](method string, f InputOutputFunc[Request, Response]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)

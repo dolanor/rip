@@ -25,7 +25,7 @@ var (
 	ErrNotFound = ripError{
 		Code:    ErrorCodeNotFound,
 		Status:  http.StatusNotFound,
-		Message: "resource not found",
+		Message: "entity not found",
 	}
 )
 
@@ -86,7 +86,7 @@ type notFoundError struct {
 }
 
 func (e notFoundError) Error() string {
-	return "resource not found: " + e.Resource
+	return "entity not found: " + e.Resource
 }
 
 type badRequestError struct {

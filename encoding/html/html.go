@@ -17,8 +17,8 @@ func init() {
 	encoding.RegisterCodec(codec, "text/html")
 }
 
-//go:embed resource.gotpl
-var resourceTmpl string
+//go:embed entity.gotpl
+var entityTmpl string
 
 type Decoder struct {
 	r io.Reader

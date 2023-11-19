@@ -1,4 +1,4 @@
-{{ define "resource" }}
+{{ define "entity" }}
 <html>
 	<head>
 		<meta charset="UTF-8">
@@ -8,7 +8,7 @@
 	font-weight: bold;
 }
 
-.resource {
+.entity {
 	padding: 2rem 1rem;
 	border-radius: 20px;
 	background: rgb(21,165,155);
@@ -17,19 +17,19 @@
 		</style>
 	</head>
 	<body>
-		<h2 id="resource-name">
-			<a href="../{{ .ResourceName | toLower | toPlural }}/">{{ .ResourceName | toPlural }}</a>
-			<form method="get" action="/{{ .ResourceName | toLower | toPlural }}/?mode=edit">
+		<h2 id="entity-name">
+			<a href="../{{ .EntityName | toLower | toPlural }}/">{{ .EntityName | toPlural }}</a>
+			<form method="get" action="/{{ .EntityName | toLower | toPlural }}/?mode=edit">
 				<input type="hidden" name="mode" value="edit">
 				<button type="submit">+</button>
 			</form>
 		</h2>
 		
 		<!-- TODO use fieldset -->
-		{{ range $k, $v := .Resources }}
+		{{ range $k, $v := .Entities }}
 			{{ $name := .Name }}
 			<p>
-				<div class="resource" id="resource-{{ .ID }}" hx-target="this" hx-select=".resource" hx-swap="outerHTML">
+				<div class="entity" id="entity-{{ .ID }}" hx-target="this" hx-select=".entity" hx-swap="outerHTML">
 				{{- range $v := .Fields }}
 					{{ if eq $v.Key "ID" }}
 					<div><label class="label">{{ $v.Key }}</label>: <a href="{{ $v.Value }}">{{ $v.Value }}</a></div>

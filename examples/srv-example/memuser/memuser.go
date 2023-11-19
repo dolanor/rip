@@ -52,14 +52,14 @@ func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, res rip.IdentifiableResource) (*User, error) {
-	log.Printf("GetUser: %+v", res.IDString())
+func (up UserProvider) Get(ctx context.Context, ent rip.Entity) (*User, error) {
+	log.Printf("GetUser: %+v", ent.IDString())
 
-	if res.IDString() == rip.NewEntityID {
+	if ent.IDString() == rip.NewEntityID {
 		return &User{}, nil
 	}
 
-	id, err := strconv.Atoi(res.IDString())
+	id, err := strconv.Atoi(ent.IDString())
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +71,9 @@ func (up UserProvider) Get(ctx context.Context, res rip.IdentifiableResource) (*
 	return u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, res rip.IdentifiableResource) error {
-	log.Printf("DeleteUser: %+v", res.IDString())
-	id, err := strconv.Atoi(res.IDString())
+func (up *UserProvider) Delete(ctx context.Context, ent rip.Entity) error {
+	log.Printf("DeleteUser: %+v", ent.IDString())
+	id, err := strconv.Atoi(ent.IDString())
 	if err != nil {
 		return err
 	}

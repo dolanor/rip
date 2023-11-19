@@ -33,7 +33,7 @@ func main() {
 	}
 
 	up := memuser.NewUserProvider()
-	http.HandleFunc(rip.HandleResource("/users/", up, logHandler(os.Stdout)))
+	http.HandleFunc(rip.HandleEntity("/users/", up, logHandler(os.Stdout)))
 
 	fmt.Println("listening on " + hostPort)
 	go browse(hostPort)

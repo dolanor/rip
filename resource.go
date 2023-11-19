@@ -4,42 +4,43 @@ import "context"
 
 const NewEntityID = "rip-new-entity-id"
 
-// ResourceCreater creates a resource that can be identified.
-type ResourceCreater[Rsc IdentifiableResource] interface {
-	Create(ctx context.Context, res Rsc) (Rsc, error)
+// EntityCreater creates a entity that can be identified.
+type EntityCreater[Ent Entity] interface {
+	Create(ctx context.Context, ent Ent) (Ent, error)
 }
 
-// ResourceGetter gets a resource with its id.
-type ResourceGetter[Rsc IdentifiableResource] interface {
-	Get(ctx context.Context, id IdentifiableResource) (Rsc, error)
+// EntityGetter gets a entity with its id.
+type EntityGetter[Ent Entity] interface {
+	Get(ctx context.Context, id Entity) (Ent, error)
 }
 
-// ResourceUpdater updates an identifiable resource.
-type ResourceUpdater[Rsc IdentifiableResource] interface {
-	Update(ctx context.Context, res Rsc) error
+// EntityUpdater updates an identifiable entity.
+type EntityUpdater[Ent Entity] interface {
+	Update(ctx context.Context, ent Ent) error
 }
 
-// ResourceDeleter deletes a resource with its id.
-type ResourceDeleter[Rsc IdentifiableResource] interface {
-	Delete(ctx context.Context, id IdentifiableResource) error
+// EntityDeleter deletes a entity with its id.
+type EntityDeleter[Ent Entity] interface {
+	Delete(ctx context.Context, id Entity) error
 }
 
-// ResourceLister lists a group of resources.
-type ResourceLister[Rsc any] interface {
-	ListAll(ctx context.Context) ([]Rsc, error)
+// EntityLister lists a group of entities.
+type EntityLister[Ent any] interface {
+	ListAll(ctx context.Context) ([]Ent, error)
 }
 
-// ResourceProvider provides identifiable resources.
-type ResourceProvider[Rsc IdentifiableResource] interface {
-	ResourceCreater[Rsc]
-	ResourceGetter[Rsc]
-	ResourceUpdater[Rsc]
-	ResourceDeleter[Rsc]
-	ResourceLister[Rsc]
+// EntityProvider provides identifiable entities.
+type EntityProvider[Ent Entity] interface {
+	EntityCreater[Ent]
+	EntityGetter[Ent]
+	EntityUpdater[Ent]
+	EntityDeleter[Ent]
+	EntityLister[Ent]
 }
 
-// IdentifiableResource is a resource that can be identified by an string.
-type IdentifiableResource interface {
+// Entity is a resource that can be identified by an string.
+// It comes from the concept of entity in Domain Driven Design.
+type Entity interface {
 	// IDString returns an ID in form of a string.
 	IDString() string
 

@@ -8,7 +8,7 @@ import (
 
 func Example() {
 	up := newUserProvider()
-	http.HandleFunc(HandleResource("/users/", up))
+	http.HandleFunc(HandleEntity("/users/", up))
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
@@ -47,21 +47,21 @@ func (up *UserProvider) Create(ctx context.Context, u *user) (*user, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, ider IdentifiableResource) (*user, error) {
-	u, ok := up.mem[ider.IDString()]
+func (up UserProvider) Get(ctx context.Context, entity Entity) (*user, error) {
+	u, ok := up.mem[entity.IDString()]
 	if !ok {
 		return &user{}, ErrNotFound
 	}
 	return &u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, ider IdentifiableResource) error {
-	_, ok := up.mem[ider.IDString()]
+func (up *UserProvider) Delete(ctx context.Context, entity Entity) error {
+	_, ok := up.mem[entity.IDString()]
 	if !ok {
 		return ErrNotFound
 	}
 
-	delete(up.mem, ider.IDString())
+	delete(up.mem, entity.IDString())
 	return nil
 }
 
