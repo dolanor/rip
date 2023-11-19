@@ -100,7 +100,7 @@ func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode) En
 	if acceptHeader == "text/html" && edit {
 		formCodec, ok := availableCodecs.Codecs["application/x-www-form-urlencoded"]
 		if !ok {
-			return &noEncoder{}
+			return &noEncoder{missingEncoder: "application/x-www-form-urlencoded"}
 		}
 		return formCodec.NewEncoder(w)
 	}
@@ -110,7 +110,7 @@ func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode) En
 
 		encoder, ok := availableCodecs.Codecs["default"]
 		if !ok {
-			return &noEncoder{}
+			return &noEncoder{missingEncoder: "default"}
 		}
 		return encoder.NewEncoder(w)
 	}
