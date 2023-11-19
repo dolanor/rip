@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/dolanor/rip/encoding"
@@ -44,7 +45,7 @@ func handleResourceWithPath[Rsc IdentifiableResource](urlPath string, create cre
 	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			handleCreate(r.Method, create)(w, r)
+			handleCreate(r.Method, urlPath, create)(w, r)
 		case http.MethodGet:
 			_, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath)
 			if err != nil {
@@ -234,7 +235,7 @@ func handleListAll[Rsc any](urlPath, method string, f listFunc[Rsc]) http.Handle
 	}
 }
 
-func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) http.HandlerFunc {
+func handleCreate[Rsc IdentifiableResource](method, urlPath string, f createFunc[Rsc]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
@@ -276,7 +277,7 @@ func handleCreate[Rsc IdentifiableResource](method string, f createFunc[Rsc]) ht
 		}
 
 		if newResource {
-			http.Redirect(w, r, "/users/"+res.IDString(), http.StatusSeeOther)
+			http.Redirect(w, r, path.Join(urlPath, res.IDString()), http.StatusSeeOther)
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
