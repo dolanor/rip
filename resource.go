@@ -2,6 +2,8 @@ package rip
 
 import "context"
 
+const NewEntityID = "rip-new-entity-id"
+
 // ResourceCreater creates a resource that can be identified.
 type ResourceCreater[Rsc IdentifiableResource] interface {
 	Create(ctx context.Context, res Rsc) (Rsc, error)
