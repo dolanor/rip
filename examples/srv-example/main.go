@@ -1,29 +1,25 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/dolanor/rip"
 	_ "github.com/dolanor/rip/encoding/html"
 	_ "github.com/dolanor/rip/encoding/json"
-	"github.com/dolanor/rip/examples/srv-example/memuser"
+	_ "github.com/dolanor/rip/encoding/xml"
 )
 
 const (
 	defaultPort = "8888"
 )
 
-func logHandler(w io.Writer) func(f http.HandlerFunc) http.HandlerFunc {
-	return func(f http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("%s %s %d", r.Method, r.URL.Path, r.ContentLength)
-			f(w, r)
-		}
-	}
+func uppercase(ctx context.Context, s string) (string, error) {
+	u := strings.ToUpper(s)
+	return u, nil
 }
 
 func main() {
@@ -32,8 +28,7 @@ func main() {
 		hostPort += defaultPort
 	}
 
-	up := memuser.NewUserProvider()
-	http.HandleFunc(rip.HandleEntity("/users/", up, logHandler(os.Stdout)))
+	http.HandleFunc("/uppercase/", rip.Handle(http.MethodPost, uppercase))
 
 	fmt.Println("listening on " + hostPort)
 	go browse(hostPort)
@@ -42,3 +37,15 @@ func main() {
 		panic(err)
 	}
 }
+
+// up := memuser.NewUserProvider()
+// http.HandleFunc(rip.HandleEntity("/users/", up, logHandler(os.Stdout)))
+
+// func logHandler(w io.Writer) func(f http.HandlerFunc) http.HandlerFunc {
+// 	return func(f http.HandlerFunc) http.HandlerFunc {
+// 		return func(w http.ResponseWriter, r *http.Request) {
+// 			log.Printf("%s %s %d", r.Method, r.URL.Path, r.ContentLength)
+// 			f(w, r)
+// 		}
+// 	}
+// }

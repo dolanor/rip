@@ -295,7 +295,7 @@ func handleCreate[Ent Entity](method, urlPath string, f createFunc[Ent]) http.Ha
 }
 
 // Handle is a generic HTTP handler that maps an HTTP method to a RequestResponseFunc f.
-func Handle[Request, Response any](method string, f InputOutputFunc[Request, Response]) http.HandlerFunc {
+func Handle[Input, Output any](method string, f InputOutputFunc[Input, Output]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
@@ -308,7 +308,7 @@ func Handle[Request, Response any](method string, f InputOutputFunc[Request, Res
 			return
 		}
 
-		req, err := decode[Request](r.Body, contentType)
+		req, err := decode[Input](r.Body, contentType)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

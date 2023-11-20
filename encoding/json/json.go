@@ -1,4 +1,4 @@
-package yaml
+package json
 
 import (
 	"encoding/json"
