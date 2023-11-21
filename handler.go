@@ -12,21 +12,29 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
+// start BackendFunc OMIT
+
 // InputOutputFunc is a function that takes a ctx and an input, and it can return an output or an err.
-type InputOutputFunc[Input, Output any] func(ctx context.Context, in Input) (out Output, err error)
+type InputOutputFunc[
+	Input, Output any,
+] func(ctx context.Context, input Input) (output Output, err error)
+
+//end BackendFunc OMIT
 
 // Middleware is an HTTP Middleware that you can add to your handler to handle specific actions like
 // logging, authentication, authorization, metrics, ….
 type Middleware func(http.HandlerFunc) http.HandlerFunc
 
-// HandleEntity associates an urlPath with an entity provider, and handles all HTTP requests in a RESTful way:
+// start HandleEntities OMIT
+
+// HandleEntities associates an urlPath with an entity provider, and handles all HTTP requests in a RESTful way:
 //
 //	POST   /entities/    : creates the entity
 //	GET    /entities/:id : get the entity
 //	PUT    /entities/:id : updates the entity (needs to pass the full entity data)
 //	DELETE /entities/:id : deletes the entity
 //	GET    /entities/    : lists the entities
-func HandleEntity[
+func HandleEntities[
 	Ent Entity,
 	EP EntityProvider[Ent],
 ](
@@ -36,6 +44,8 @@ func HandleEntity[
 ) (path string, handler http.HandlerFunc) {
 	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.ListAll, middlewares...)
 }
+
+// end HandleEntity OMIT
 
 type (
 	createFunc[Ent any]         func(ctx context.Context, ent Ent) (Ent, error)
@@ -294,8 +304,15 @@ func handleCreate[Ent Entity](method, urlPath string, f createFunc[Ent]) http.Ha
 	}
 }
 
+// start Handle OMIT
+
 // Handle is a generic HTTP handler that maps an HTTP method to a RequestResponseFunc f.
-func Handle[Input, Output any](method string, f InputOutputFunc[Input, Output]) http.HandlerFunc {
+func Handle[
+	Input, Output any,
+](
+	method string, f InputOutputFunc[Input, Output],
+) http.HandlerFunc {
+	// end Handle OMIT
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)

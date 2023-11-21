@@ -8,7 +8,7 @@ import (
 
 func Example() {
 	up := newUserProvider()
-	http.HandleFunc(HandleEntity("/users/", up))
+	http.HandleFunc(HandleEntities("/users/", up))
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
