@@ -29,6 +29,8 @@ type EntityLister[Ent any] interface {
 	ListAll(ctx context.Context) ([]Ent, error)
 }
 
+// start EntityProvider OMIT
+
 // EntityProvider provides identifiable entities.
 type EntityProvider[Ent Entity] interface {
 	EntityCreater[Ent]
@@ -37,6 +39,8 @@ type EntityProvider[Ent Entity] interface {
 	EntityDeleter[Ent]
 	EntityLister[Ent]
 }
+
+// end EntityProvider OMIT
 
 // Entity is a resource that can be identified by an string.
 // It comes from the concept of entity in Domain Driven Design.

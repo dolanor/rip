@@ -32,7 +32,9 @@ func main() {
 	}
 
 	up := memuser.NewUserProvider()
+	// start HandleFuncEntities OMIT
 	http.HandleFunc(rip.HandleEntities("/users/", up, logHandler(os.Stdout)))
+	// end HandleFuncEntities OMIT
 
 	fmt.Println("listening on " + hostPort)
 	go browse(hostPort)

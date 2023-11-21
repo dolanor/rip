@@ -45,7 +45,7 @@ func HandleEntities[
 	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.ListAll, middlewares...)
 }
 
-// end HandleEntity OMIT
+// end HandleEntities OMIT
 
 type (
 	createFunc[Ent any]         func(ctx context.Context, ent Ent) (Ent, error)
