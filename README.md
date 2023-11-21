@@ -13,10 +13,10 @@ Let's get the best of both worlds with **GENERICS** 🎆 *everybody screams* �
 The idea would be to use the classic `net/http` package with handlers created from Go types.
 
 ```go
-http.HandleFunc(rip.HandleEntity[User]("/users", NewUserProvider())
+http.HandleFunc(rip.HandleEntities[User]("/users", NewUserProvider())
 
 // in Go 1.21, you can skip the type specification
-http.HandleFunc(rip.HandleEntity("/users", NewUserProvider())
+http.HandleFunc(rip.HandleEntities("/users", NewUserProvider())
 ```
 
 given that `UserProvider` implements the `rip.EntityProvider` interface
@@ -60,7 +60,7 @@ go run github.com/dolanor/rip/examples/srv-example@latest
 
 ## Features
 
-- support for multiple encoding automatically selected with `Accept` and `Content-Type` headers, or resource extension `/entities/1.json`
+- support for multiple encoding automatically selected with `Accept` and `Content-Type` headers, or entity extension `/entities/1.json`
   - JSON
   - YAML
   - XML
@@ -68,13 +68,18 @@ go run github.com/dolanor/rip/examples/srv-example@latest
   - HTML (read version)
   - HTML forms (write version)
 - middlewares
-- automatic generation of HTML forms for live editing of resources
+- automatic generation of HTML forms for live editing of entities
+
+## Talk
+
+I gave a talk at GoLab 2023.
+The slides are [in my talks repository](https://github.com/dolanor/talks/blob/main/rip/rip.slide)
 
 ## TODO
 
 - [x] middleware support
-- [ ] I'd like to have more composability in the resource provider (some are read-only, some can't list, some are write only…), haven't figured out the right way to design that, yet.
-- [ ] it should work for nested resources
+- [ ] I'd like to have more composability in the entity provider (some are read-only, some can't list, some are write only…), haven't figured out the right way to design that, yet.
+- [ ] it should work for nested entities
 - [ ] improve the error API
 - [ ] support for hypermedia discoverability
 - [x] support for multiple data representation
