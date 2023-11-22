@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package testdata;
+
+option go_package = "github.com/dolanor/rip/encoding/protobuf/testdata";
+
+message User {
+	string name = 1;
+	int32  id = 2;
+}

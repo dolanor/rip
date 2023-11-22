@@ -18,13 +18,12 @@ func newEncoder(w io.Writer) *encoder {
 }
 
 func (e *encoder) Encode(v any) error {
-	switch v.(type) {
-	case proto.Message:
-	default:
+	m, ok := v.(proto.Message)
+	if !ok {
 		return fmt.Errorf("protobuf encode: bad message format: %T", v)
 	}
 
-	b, err := proto.Marshal(v.(proto.Message))
+	b, err := proto.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("protobuf encode: protobuf marshal: %w", err)
 	}
