@@ -21,7 +21,7 @@
 			<a href="../{{ .EntityName | toLower | toPlural }}/">{{ .EntityName | toPlural }}</a>
 			<form method="get" action="/{{ .EntityName | toLower | toPlural }}/?mode=edit">
 				<input type="hidden" name="mode" value="edit">
-				<button type="submit">+</button>
+				<button type="submit" style="font-size: 2em;">+</button>
 			</form>
 		</h2>
 		
@@ -42,8 +42,8 @@
 					{{ end }}
 				{{- end }}
 
-					<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?{{ editModeQueryParam }}" class="btn btn-primary">Click to edit</button>
-					<button hx-delete="/{{ $name | toLower | toPlural}}/{{ .ID }}" hx-confirm="Are you sure you want to delete it?" class="btn btn-primary">&#128465;</button>
+					<button hx-get="/{{ $name | toLower | toPlural}}/{{ .ID }}.html?{{ editModeQueryParam }}" class="btn btn-primary" style="font-size: 2em;">&#9998;</button>
+					<button hx-delete="/{{ $name | toLower | toPlural}}/{{ .ID }}" hx-confirm="Are you sure you want to delete it?" class="btn btn-primary" style="font-size: 2em;">&#128465;</button>
 				</div>
 			</p>
 		{{ end }}
