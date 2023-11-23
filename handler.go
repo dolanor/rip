@@ -102,7 +102,7 @@ func checkPathID(requestPath, prefixPath string, id string) error {
 	rID := resID(requestPath, prefixPath)
 
 	if rID.IDString() != id {
-		return ripError{Status: http.StatusBadRequest, Message: fmt.Sprintf("ID from URL (%s) doesn't match ID in entity (%s)", rID.IDString(), id)}
+		return Error{Status: http.StatusBadRequest, Detail: fmt.Sprintf("ID from URL (%s) doesn't match ID in entity (%s)", rID.IDString(), id)}
 	}
 
 	return nil
@@ -167,7 +167,7 @@ func deletePathID(urlPath, method string, f deleteFunc[Entity]) http.HandlerFunc
 		// we don't need the returning entity, it's mostly a no-op
 		err = f(r.Context(), &rID)
 		if err != nil {
-			var e ripError
+			var e Error
 			if errors.As(err, &e) {
 				if e.Code != ErrorCodeNotFound {
 					writeError(w, accept, e)
@@ -362,5 +362,5 @@ func badMethodHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeError(w, accept, ripError{Status: http.StatusMethodNotAllowed, Message: "bad method"})
+	writeError(w, accept, Error{Status: http.StatusMethodNotAllowed, Detail: "bad method"})
 }

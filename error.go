@@ -22,29 +22,58 @@ const (
 )
 
 var (
-	ErrNotFound = ripError{
-		Code:    ErrorCodeNotFound,
-		Status:  http.StatusNotFound,
-		Message: "entity not found",
+	ErrNotFound = Error{
+		Code:   ErrorCodeNotFound,
+		Status: http.StatusNotFound,
+		Detail: "entity not found",
 	}
 )
 
-// ripError is the error returned by rip.
-type ripError struct {
-	Status  int
-	Code    ErrorCode
-	Message string
+// Error is the error returned by rip.
+// It is inspired by JSON-API.
+type Error struct {
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `json:"id,omitempty"`
+
+	// Links can contains an About Link or a Type Link.
+	Links []Link `json:"links,omitempty"`
+
+	// Status is the HTTP status code applicable to this problem. This SHOULD be provided.
+	Status int `json:"status,omitempty"`
+
+	// Code is an application-specific error code.
+	Code ErrorCode `json:"code,omitempty"`
+
+	// Title is a short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.
+	Title string `json:"title,omitempty"`
+
+	// Detail is a human-readable explanation specific to this occurrence of the problem
+	Detail string `json:"detail,omitempty"`
+
+	// Source is an object containing references to the primary source of the error. It SHOULD include one of its member or be omitted.
+	Source ErrorSource `json:"source,omitempty"`
+
+	// Meta contains non-standard meta-information about the error.
+	Meta Metadata `json:"meta,omitempty"`
 }
 
-func (e ripError) Error() string {
-	return fmt.Sprintf("%d - %s", e.Code, e.Message)
+// ErrorSource indicates the source error.
+// It is based on the JSON API specification.
+type ErrorSource struct {
+	Pointer   string `json:omitempty`
+	Parameter string `json:omitempty`
+	Header    string `json:omitempty`
+}
+
+func (e Error) Error() string {
+	return fmt.Sprintf("%d - %s", e.Code, e.Detail)
 }
 
 func writeError(w http.ResponseWriter, accept string, err error) {
-	var e ripError
+	var e Error
 	if !errors.As(err, &e) {
-		e = ripError{
-			Message: err.Error(),
+		e = Error{
+			Detail: err.Error(),
 		}
 	}
 
@@ -52,7 +81,7 @@ func writeError(w http.ResponseWriter, accept string, err error) {
 		e.Status = http.StatusInternalServerError
 	}
 
-	e.Message = err.Error()
+	e.Detail = err.Error()
 
 	var bre badRequestError
 	if e.Code == ErrorCodeBadQArg || errors.As(err, &bre) {

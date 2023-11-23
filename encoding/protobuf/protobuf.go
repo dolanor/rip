@@ -5,10 +5,10 @@ import (
 )
 
 func init() {
-	codec := encoding.Codec{
-		NewEncoder: encoding.WrapEncoder(newEncoder),
-		NewDecoder: encoding.WrapDecoder(newDecoder),
-	}
+	encoding.RegisterCodec(Codec, "application/vnd.google.protobuf", "application/protobuf", "application/x-protobuf")
+}
 
-	encoding.RegisterCodec(codec, "application/json")
+var Codec = encoding.Codec{
+	NewEncoder: encoding.WrapEncoder(newEncoder),
+	NewDecoder: encoding.WrapDecoder(newDecoder),
 }
