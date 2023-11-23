@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -50,7 +49,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				defer resp.Body.Close()
 
 				if resp.StatusCode != http.StatusCreated {
-					b, err := ioutil.ReadAll(resp.Body)
+					b, err := io.ReadAll(resp.Body)
 					t.Fatalf("post status code is not 201: body: %v: %s", err, string(b))
 				}
 				var buf bytes.Buffer
