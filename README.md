@@ -13,9 +13,6 @@ Let's get the best of both worlds with **GENERICS** ðŸŽ† *everybody screams* ðŸ˜
 The idea would be to use the classic `net/http` package with handlers created from Go types.
 
 ```go
-http.HandleFunc(rip.HandleEntities[User]("/users", NewUserProvider())
-
-// in Go 1.21, you can skip the type specification
 http.HandleFunc(rip.HandleEntities("/users", NewUserProvider())
 ```
 
