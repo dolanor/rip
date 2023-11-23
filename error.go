@@ -52,9 +52,6 @@ type Error struct {
 
 	// Source is an object containing references to the primary source of the error. It SHOULD include one of its member or be omitted.
 	Source ErrorSource `json:"source,omitempty"`
-
-	// Meta contains non-standard meta-information about the error.
-	Meta Metadata `json:"meta,omitempty"`
 }
 
 // ErrorSource indicates the source error.
