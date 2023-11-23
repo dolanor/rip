@@ -57,9 +57,9 @@ type Error struct {
 // ErrorSource indicates the source error.
 // It is based on the JSON API specification.
 type ErrorSource struct {
-	Pointer   string `json:omitempty`
-	Parameter string `json:omitempty`
-	Header    string `json:omitempty`
+	Pointer   string `json:"pointer,omitempty"`
+	Parameter string `json:"parameter,omitempty"`
+	Header    string `json:"header,omitempty"`
 }
 
 func (e Error) Error() string {
