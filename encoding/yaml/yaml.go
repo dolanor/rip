@@ -7,10 +7,17 @@ import (
 )
 
 func init() {
-	codec := encoding.Codec{
-		NewEncoder: encoding.WrapEncoder(yaml.NewEncoder),
-		NewDecoder: encoding.WrapDecoder(yaml.NewDecoder),
-	}
+	encoding.RegisterCodec(Codec, MimeTypes...)
+}
 
-	encoding.RegisterCodec(codec, "text/vnd.yaml", "text/yaml", "text/-xyaml", "application/x-yaml")
+var Codec = encoding.Codec{
+	NewEncoder: encoding.WrapEncoder(yaml.NewEncoder),
+	NewDecoder: encoding.WrapDecoder(yaml.NewDecoder),
+}
+
+var MimeTypes = []string{
+	"text/vnd.yaml",
+	"text/yaml",
+	"text/-xyaml",
+	"application/x-yaml",
 }

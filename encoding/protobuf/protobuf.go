@@ -5,10 +5,16 @@ import (
 )
 
 func init() {
-	encoding.RegisterCodec(Codec, "application/vnd.google.protobuf", "application/protobuf", "application/x-protobuf")
+	encoding.RegisterCodec(Codec, MimeTypes...)
 }
 
 var Codec = encoding.Codec{
 	NewEncoder: encoding.WrapEncoder(newEncoder),
 	NewDecoder: encoding.WrapDecoder(newDecoder),
+}
+
+var MimeTypes = []string{
+	"application/vnd.google.protobuf",
+	"application/protobuf",
+	"application/x-protobuf",
 }

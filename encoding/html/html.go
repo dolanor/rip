@@ -8,13 +8,13 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
-func init() {
-	codec := encoding.Codec{
-		NewEncoder: encoding.WrapEncoder(NewEncoder),
-		NewDecoder: encoding.WrapDecoder(NewDecoder),
-	}
+var Codec = encoding.Codec{
+	NewEncoder: encoding.WrapEncoder(NewEncoder),
+	NewDecoder: encoding.WrapDecoder(NewDecoder),
+}
 
-	encoding.RegisterCodec(codec, "text/html")
+var MimeTypes = []string{
+	"text/html",
 }
 
 //go:embed entity.gotpl

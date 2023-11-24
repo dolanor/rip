@@ -7,10 +7,14 @@ import (
 )
 
 func init() {
-	codec := encoding.Codec{
-		NewEncoder: encoding.WrapEncoder(json.NewEncoder),
-		NewDecoder: encoding.WrapDecoder(json.NewDecoder),
-	}
+	encoding.RegisterCodec(Codec, MimeTypes...)
+}
 
-	encoding.RegisterCodec(codec, "application/json")
+var Codec = encoding.Codec{
+	NewEncoder: encoding.WrapEncoder(json.NewEncoder),
+	NewDecoder: encoding.WrapDecoder(json.NewDecoder),
+}
+
+var MimeTypes = []string{
+	"application/json",
 }
