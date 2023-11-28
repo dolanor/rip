@@ -10,9 +10,10 @@ import (
 	"strings"
 
 	"github.com/dolanor/rip"
-	_ "github.com/dolanor/rip/encoding/html"
-	_ "github.com/dolanor/rip/encoding/json"
-	_ "github.com/dolanor/rip/encoding/xml"
+	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/encoding/html"
+	"github.com/dolanor/rip/encoding/json"
+	"github.com/dolanor/rip/encoding/xml"
 	"github.com/dolanor/rip/examples/srv-example/memuser"
 )
 
@@ -26,6 +27,9 @@ func uppercase(ctx context.Context, s string) (string, error) {
 }
 
 func main() {
+	encoding.RegisterCodec(html.Codec, html.MimeTypes...)
+	encoding.RegisterCodec(json.Codec, json.MimeTypes...)
+	encoding.RegisterCodec(xml.Codec, xml.MimeTypes...)
 	hostPort := os.ExpandEnv("$HOST:$PORT")
 	if hostPort == ":" {
 		hostPort += defaultPort

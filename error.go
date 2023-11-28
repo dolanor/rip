@@ -17,6 +17,9 @@ const (
 	// ErrorCodeNotFound happens when a resource with an id is not found.
 	ErrorCodeNotFound ErrorCode = http.StatusNotFound
 
+	// ErrorNotImplemented is when the endpoint is not implemented.
+	ErrorNotImplemented ErrorCode = http.StatusNotImplemented
+
 	// ErrorCodeBadQArg happens when a user gives a wrongly formatted header `; q=X.Y` argument.
 	ErrorCodeBadQArg ErrorCode = 499
 )
@@ -26,6 +29,12 @@ var (
 		Code:   ErrorCodeNotFound,
 		Status: http.StatusNotFound,
 		Detail: "entity not found",
+	}
+
+	ErrNotImplemented = Error{
+		Code:   ErrorNotImplemented,
+		Status: http.StatusNotImplemented,
+		Detail: "not implemented",
 	}
 )
 

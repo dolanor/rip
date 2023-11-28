@@ -53,6 +53,13 @@ func (e FormEncoder) Encode(v interface{}) error {
 }
 
 func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
+	err, ok := v.(error)
+	if err != nil {
+		// TODO: handle error better
+		w.Write([]byte(err.Error()))
+		return nil
+	}
+
 	s := reflect.ValueOf(v)
 	if s.Kind() == reflect.Pointer {
 		s = s.Elem()
@@ -108,7 +115,7 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 		tmplSrc = entityFormTmpl
 	}
 
-	tpl, err := tpl.Parse(tmplSrc)
+	tpl, err = tpl.Parse(tmplSrc)
 	if err != nil {
 		return err
 	}
