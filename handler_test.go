@@ -2,8 +2,7 @@ package rip
 
 import (
 	"bytes"
-	"encoding/json"
-	"encoding/xml"
+	gjson "encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,15 +10,17 @@ import (
 	"time"
 
 	"github.com/dolanor/rip/encoding"
-	"github.com/vmihailenco/msgpack/v5"
-	"gopkg.in/yaml.v3"
+	"github.com/dolanor/rip/encoding/json"
+	"github.com/dolanor/rip/encoding/msgpack"
+	"github.com/dolanor/rip/encoding/xml"
+	"github.com/dolanor/rip/encoding/yaml"
 )
 
 func TestHandleResourceWithPath(t *testing.T) {
-	encoding.RegisterCodec(encoding.WrapCodec(json.NewEncoder, json.NewDecoder), "application/json")
-	encoding.RegisterCodec(encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder), "application/yaml")
-	encoding.RegisterCodec(encoding.WrapCodec(msgpack.NewEncoder, msgpack.NewDecoder), "application/msgpack")
-	encoding.RegisterCodec(encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder), "text/xml")
+	encoding.RegisterCodec(json.Codec, json.MimeTypes...)
+	encoding.RegisterCodec(yaml.Codec, yaml.MimeTypes...)
+	encoding.RegisterCodec(msgpack.Codec, msgpack.MimeTypes...)
+	encoding.RegisterCodec(xml.Codec, xml.MimeTypes...)
 
 	up := newUserProvider()
 
@@ -174,7 +175,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				var users []user
 				dec := codec.NewDecoder(resp.Body)
 				switch name {
-				case "text/xml":
+				case "application/xml", "text/xml":
 					// the curren XML impl doesn't create an array of users
 					// it just streams more values.
 					// FIXME make XML create a top array value
@@ -284,14 +285,14 @@ func TestMiddleware(t *testing.T) {
 			f(w, r)
 		}
 	}
-	encoding.RegisterCodec(encoding.WrapCodec(json.NewEncoder, json.NewDecoder), "application/json")
+	encoding.RegisterCodec(json.Codec, json.MimeTypes...)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(HandleEntities[*user]("/users/", up, middleware))
 	s := httptest.NewServer(mux)
 
 	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
-	b, err := json.Marshal(u)
+	b, err := gjson.Marshal(u)
 	panicErr(t, err)
 
 	c := s.Client()
@@ -305,7 +306,7 @@ func TestMiddleware(t *testing.T) {
 		}
 
 		var uCreated user
-		err = json.NewDecoder(respCreate.Body).Decode(&uCreated)
+		err = gjson.NewDecoder(respCreate.Body).Decode(&uCreated)
 		panicErr(t, err)
 		if uCreated != u {
 			t.Fatal("user created != from original")

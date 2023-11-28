@@ -19,10 +19,7 @@ func init() {
 	encoding.RegisterCodec(FormCodec, FormMimeTypes...)
 }
 
-var FormCodec = encoding.Codec{
-	NewEncoder: encoding.WrapEncoder(NewFormEncoder),
-	NewDecoder: encoding.WrapDecoder(form.NewDecoder),
-}
+var FormCodec = encoding.WrapCodec(NewFormEncoder, form.NewDecoder)
 
 var FormMimeTypes = []string{
 	"application/x-www-form-urlencoded",

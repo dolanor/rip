@@ -7,14 +7,10 @@ import (
 )
 
 func init() {
-
 	encoding.RegisterCodec(Codec, MimeTypes...)
 }
 
-var Codec = encoding.Codec{
-	NewEncoder: encoding.WrapEncoder(xml.NewEncoder),
-	NewDecoder: encoding.WrapDecoder(xml.NewDecoder),
-}
+var Codec = encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder)
 
 var MimeTypes = []string{
 	"application/xml",

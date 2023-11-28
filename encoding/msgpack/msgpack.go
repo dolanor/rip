@@ -10,10 +10,7 @@ func init() {
 	encoding.RegisterCodec(Codec, MimeTypes...)
 }
 
-var Codec = encoding.Codec{
-	NewEncoder: encoding.WrapEncoder(msgpack.NewEncoder),
-	NewDecoder: encoding.WrapDecoder(msgpack.NewDecoder),
-}
+var Codec = encoding.WrapCodec(msgpack.NewEncoder, msgpack.NewDecoder)
 
 var MimeTypes = []string{
 	"application/msgpack",

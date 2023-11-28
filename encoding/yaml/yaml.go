@@ -10,10 +10,7 @@ func init() {
 	encoding.RegisterCodec(Codec, MimeTypes...)
 }
 
-var Codec = encoding.Codec{
-	NewEncoder: encoding.WrapEncoder(yaml.NewEncoder),
-	NewDecoder: encoding.WrapDecoder(yaml.NewDecoder),
-}
+var Codec = encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder)
 
 var MimeTypes = []string{
 	"text/vnd.yaml",
