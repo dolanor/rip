@@ -17,22 +17,27 @@ const (
 	// ErrorCodeNotFound happens when a resource with an id is not found.
 	ErrorCodeNotFound ErrorCode = http.StatusNotFound
 
-	// ErrorNotImplemented is when the endpoint is not implemented.
-	ErrorNotImplemented ErrorCode = http.StatusNotImplemented
+	// ErrorCodeNotImplemented is when the endpoint is not implemented.
+	ErrorCodeNotImplemented ErrorCode = http.StatusNotImplemented
 
 	// ErrorCodeBadQArg happens when a user gives a wrongly formatted header `; q=X.Y` argument.
 	ErrorCodeBadQArg ErrorCode = 499
 )
 
 var (
+	// ErrNotFound represents when a resource is not found.
+	// It can also be used if a user without proper authorization
+	// should not know if a resource exists or not.
 	ErrNotFound = Error{
 		Code:   ErrorCodeNotFound,
 		Status: http.StatusNotFound,
 		Detail: "entity not found",
 	}
 
+	// ErrNotImplemented communicates if a specific entity function is not
+	// implemented.
 	ErrNotImplemented = Error{
-		Code:   ErrorNotImplemented,
+		Code:   ErrorCodeNotImplemented,
 		Status: http.StatusNotImplemented,
 		Detail: "not implemented",
 	}
@@ -64,11 +69,20 @@ type Error struct {
 }
 
 // ErrorSource indicates the source error.
-// It is based on the JSON API specification.
+// It is based on the JSON API specification: https://jsonapi.org/format/#error-objects
 type ErrorSource struct {
-	Pointer   string `json:"pointer,omitempty"`
+	// Pointer is a JSON Pointer [RFC6901] to the value in the request document
+	// that caused the error [e.g. "/data" for a primary data object,
+	// or "/data/attributes/title" for a specific attribute].
+	// This MUST point to a value in the request document that exists;
+	// if it doesn’t, the client SHOULD simply ignore the pointer.
+	Pointer string `json:"pointer,omitempty"`
+
+	// Parameter indicates which URI query parameter caused the error.
 	Parameter string `json:"parameter,omitempty"`
-	Header    string `json:"header,omitempty"`
+
+	// Header indicates the name of a single request header which caused the error.
+	Header string `json:"header,omitempty"`
 }
 
 func (e Error) Error() string {

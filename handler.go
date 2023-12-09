@@ -309,7 +309,7 @@ func handleCreate[Ent Entity](method, urlPath string, f createFunc[Ent], options
 
 // start Handle OMIT
 
-// Handle is a generic HTTP handler that maps an HTTP method to a RequestResponseFunc f.
+// Handle is a generic HTTP handler that maps an HTTP method to a InputOutputFunc f.
 func Handle[
 	Input, Output any,
 ](

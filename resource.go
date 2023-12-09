@@ -4,7 +4,7 @@ import "context"
 
 const NewEntityID = "rip-new-entity-id"
 
-// EntityCreater creates a entity that can be identified.
+// EntityCreater creates a resource that can be identified (an entity).
 type EntityCreater[Ent Entity] interface {
 	Create(ctx context.Context, ent Ent) (Ent, error)
 }
@@ -14,7 +14,7 @@ type EntityGetter[Ent Entity] interface {
 	Get(ctx context.Context, id Entity) (Ent, error)
 }
 
-// EntityUpdater updates an identifiable entity.
+// EntityUpdater updates an entity.
 type EntityUpdater[Ent Entity] interface {
 	Update(ctx context.Context, ent Ent) error
 }
@@ -31,7 +31,7 @@ type EntityLister[Ent any] interface {
 
 // start EntityProvider OMIT
 
-// EntityProvider provides identifiable entities.
+// EntityProvider provides identifiable resources.
 type EntityProvider[Ent Entity] interface {
 	EntityCreater[Ent]
 	EntityGetter[Ent]
@@ -42,7 +42,7 @@ type EntityProvider[Ent Entity] interface {
 
 // end EntityProvider OMIT
 
-// Entity is a resource that can be identified by an string.
+// Entity is a resource that can be identified by a string.
 // It comes from the concept of entity in Domain Driven Design.
 type Entity interface {
 	// IDString returns an ID in form of a string.
