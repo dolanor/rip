@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/encoding/msgpack"
 	"github.com/dolanor/rip/encoding/xml"
@@ -17,22 +16,25 @@ import (
 )
 
 func TestHandleResourceWithPath(t *testing.T) {
-	encoding.RegisterCodec(json.Codec)
-	encoding.RegisterCodec(yaml.Codec)
-	encoding.RegisterCodec(msgpack.Codec)
-	encoding.RegisterCodec(xml.Codec)
-
 	up := newUserProvider()
+	ro := NewRouteOptions().
+		WithCodecs(
+			json.Codec,
+			yaml.Codec,
+			msgpack.Codec,
+			xml.Codec,
+		)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(HandleEntities("/users/", up))
+	mux.HandleFunc(HandleEntities("/users/", up, ro))
 	s := httptest.NewServer(mux)
 
 	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
 
 	c := s.Client()
 
-	availableCodecs := encoding.AvailableCodecs().Codecs
+	availableCodecs := ro.codecs.Codecs
+	t.Log(ro.codecs)
 
 	for name, codec := range availableCodecs {
 		var b bytes.Buffer
@@ -285,10 +287,12 @@ func TestMiddleware(t *testing.T) {
 			f(w, r)
 		}
 	}
-	encoding.RegisterCodec(json.Codec)
+	ro := NewRouteOptions().
+		WithMiddlewares(middleware).
+		WithCodecs(json.Codec)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(HandleEntities[*user]("/users/", up, middleware))
+	mux.HandleFunc(HandleEntities[*user]("/users/", up, ro))
 	s := httptest.NewServer(mux)
 
 	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}

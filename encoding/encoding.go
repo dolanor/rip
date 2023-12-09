@@ -6,9 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
 	"net/http"
-	"slices"
 )
 
 var ErrNoEncoderAvailable = errors.New("codec not available")
@@ -32,23 +30,6 @@ func (c *Codecs) Register(codec Codec) {
 	}
 }
 
-var availableCodecs = Codecs{
-	Codecs:           map[string]Codec{},
-	OrderedMimeTypes: []string{},
-}
-
-func AvailableCodecs() Codecs {
-	codecs := maps.Clone(availableCodecs.Codecs)
-	mimeTypes := slices.Clone(availableCodecs.OrderedMimeTypes)
-	return Codecs{
-		Codecs:           codecs,
-		OrderedMimeTypes: mimeTypes,
-	}
-}
-
-func RegisterCodec(codec Codec) {
-	availableCodecs.Register(codec)
-}
 
 type Codec struct {
 	NewEncoder NewEncoderFunc
@@ -62,8 +43,8 @@ type Decoder interface {
 	Decode(v interface{}) error
 }
 
-func ContentTypeDecoder(r io.Reader, contentTypeHeader string) Decoder {
-	decoder, ok := availableCodecs.Codecs[contentTypeHeader]
+func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) Decoder {
+	decoder, ok := codecs.Codecs[contentTypeHeader]
 	if !ok {
 		return json.NewDecoder(r)
 	}
@@ -97,20 +78,20 @@ func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.
 	}
 }
 
-func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode) Encoder {
+func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode, codecs Codecs) Encoder {
 	// TODO: add some hook to be able to tune this from the codec package
 	if acceptHeader == "text/html" && edit {
-		formCodec, ok := availableCodecs.Codecs["application/x-www-form-urlencoded"]
+		formCodec, ok := codecs.Codecs["application/x-www-form-urlencoded"]
 		if !ok {
 			return &noEncoder{missingEncoder: "application/x-www-form-urlencoded"}
 		}
 		return formCodec.NewEncoder(w)
 	}
 
-	encoder, ok := availableCodecs.Codecs[acceptHeader]
+	encoder, ok := codecs.Codecs[acceptHeader]
 	if !ok {
 
-		encoder, ok := availableCodecs.Codecs["default"]
+		encoder, ok := codecs.Codecs["default"]
 		if !ok {
 			return &noEncoder{missingEncoder: "default"}
 		}

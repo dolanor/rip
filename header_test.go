@@ -3,7 +3,8 @@ package rip
 import (
 	"testing"
 
-	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/encoding/json"
+	"github.com/dolanor/rip/encoding/xml"
 )
 
 func TestChooseHeaderValue(t *testing.T) {
@@ -18,9 +19,10 @@ func TestChooseHeaderValue(t *testing.T) {
 		"2x2 values with q and other": {map[string][]string{"a": {"text/xml; nope; q=0.7, application/json; q=0.1", "application/json; q=0.3, text/plaintext; other;q=0.71"}}, "text/xml"},
 	}
 
+	options := NewRouteOptions().WithCodecs(json.Codec, xml.Codec)
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			got, err := bestHeaderValue(c.in, "a", encoding.AvailableCodecs().OrderedMimeTypes)
+			got, err := bestHeaderValue(c.in, "a", options.codecs.OrderedMimeTypes)
 			if err != nil {
 				t.Fatal(err)
 			}

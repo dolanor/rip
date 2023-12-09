@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/dolanor/rip"
-	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/html"
 	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/encoding/xml"
@@ -27,18 +26,23 @@ func uppercase(ctx context.Context, s string) (string, error) {
 }
 
 func main() {
-	encoding.RegisterCodec(html.Codec)
-	encoding.RegisterCodec(html.FormCodec)
-	encoding.RegisterCodec(json.Codec)
-	encoding.RegisterCodec(xml.Codec)
 	hostPort := os.ExpandEnv("$HOST:$PORT")
 	if hostPort == ":" {
 		hostPort += defaultPort
 	}
 
 	up := memuser.NewUserProvider()
+	ro := rip.NewRouteOptions().
+		WithCodecs(
+			json.Codec,
+			xml.Codec,
+			html.Codec,
+			html.FormCodec,
+		).
+		WithMiddlewares(logHandler(os.Stdout))
+
 	// start HandleFuncEntities OMIT
-	http.HandleFunc(rip.HandleEntities("/users/", up, logHandler(os.Stdout)))
+	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
 	// end HandleFuncEntities OMIT
 
 	fmt.Println("listening on " + hostPort)

@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/dolanor/rip/encoding"
 )
 
-func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string) (cleanedPath string, accept, contentType string, err error) {
-	accept, err = bestHeaderValue(header, "Accept", encoding.AvailableCodecs().OrderedMimeTypes)
+func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string, options *RouteOptions) (cleanedPath string, accept, contentType string, err error) {
+	accept, err = bestHeaderValue(header, "Accept", options.codecs.OrderedMimeTypes)
 	if err != nil {
 		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Detail: fmt.Sprintf("bad accept header format: %v", err)}
 	}
@@ -17,7 +15,7 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		return "", "", "", Error{Status: http.StatusMethodNotAllowed, Detail: "bad method"}
 	}
 
-	contentType, err = bestHeaderValue(header, "Content-Type", encoding.AvailableCodecs().OrderedMimeTypes)
+	contentType, err = bestHeaderValue(header, "Content-Type", options.codecs.OrderedMimeTypes)
 	if err != nil {
 		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Detail: fmt.Sprintf("bad content type header format: %v", err)}
 	}

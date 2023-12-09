@@ -3,6 +3,9 @@ package rip
 import (
 	"net/http"
 	"testing"
+
+	"github.com/dolanor/rip/encoding/json"
+	"github.com/dolanor/rip/encoding/xml"
 )
 
 func TestPreprocessRequest(t *testing.T) {
@@ -14,8 +17,9 @@ func TestPreprocessRequest(t *testing.T) {
 	}
 	rURLPath := "/whatever/entity/id"
 
+	options := NewRouteOptions().WithCodecs(json.Codec, xml.Codec)
 	// TODO: add some .xml/.json/.html
-	_, accept, contentType, err := preprocessRequest(rMethod, hMethod, h, rURLPath)
+	_, accept, contentType, err := preprocessRequest(rMethod, hMethod, h, rURLPath, options)
 	if err != nil {
 		t.Fatal(err)
 	}

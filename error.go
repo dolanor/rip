@@ -75,7 +75,7 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%d - %s", e.Code, e.Detail)
 }
 
-func writeError(w http.ResponseWriter, accept string, err error) {
+func writeError(w http.ResponseWriter, accept string, err error, options *RouteOptions) {
 	var e Error
 	if !errors.As(err, &e) {
 		e = Error{
@@ -101,7 +101,7 @@ func writeError(w http.ResponseWriter, accept string, err error) {
 		e.Status = http.StatusNotAcceptable
 	}
 
-	encoder := encoding.AcceptEncoder(w, accept, encoding.EditOff)
+	encoder := encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs)
 	if e.Status == http.StatusNotAcceptable {
 		// if we have encoding problems, we will use json as default
 		// to serialize the error to user

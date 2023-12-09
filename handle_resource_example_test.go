@@ -4,11 +4,16 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/dolanor/rip/encoding/html"
+	"github.com/dolanor/rip/encoding/json"
 )
 
 func Example() {
 	up := newUserProvider()
-	http.HandleFunc(HandleEntities("/users/", up))
+	ro := NewRouteOptions().
+		WithCodecs(json.Codec, html.Codec)
+	http.HandleFunc(HandleEntities("/users/", up, ro))
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
