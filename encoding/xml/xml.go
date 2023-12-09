@@ -6,11 +6,7 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
-func init() {
-	encoding.RegisterCodec(Codec, MimeTypes...)
-}
-
-var Codec = encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder)
+var Codec = encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"application/xml",

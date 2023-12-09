@@ -6,11 +6,7 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
-func init() {
-	encoding.RegisterCodec(Codec, MimeTypes...)
-}
-
-var Codec = encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder)
+var Codec = encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"text/vnd.yaml",

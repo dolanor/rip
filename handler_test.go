@@ -17,10 +17,10 @@ import (
 )
 
 func TestHandleResourceWithPath(t *testing.T) {
-	encoding.RegisterCodec(json.Codec, json.MimeTypes...)
-	encoding.RegisterCodec(yaml.Codec, yaml.MimeTypes...)
-	encoding.RegisterCodec(msgpack.Codec, msgpack.MimeTypes...)
-	encoding.RegisterCodec(xml.Codec, xml.MimeTypes...)
+	encoding.RegisterCodec(json.Codec)
+	encoding.RegisterCodec(yaml.Codec)
+	encoding.RegisterCodec(msgpack.Codec)
+	encoding.RegisterCodec(xml.Codec)
 
 	up := newUserProvider()
 
@@ -285,7 +285,7 @@ func TestMiddleware(t *testing.T) {
 			f(w, r)
 		}
 	}
-	encoding.RegisterCodec(json.Codec, json.MimeTypes...)
+	encoding.RegisterCodec(json.Codec)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc(HandleEntities[*user]("/users/", up, middleware))

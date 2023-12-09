@@ -27,9 +27,10 @@ func uppercase(ctx context.Context, s string) (string, error) {
 }
 
 func main() {
-	encoding.RegisterCodec(html.Codec, html.MimeTypes...)
-	encoding.RegisterCodec(json.Codec, json.MimeTypes...)
-	encoding.RegisterCodec(xml.Codec, xml.MimeTypes...)
+	encoding.RegisterCodec(html.Codec)
+	encoding.RegisterCodec(html.FormCodec)
+	encoding.RegisterCodec(json.Codec)
+	encoding.RegisterCodec(xml.Codec)
 	hostPort := os.ExpandEnv("$HOST:$PORT")
 	if hostPort == ":" {
 		hostPort += defaultPort

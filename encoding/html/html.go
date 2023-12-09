@@ -8,7 +8,7 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
-var Codec = encoding.WrapCodec(NewEncoder, NewDecoder)
+var Codec = encoding.WrapCodec(NewEncoder, NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"text/html",

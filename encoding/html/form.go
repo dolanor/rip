@@ -15,11 +15,7 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
-func init() {
-	encoding.RegisterCodec(FormCodec, FormMimeTypes...)
-}
-
-var FormCodec = encoding.WrapCodec(NewFormEncoder, form.NewDecoder)
+var FormCodec = encoding.WrapCodec(NewFormEncoder, form.NewDecoder, FormMimeTypes...)
 
 var FormMimeTypes = []string{
 	"application/x-www-form-urlencoded",

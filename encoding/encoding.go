@@ -25,8 +25,8 @@ type Codecs struct {
 	OrderedMimeTypes []string
 }
 
-func (c *Codecs) Register(codec Codec, mimes ...string) {
-	for _, mime := range mimes {
+func (c *Codecs) Register(codec Codec) {
+	for _, mime := range codec.MimeTypes {
 		c.Codecs[mime] = codec
 		c.OrderedMimeTypes = append(c.OrderedMimeTypes, mime)
 	}
@@ -46,13 +46,14 @@ func AvailableCodecs() Codecs {
 	}
 }
 
-func RegisterCodec(codec Codec, mimes ...string) {
-	availableCodecs.Register(codec, mimes...)
+func RegisterCodec(codec Codec) {
+	availableCodecs.Register(codec)
 }
 
 type Codec struct {
 	NewEncoder NewEncoderFunc
 	NewDecoder NewDecoderFunc
+	MimeTypes  []string
 }
 
 type NewDecoderFunc func(r io.Reader) Decoder
@@ -88,10 +89,11 @@ func WrapEncoder[E Encoder, F func(w io.Writer) E](f F) NewEncoderFunc {
 	}
 }
 
-func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.Reader) D](encoderFunc EFunc, decoderFunc DFunc) Codec {
+func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.Reader) D](encoderFunc EFunc, decoderFunc DFunc, mimeTypes ...string) Codec {
 	return Codec{
 		NewEncoder: func(w io.Writer) Encoder { return encoderFunc(w) },
 		NewDecoder: func(r io.Reader) Decoder { return decoderFunc(r) },
+		MimeTypes:  mimeTypes,
 	}
 }
 

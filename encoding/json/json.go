@@ -6,11 +6,7 @@ import (
 	"github.com/dolanor/rip/encoding"
 )
 
-func init() {
-	encoding.RegisterCodec(Codec, MimeTypes...)
-}
-
-var Codec = encoding.WrapCodec(json.NewEncoder, json.NewDecoder)
+var Codec = encoding.WrapCodec(json.NewEncoder, json.NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"application/json",
