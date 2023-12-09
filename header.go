@@ -17,7 +17,7 @@ func bestHeaderValue(header http.Header, headerName string, serverPreferences []
 	// By default, we choose application/json
 	// TODO maybe switch to text/html if it's implemented
 	defaultClientPref := []headerQ{{Value: "application/json", Q: 1}}
-	clientPreferences, err := headerValues(header[headerName])
+	clientPreferences, err := headerValues(headerName, header[headerName])
 	if err != nil {
 		return "", err
 	}
@@ -35,7 +35,8 @@ func bestHeaderValue(header http.Header, headerName string, serverPreferences []
 
 	if len(clientPreferences) == 0 {
 		// check in request Content-Type
-		clientPreferences, err = headerValues(header["Content-Type"])
+		headerName := "Content-Type"
+		clientPreferences, err = headerValues(headerName, header[headerName])
 		if err != nil {
 			return "", err
 		}
@@ -67,7 +68,7 @@ func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) (
 	return "", false
 }
 
-func headerValues(header []string) ([]headerQ, error) {
+func headerValues(headerName string, header []string) ([]headerQ, error) {
 	var hqs []headerQ
 	for _, h := range header {
 		for _, aQStrs := range strings.Split(h, ",") {
@@ -89,8 +90,8 @@ func headerValues(header []string) ([]headerQ, error) {
 					hasQ = true
 					q, err := strconv.ParseFloat(qp[1], 32)
 					if err != nil {
-						err := fmt.Errorf("parsing q value of %v: %w", aQStrs, err)
-						return hqs, Error{Code: ErrorCodeBadQArg, Detail: err.Error()}
+						err := fmt.Errorf("parsing q value in header %v of %v: %w", headerName, aQStrs, err)
+						return hqs, Error{Code: ErrorCodeBadQArg, Detail: err.Error(), Source: ErrorSource{Header: headerName}}
 					}
 					hq := headerQ{Value: aQ[0], Q: float32(q)}
 					hqs = append(hqs, hq)
