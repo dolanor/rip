@@ -2,6 +2,8 @@
 
 REST in peace
 
+![gopher resting in peace](.meta/assets/rip.png)
+
 ## Why?
 
 Creating RESTful API in Go is in a way simple and fun in the first time, but also repetitive and error prone the more resources you handle.  
@@ -81,3 +83,6 @@ The slides are [in my talks repository](https://github.com/dolanor/talks/blob/ma
 - [ ] support for hypermedia discoverability
 - [x] support for multiple data representation
 
+## Thanks
+
+- logo from Thierry Pfeiffer
