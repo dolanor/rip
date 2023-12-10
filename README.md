@@ -18,6 +18,19 @@ The idea would be to use the classic `net/http` package with handlers created fr
 http.HandleFunc(rip.HandleEntities("/users", NewUserProvider())
 ```
 
+and it would generate all the necessary boilerplate to have some sane (IMO) HTTP routes.
+```go
+// HandleEntities associates an urlPath with an entity provider, and handles all HTTP requests in a RESTful way:
+//
+//	POST   /entities/    : creates the entity
+//	GET    /entities/:id : get the entity
+//	PUT    /entities/:id : updates the entity (needs to pass the full entity data)
+//	DELETE /entities/:id : deletes the entity
+//	GET    /entities/    : lists the entities
+
+```
+
+
 given that `UserProvider` implements the `rip.EntityProvider` interface
 
 ```go
