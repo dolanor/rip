@@ -1,6 +1,9 @@
 package rip
 
 import (
+	"maps"
+	"slices"
+
 	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/json"
 )
@@ -33,13 +36,30 @@ func NewRouteOptions() *RouteOptions {
 }
 
 func (ro *RouteOptions) WithCodecs(codecs ...encoding.Codec) *RouteOptions {
+	newRO := cloneRouteOptions(*ro)
 	for _, c := range codecs {
-		ro.codecs.Register(c)
+		newRO.codecs.Register(c)
 	}
-	return ro
+	return &newRO
 }
 
 func (ro *RouteOptions) WithMiddlewares(middlewares ...Middleware) *RouteOptions {
-	ro.middlewares = append(ro.middlewares, middlewares...)
-	return ro
+	newRO := cloneRouteOptions(*ro)
+	newRO.middlewares = append(newRO.middlewares, middlewares...)
+	return &newRO
+}
+
+func cloneRouteOptions(ro RouteOptions) RouteOptions {
+	middlewares := slices.Clone(ro.middlewares)
+	codecs := maps.Clone(ro.codecs.Codecs)
+
+	orderedMimeTypes := slices.Clone(ro.codecs.OrderedMimeTypes)
+
+	return RouteOptions{
+		middlewares: middlewares,
+		codecs: encoding.Codecs{
+			Codecs:           codecs,
+			OrderedMimeTypes: orderedMimeTypes,
+		},
+	}
 }
