@@ -23,7 +23,14 @@ type Codecs struct {
 	OrderedMimeTypes []string
 }
 
+const defaultCodecKey = "default_codec_key"
+
 func (c *Codecs) Register(codec Codec) {
+	_, ok := c.Codecs[defaultCodecKey]
+	if !ok {
+		c.Codecs[defaultCodecKey] = codec
+	}
+
 	for _, mime := range codec.MimeTypes {
 		c.Codecs[mime] = codec
 		c.OrderedMimeTypes = append(c.OrderedMimeTypes, mime)
@@ -90,8 +97,7 @@ func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode, co
 
 	encoder, ok := codecs.Codecs[acceptHeader]
 	if !ok {
-
-		encoder, ok := codecs.Codecs["default"]
+		encoder, ok := codecs.Codecs[defaultCodecKey]
 		if !ok {
 			return &noEncoder{missingEncoder: "default"}
 		}
