@@ -126,7 +126,6 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], options
 			return
 		}
 
-		// TODO: use the correct encoder (www-urlform?)
 		res, err := decode[Ent](r.Body, contentType, options)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("bad input format: %w", err), options)
