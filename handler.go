@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"reflect"
 	"strings"
 
 	"github.com/dolanor/rip/encoding"
@@ -64,7 +65,7 @@ func handleEntityWithPath[Ent Entity](urlPath string, create createFunc[Ent], ge
 		case http.MethodPost:
 			handleCreate(r.Method, urlPath, create, options)(w, r)
 		case http.MethodGet:
-			_, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath, options)
+			_, _, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath, options)
 			if err != nil {
 				writeError(w, accept, err, options)
 				return
@@ -185,7 +186,16 @@ func deletePathID(urlPath, method string, f deleteFunc[Entity], options *RouteOp
 	}
 }
 
-func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string, options *RouteOptions) (id string, accept string, editMode encoding.EditMode, err error) {
+func getEntityField(trimmedURLPath string) (entityPath, field string) {
+	if strings.Contains(trimmedURLPath, "/") {
+		entityPath, field = path.Split(trimmedURLPath)
+		entityPath = entityPath[:len(entityPath)-1]
+	}
+
+	return entityPath, field
+}
+
+func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string, options *RouteOptions) (id string, field string, accept string, editMode encoding.EditMode, err error) {
 	vals := r.URL.Query()
 	editMode = encoding.EditOff
 	if vals.Get("mode") == "edit" {
@@ -194,23 +204,24 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 
 	cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
 	if err != nil {
-		return id, accept, editMode, err
+		return id, field, accept, editMode, err
 	}
 
 	id = strings.TrimPrefix(cleanedPath, urlPath)
 	if id == "" {
 		id = NewEntityID
 	}
-	return id, accept, editMode, nil
+	return id, field, accept, editMode, nil
 }
 
 func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath, options)
+		id, field, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath, options)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
 		}
+		_ = field
 
 		var resID stringID
 		resID.IDFromString(id)
@@ -221,7 +232,8 @@ func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], optio
 			return
 		}
 
-		err = encoding.AcceptEncoder(w, accept, editMode, options.codecs).Encode(res)
+		var ret any = res
+		err = encoding.AcceptEncoder(w, accept, editMode, options.codecs).Encode(ret)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
