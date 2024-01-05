@@ -186,13 +186,20 @@ func deletePathID(urlPath, method string, f deleteFunc[Entity], options *RouteOp
 	}
 }
 
-func getEntityField(trimmedURLPath string) (entityPath, field string) {
-	if strings.Contains(trimmedURLPath, "/") {
-		entityPath, field = path.Split(trimmedURLPath)
-		entityPath = entityPath[:len(entityPath)-1]
+func getEntityField(entityPrefix, requestPath string) (id, field string) {
+	requestPath = strings.TrimPrefix(requestPath, entityPrefix)
+
+	requestPath = strings.TrimRight(requestPath, "/")
+	requestPath = strings.TrimLeft(requestPath, "/")
+
+	if strings.Contains(requestPath, "/") {
+		id, field = path.Split(requestPath)
+		id = strings.TrimRight(id, "/")
+	} else {
+		id = strings.TrimRight(requestPath, "/")
 	}
 
-	return entityPath, field
+	return id, field
 }
 
 func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string, options *RouteOptions) (id string, field string, accept string, editMode encoding.EditMode, err error) {
