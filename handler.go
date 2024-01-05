@@ -218,7 +218,49 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 	if id == "" {
 		id = NewEntityID
 	}
+
+	id, field = getEntityField(urlPath, cleanedPath)
 	return id, field, accept, editMode, nil
+}
+
+func StructOf(v any) reflect.Value {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Pointer {
+		val = val.Elem()
+	}
+	return val
+}
+
+func FieldValue(st reflect.Value, field string) any {
+	val := st.FieldByNameFunc(func(f string) bool {
+		if strings.ToLower(f) != strings.ToLower(field) {
+			return false
+		}
+		return true
+	})
+
+	switch val.Kind() {
+	case reflect.Bool:
+		return val.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return val.Int()
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return val.Uint()
+	case reflect.Float32, reflect.Float64:
+		return val.Float()
+	case reflect.Complex64, reflect.Complex128:
+		return val.Complex()
+	case reflect.String:
+		return val.String()
+	case reflect.Slice,
+		reflect.Array,
+		reflect.Map,
+		reflect.Struct,
+		reflect.Chan:
+		return val.Interface()
+	default:
+		return val.String()
+	}
 }
 
 func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], options *RouteOptions) http.HandlerFunc {
@@ -240,6 +282,11 @@ func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], optio
 		}
 
 		var ret any = res
+		if field != "" {
+			st := StructOf(res)
+			ret = FieldValue(st, field)
+		}
+
 		err = encoding.AcceptEncoder(w, accept, editMode, options.codecs).Encode(ret)
 		if err != nil {
 			writeError(w, accept, err, options)
