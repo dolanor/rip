@@ -65,7 +65,7 @@ func handleEntityWithPath[Ent Entity](urlPath string, create createFunc[Ent], ge
 		case http.MethodPost:
 			handleCreate(r.Method, urlPath, create, options)(w, r)
 		case http.MethodGet:
-			_, _, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath, options)
+			_, _, _, _, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath, options)
 			if err != nil {
 				writeError(w, accept, err, options)
 				return
@@ -121,7 +121,8 @@ func decode[T any](r io.Reader, contentType string, options *RouteOptions) (T, e
 
 func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cleanedPath, accept, contentType, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
+		//TODO add edit mode on
+		id, field, cleanedPath, contentType, accept, _, err := getIDAndEditMode(w, r, method, urlPath, options)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
@@ -202,16 +203,16 @@ func getEntityField(entityPrefix, requestPath string) (id, field string) {
 	return id, field
 }
 
-func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string, options *RouteOptions) (id string, field string, accept string, editMode encoding.EditMode, err error) {
+func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string, options *RouteOptions) (id, field, cleanedPath, contentType, accept string, editMode encoding.EditMode, err error) {
 	vals := r.URL.Query()
 	editMode = encoding.EditOff
 	if vals.Get("mode") == "edit" {
 		editMode = encoding.EditOn
 	}
 
-	cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
+	cleanedPath, accept, contentType, err = preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
 	if err != nil {
-		return id, field, accept, editMode, err
+		return id, field, cleanedPath, contentType, accept, editMode, err
 	}
 
 	id = strings.TrimPrefix(cleanedPath, urlPath)
@@ -220,7 +221,9 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 	}
 
 	id, field = getEntityField(urlPath, cleanedPath)
-	return id, field, accept, editMode, nil
+
+	//return entityPath, field, accept, editMode, nil
+	return id, field, cleanedPath, contentType, accept, editMode, nil
 }
 
 func StructOf(v any) reflect.Value {
@@ -265,7 +268,7 @@ func FieldValue(st reflect.Value, field string) any {
 
 func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, field, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath, options)
+		id, field, _, _, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath, options)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
