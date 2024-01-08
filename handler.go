@@ -77,7 +77,7 @@ func handleEntityWithPath[Ent Entity](urlPath string, create createFunc[Ent], ge
 			}
 			handleGet(urlPath, r.Method, get, options)(w, r)
 		case http.MethodPut:
-			updatePathID(urlPath, r.Method, update, options)(w, r)
+			updatePathID(urlPath, r.Method, update, get, options)(w, r)
 		case http.MethodDelete:
 			deletePathID(urlPath, r.Method, deleteFn, options)(w, r)
 		default:
@@ -112,14 +112,44 @@ func checkPathID(requestPath, prefixPath string, id string) error {
 	return nil
 }
 
-// decode use the content type to decode the data from r into v.
+// decode use the content type to decode the data from r into t.
 func decode[T any](r io.Reader, contentType string, options *RouteOptions) (T, error) {
 	var t T
 	err := encoding.ContentTypeDecoder(r, contentType, options.codecs).Decode(&t)
 	return t, err
 }
 
-func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], options *RouteOptions) http.HandlerFunc {
+// decodeIn use the content type to decode the data from r into t (which should be a pointer).
+func decodeIn(t any, r io.Reader, contentType string, options *RouteOptions) (any, error) {
+	err := encoding.ContentTypeDecoder(r, contentType, options.codecs).Decode(t)
+	return t, err
+}
+
+func updateFieldInEntity[Ent Entity](entity Ent, fieldName string, fieldValue any) (err error) {
+	defer func() {
+		rerr := recover()
+		if rerr != nil {
+			// TODO(the): add a real full error with error source, etc
+			err = Error{
+				Source: ErrorSource{
+					Pointer: fieldName,
+				},
+				Debug: fmt.Errorf("%v: %w", rerr, err).Error(),
+			}
+		}
+	}()
+	val := reflect.ValueOf(entity)
+	// it should be a pointer type
+	val = val.Elem()
+	field := val.FieldByNameFunc(func(s string) bool {
+		return strings.ToLower(s) == strings.ToLower(fieldName)
+	})
+	field.Set(reflect.ValueOf(fieldValue))
+
+	return nil
+}
+
+func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get getFunc[Entity, Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//TODO add edit mode on
 		id, field, cleanedPath, contentType, accept, _, err := getIDAndEditMode(w, r, method, urlPath, options)
@@ -128,25 +158,61 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], options
 			return
 		}
 
-		res, err := decode[Ent](r.Body, contentType, options)
-		if err != nil {
-			writeError(w, accept, fmt.Errorf("bad input format: %w", err), options)
+		var ent Ent
+
+		if field != "" {
+			var resID stringID
+			resID.IDFromString(id)
+
+			ent, err = get(r.Context(), &resID)
+			if err != nil {
+				writeError(w, accept, fmt.Errorf("can get original entity: %w", err), options)
+				return
+			}
+
+			st := StructOf(ent)
+
+			fieldValue := st.FieldByNameFunc(func(s string) bool {
+				return strings.ToLower(s) == strings.ToLower(field)
+			})
+			pField := reflect.New(fieldValue.Type())
+
+			var lol any
+			err = encoding.ContentTypeDecoder(r.Body, contentType, options.codecs).Decode(&lol)
+			//		v, err := decodeIn(&pField, r.Body, contentType, options)
+			if err != nil {
+				writeError(w, accept, fmt.Errorf("can decode entity field: %w", err), options)
+				return
+			}
+			vlol := reflect.ValueOf(lol)
+			fieldValue.Set(vlol)
+
+			// We've updated the field. We're good to go.
 			return
+		} else {
+			ent, err = decode[Ent](r.Body, contentType, options)
+			if err != nil {
+				writeError(w, accept, fmt.Errorf("bad input format: %w", err), options)
+				return
+			}
+
 		}
 
-		err = checkPathID(cleanedPath, urlPath, res.IDString())
+		err = checkPathID(cleanedPath, urlPath, id)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("incompatible entity id VS path ID: %w", err), options)
 			return
 		}
 
-		err = f(r.Context(), res)
+		// To update a field, we need to get the entity first, then reflect on it to get the field and change it
+		// then we can update the whole entity with updateFunc
+		err = f(r.Context(), ent)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
 		}
 
-		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(res)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(ent)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
