@@ -168,31 +168,49 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 				return
 			}
 		} else {
-			var resID stringID
-			resID.IDFromString(id)
+			err = func() (err error) {
+				defer func() {
+					rerr := recover()
+					if rerr != nil {
+						err = Error{
+							Source: ErrorSource{
+								Pointer: field,
+							},
+							Debug: fmt.Errorf("%v: %w", rerr, err).Error(),
+						}
+					}
+				}()
+				var resID stringID
+				resID.IDFromString(id)
 
-			ent, err = get(r.Context(), &resID)
-			if err != nil {
-				writeError(w, accept, fmt.Errorf("can get original entity: %w", err), options)
-				return
-			}
+				ent, err = get(r.Context(), &resID)
+				if err != nil {
+					writeError(w, accept, fmt.Errorf("can get original entity: %w", err), options)
+					return err
+				}
 
-			st := StructOf(ent)
+				st := StructOf(ent)
 
-			fieldValue := st.FieldByNameFunc(func(s string) bool {
-				return strings.ToLower(s) == strings.ToLower(field)
-			})
+				fieldValue := st.FieldByNameFunc(func(s string) bool {
+					return strings.ToLower(s) == strings.ToLower(field)
+				})
 
-			var fieldData any
-			err = encoding.ContentTypeDecoder(r.Body, contentType, options.codecs).Decode(&fieldData)
+				var fieldData any
+				err = encoding.ContentTypeDecoder(r.Body, contentType, options.codecs).Decode(&fieldData)
+				if err != nil {
+					writeError(w, accept, fmt.Errorf("can decode entity field: %w", err), options)
+					return err
+				}
+				fieldDataValue := reflect.ValueOf(fieldData)
+				fieldValue.Set(fieldDataValue)
+
+				// We've updated the field. We're good to go.
+				return nil
+			}()
 			if err != nil {
 				writeError(w, accept, fmt.Errorf("can decode entity field: %w", err), options)
 				return
 			}
-			fieldDataValue := reflect.ValueOf(fieldData)
-			fieldValue.Set(fieldDataValue)
-
-			// We've updated the field. We're good to go.
 		}
 
 		if ent.IDString() != id {
