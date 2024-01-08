@@ -102,6 +102,7 @@ func resID(requestPath, prefixPath string) stringID {
 	return resID
 }
 
+// TODO(dol): delete?
 func checkPathID(requestPath, prefixPath string, id string) error {
 	rID := resID(requestPath, prefixPath)
 
@@ -152,15 +153,21 @@ func updateFieldInEntity[Ent Entity](entity Ent, fieldName string, fieldValue an
 func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get getFunc[Entity, Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//TODO add edit mode on
-		id, field, cleanedPath, contentType, accept, _, err := getIDAndEditMode(w, r, method, urlPath, options)
+		id, field, _, contentType, accept, _, err := getIDAndEditMode(w, r, method, urlPath, options)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
 		}
 
 		var ent Ent
-
-		if field != "" {
+		if field == "" {
+			// if we have no field selected, we just decode the entire entity
+			ent, err = decode[Ent](r.Body, contentType, options)
+			if err != nil {
+				writeError(w, accept, fmt.Errorf("bad input format: %w", err), options)
+				return
+			}
+		} else {
 			var resID stringID
 			resID.IDFromString(id)
 
@@ -175,31 +182,21 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 			fieldValue := st.FieldByNameFunc(func(s string) bool {
 				return strings.ToLower(s) == strings.ToLower(field)
 			})
-			pField := reflect.New(fieldValue.Type())
 
-			var lol any
-			err = encoding.ContentTypeDecoder(r.Body, contentType, options.codecs).Decode(&lol)
-			//		v, err := decodeIn(&pField, r.Body, contentType, options)
+			var fieldData any
+			err = encoding.ContentTypeDecoder(r.Body, contentType, options.codecs).Decode(&fieldData)
 			if err != nil {
 				writeError(w, accept, fmt.Errorf("can decode entity field: %w", err), options)
 				return
 			}
-			vlol := reflect.ValueOf(lol)
-			fieldValue.Set(vlol)
+			fieldDataValue := reflect.ValueOf(fieldData)
+			fieldValue.Set(fieldDataValue)
 
 			// We've updated the field. We're good to go.
-			return
-		} else {
-			ent, err = decode[Ent](r.Body, contentType, options)
-			if err != nil {
-				writeError(w, accept, fmt.Errorf("bad input format: %w", err), options)
-				return
-			}
-
 		}
 
-		err = checkPathID(cleanedPath, urlPath, id)
-		if err != nil {
+		if ent.IDString() != id {
+			err = Error{Status: http.StatusBadRequest, Detail: fmt.Sprintf("ID from URL (%s) doesn't match ID in entity (%s)", ent.IDString(), id)}
 			writeError(w, accept, fmt.Errorf("incompatible entity id VS path ID: %w", err), options)
 			return
 		}
@@ -209,6 +206,11 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 		err = f(r.Context(), ent)
 		if err != nil {
 			writeError(w, accept, err, options)
+			return
+		}
+
+		if field != "" {
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
