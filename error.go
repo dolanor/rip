@@ -66,6 +66,9 @@ type Error struct {
 
 	// Source is an object containing references to the primary source of the error. It SHOULD include one of its member or be omitted.
 	Source ErrorSource `json:"source,omitempty"`
+
+	// Debug contains debug information, not to be read by a user of the app, but by a technical user trying to fix problems.
+	Debug string `json:"debug,omitempty"`
 }
 
 // ErrorSource indicates the source error.
