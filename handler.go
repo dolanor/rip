@@ -309,6 +309,7 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 	id = strings.TrimPrefix(cleanedPath, urlPath)
 	if id == "" {
 		id = NewEntityID
+		return id, field, cleanedPath, contentType, accept, editMode, err
 	}
 
 	id, field = getEntityField(urlPath, cleanedPath)
