@@ -207,8 +207,8 @@ func TestHandleResourceWithPath(t *testing.T) {
 				resp, err := c.Do(req)
 				panicErr(t, err)
 				defer resp.Body.Close()
-				if resp.StatusCode != http.StatusOK {
-					t.Fatal("delete status is not 200:", resp.StatusCode)
+				if resp.StatusCode != http.StatusNoContent {
+					t.Fatal("delete status is not 204:", resp.StatusCode)
 				}
 			})
 
@@ -270,8 +270,8 @@ func TestHandleResourceWithPath(t *testing.T) {
 				resp, err := c.Do(req)
 				panicErr(t, err)
 				defer resp.Body.Close()
-				if resp.StatusCode != http.StatusOK {
-					t.Fatal("delete status is not 200:", resp.StatusCode)
+				if resp.StatusCode != http.StatusNoContent {
+					t.Fatal("delete status is not 204:", resp.StatusCode)
 				}
 			})
 		})

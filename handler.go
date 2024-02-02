@@ -269,7 +269,12 @@ func deletePathID(urlPath, method string, f deleteFunc[Entity], options *RouteOp
 			}
 		}
 
-		http.Redirect(w, r, urlPath, http.StatusSeeOther)
+		if accept == "text/html" || accept == "application/x-www-form-urlencoded" {
+			http.Redirect(w, r, urlPath, http.StatusSeeOther)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
