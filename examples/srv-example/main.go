@@ -31,7 +31,7 @@ func main() {
 		hostPort += defaultPort
 	}
 
-	up := memuser.NewUserProvider()
+	// start route option OMIT
 	ro := rip.NewRouteOptions().
 		WithCodecs(
 			json.Codec,
@@ -40,9 +40,12 @@ func main() {
 			html.FormCodec,
 		).
 		WithMiddlewares(logHandler(os.Stdout))
+	// end route option OMIT
 
 	// start HandleFuncEntities OMIT
-	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
+	up := memuser.NewUserProvider()
+
+	http.HandleFunc(rip.HandleEntities("/users/", up, nil))
 	// end HandleFuncEntities OMIT
 
 	fmt.Println("listening on " + hostPort)

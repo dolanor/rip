@@ -10,6 +10,7 @@ import (
 	"github.com/dolanor/rip"
 )
 
+// start User Entity OMIT
 type User struct {
 	ID           int       `json:"id" xml:"id"`
 	BirthDate    time.Time `json:"birth_date" xml:"birth_date"`
@@ -17,6 +18,7 @@ type User struct {
 	EmailAddress string    `json:"email_address" xml:"email_address"`
 }
 
+// start User Entity interface OMIT
 func (u User) IDString() string {
 	return strconv.Itoa(u.ID)
 }
@@ -30,9 +32,15 @@ func (u *User) IDFromString(s string) error {
 	return nil
 }
 
+// end User Entity OMIT
+// end User Entity interface OMIT
+
+// start User Provider OMIT
 type UserProvider struct {
 	mem map[int]*User
 }
+
+// end User Provider OMIT
 
 func NewUserProvider() *UserProvider {
 	u := User{ID: 1, Name: "Jean", EmailAddress: "jean@example.com", BirthDate: time.Date(1900, time.November, 15, 0, 0, 0, 0, time.UTC)}
@@ -87,6 +95,7 @@ func (up *UserProvider) Delete(ctx context.Context, ent rip.Entity) error {
 	return nil
 }
 
+// start User Provider Update OMIT
 func (up *UserProvider) Update(ctx context.Context, u *User) error {
 	log.Printf("UpdateUser: %+v", u.IDString())
 	_, ok := up.mem[u.ID]
@@ -97,6 +106,8 @@ func (up *UserProvider) Update(ctx context.Context, u *User) error {
 
 	return nil
 }
+
+// end User Provider Update OMIT
 
 func (up UserProvider) ListAll(ctx context.Context) ([]*User, error) {
 	log.Printf("ListAllUser")

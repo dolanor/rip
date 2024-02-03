@@ -35,6 +35,11 @@ type Middleware func(http.HandlerFunc) http.HandlerFunc
 //	PUT    /entities/:id : updates the entity (needs to pass the full entity data)
 //	DELETE /entities/:id : deletes the entity
 //	GET    /entities/    : lists the entities
+//
+// It also handles fields
+//
+//	GET    /entities/:id/name : get only the name field of the entity
+//	PUT    /entities/:id/name : updates only the name entity field
 func HandleEntities[
 	Ent Entity,
 	EP EntityProvider[Ent],
@@ -43,13 +48,12 @@ func HandleEntities[
 	ep EP,
 	options *RouteOptions,
 ) (path string, handler http.HandlerFunc) {
+	// end HandleEntities OMIT
 	if options == nil {
 		options = defaultOptions
 	}
 	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.ListAll, options)
 }
-
-// end HandleEntities OMIT
 
 type (
 	createFunc[Ent any]         func(ctx context.Context, ent Ent) (Ent, error)
@@ -476,10 +480,10 @@ func Handle[
 	method string, f InputOutputFunc[Input, Output],
 	options *RouteOptions,
 ) http.HandlerFunc {
+	// end Handle OMIT
 	if options == nil {
 		options = defaultOptions
 	}
-	// end Handle OMIT
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
