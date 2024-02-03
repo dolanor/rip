@@ -11,6 +11,6 @@ var Codec = encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder, MimeTypes...)
 var MimeTypes = []string{
 	"text/vnd.yaml",
 	"text/yaml",
-	"text/-xyaml",
+	"text/x-yaml",
 	"application/x-yaml",
 }
