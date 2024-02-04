@@ -37,22 +37,24 @@ func (u *User) IDFromString(s string) error {
 
 // start User Provider OMIT
 type UserProvider struct {
-	mem map[int]*User
+	mem    map[int]*User
+	logger *log.Logger
 }
 
 // end User Provider OMIT
 
-func NewUserProvider() *UserProvider {
+func NewUserProvider(logger *log.Logger) *UserProvider {
 	u := User{ID: 1, Name: "Jean", EmailAddress: "jean@example.com", BirthDate: time.Date(1900, time.November, 15, 0, 0, 0, 0, time.UTC)}
 	return &UserProvider{
 		mem: map[int]*User{
 			u.ID: &u,
 		},
+		logger: logger,
 	}
 }
 
 func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
-	log.Printf("SaveUser: %+v", *u)
+	up.logger.Printf("SaveUser: %+v", *u)
 	id := rand.Intn(1000)
 	u.ID = id
 
@@ -61,7 +63,7 @@ func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 }
 
 func (up UserProvider) Get(ctx context.Context, ent rip.Entity) (*User, error) {
-	log.Printf("GetUser: %+v", ent.IDString())
+	up.logger.Printf("GetUser: %+v", ent.IDString())
 
 	if ent.IDString() == rip.NewEntityID {
 		return &User{}, nil
@@ -80,7 +82,7 @@ func (up UserProvider) Get(ctx context.Context, ent rip.Entity) (*User, error) {
 }
 
 func (up *UserProvider) Delete(ctx context.Context, ent rip.Entity) error {
-	log.Printf("DeleteUser: %+v", ent.IDString())
+	up.logger.Printf("DeleteUser: %+v", ent.IDString())
 	id, err := strconv.Atoi(ent.IDString())
 	if err != nil {
 		return err
@@ -97,7 +99,7 @@ func (up *UserProvider) Delete(ctx context.Context, ent rip.Entity) error {
 
 // start User Provider Update OMIT
 func (up *UserProvider) Update(ctx context.Context, u *User) error {
-	log.Printf("UpdateUser: %+v", u.IDString())
+	up.logger.Printf("UpdateUser: %+v", u.IDString())
 	_, ok := up.mem[u.ID]
 	if !ok {
 		return rip.ErrNotFound
@@ -110,7 +112,7 @@ func (up *UserProvider) Update(ctx context.Context, u *User) error {
 // end User Provider Update OMIT
 
 func (up UserProvider) ListAll(ctx context.Context) ([]*User, error) {
-	log.Printf("ListAllUser")
+	up.logger.Printf("ListAllUser")
 	var users []*User
 	for _, u := range up.mem {
 		u := u

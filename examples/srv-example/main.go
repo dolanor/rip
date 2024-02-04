@@ -47,9 +47,9 @@ func main() {
 	// end route option OMIT
 
 	// start HandleFuncEntities OMIT
-	up := memuser.NewUserProvider()
+	up := memuser.NewUserProvider(logger)
 
-	http.HandleFunc(rip.HandleEntities("/users/", up, nil))
+	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
 	// end HandleFuncEntities OMIT
 
 	fmt.Println("listening on " + hostPort)
