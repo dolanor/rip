@@ -14,6 +14,7 @@ import (
 	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/encoding/xml"
 	"github.com/dolanor/rip/examples/srv-example/memuser"
+	"github.com/gorilla/handlers"
 )
 
 const (
@@ -31,6 +32,9 @@ func main() {
 		hostPort += defaultPort
 	}
 
+	logWriter := &yellowWriter{w: os.Stderr}
+	logger := log.New(logWriter, "", log.LstdFlags)
+
 	// start route option OMIT
 	ro := rip.NewRouteOptions().
 		WithCodecs(
@@ -39,7 +43,7 @@ func main() {
 			html.Codec,
 			html.FormCodec,
 		).
-		WithMiddlewares(logHandler(os.Stdout))
+		WithMiddlewares(loggerMW(logWriter))
 	// end route option OMIT
 
 	// start HandleFuncEntities OMIT
@@ -63,4 +67,23 @@ func logHandler(w io.Writer) func(f http.HandlerFunc) http.HandlerFunc {
 			f(w, r)
 		}
 	}
+}
+
+func loggerMW(logOut io.Writer) func(http.HandlerFunc) http.HandlerFunc {
+	return func(hf http.HandlerFunc) http.HandlerFunc {
+		w := yellowWriter{w: logOut}
+		logHandler := handlers.LoggingHandler(&w, hf)
+		return logHandler.ServeHTTP
+	}
+}
+
+type yellowWriter struct {
+	w io.Writer
+}
+
+func (w *yellowWriter) Write(b []byte) (int, error) {
+	w.w.Write([]byte{27, 91, 51, 51, 109})
+	defer w.w.Write([]byte{27, 91, 48, 109})
+
+	return w.w.Write(b)
 }
