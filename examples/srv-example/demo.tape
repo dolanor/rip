@@ -74,6 +74,7 @@ Sleep 3s
 
 Ctrl+L
 Type `curl -s localhost:8888/users/ -X POST -H "Content-Type: application/json" -d '{ "name": "Kamel" }'` Sleep 500ms Enter
+Sleep 3s
 
 Ctrl+L
 Type "curl -s localhost:8888/users/ | gojq ." Sleep 500ms Enter
