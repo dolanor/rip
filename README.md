@@ -27,6 +27,11 @@ and it would generate all the necessary boilerplate to have some sane (IMO) HTTP
 //	PUT    /entities/:id : updates the entity (needs to pass the full entity data)
 //	DELETE /entities/:id : deletes the entity
 //	GET    /entities/    : lists the entities
+//
+// It also handles fields
+//
+//	GET    /entities/:id/name : get only the name field of the entity
+//	PUT    /entities/:id/name : updates only the name entity field
 
 ```
 
