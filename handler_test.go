@@ -37,6 +37,10 @@ func TestHandleResourceWithPath(t *testing.T) {
 	t.Log(ro.codecs)
 
 	for name, codec := range availableCodecs {
+		if name == "default_codec_key" {
+			// it's an internal logic, it's not a known mime type
+			t.Skip()
+		}
 		var b bytes.Buffer
 		err := codec.NewEncoder(&b).Encode(u)
 		panicErr(t, err)
