@@ -4,8 +4,8 @@ import "context"
 
 const NewEntityID = "rip-new-entity-id"
 
-// EntityCreater creates a resource that can be identified (an entity).
-type EntityCreater[Ent Entity] interface {
+// EntityCreator creates a resource that can be identified (an entity).
+type EntityCreator[Ent Entity] interface {
 	Create(ctx context.Context, ent Ent) (Ent, error)
 }
 
@@ -33,7 +33,7 @@ type EntityLister[Ent any] interface {
 
 // EntityProvider provides identifiable resources.
 type EntityProvider[Ent Entity] interface {
-	EntityCreater[Ent]
+	EntityCreator[Ent]
 	EntityGetter[Ent]
 	EntityUpdater[Ent]
 	EntityDeleter[Ent]
