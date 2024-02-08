@@ -193,7 +193,7 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 					return err
 				}
 
-				st := StructOf(ent)
+				st := structOf(ent)
 
 				fieldValue := st.FieldByNameFunc(func(s string) bool {
 					return strings.ToLower(s) == strings.ToLower(field)
@@ -322,7 +322,7 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 	return id, field, cleanedPath, contentType, accept, editMode, nil
 }
 
-func StructOf(v any) reflect.Value {
+func structOf(v any) reflect.Value {
 	val := reflect.ValueOf(v)
 	if val.Kind() == reflect.Pointer {
 		val = val.Elem()
@@ -382,7 +382,7 @@ func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], optio
 
 		var ret any = res
 		if field != "" {
-			st := StructOf(res)
+			st := structOf(res)
 			ret = FieldValue(st, field)
 		}
 
