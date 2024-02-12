@@ -24,7 +24,7 @@ type InputOutputFunc[
 
 // Middleware is an HTTP Middleware that you can add to your handler to handle specific actions like
 // logging, authentication, authorization, metrics, ….
-type Middleware func(http.HandlerFunc) http.HandlerFunc
+type Middleware = func(http.HandlerFunc) http.HandlerFunc
 
 // start HandleEntities OMIT
 

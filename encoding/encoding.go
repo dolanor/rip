@@ -44,7 +44,7 @@ type Codec struct {
 	MimeTypes  []string
 }
 
-type NewDecoderFunc func(r io.Reader) Decoder
+type NewDecoderFunc = func(r io.Reader) Decoder
 
 type Decoder interface {
 	Decode(v interface{}) error
@@ -59,7 +59,7 @@ func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) De
 	return decoder.NewDecoder(r)
 }
 
-type NewEncoderFunc func(w io.Writer) Encoder
+type NewEncoderFunc = func(w io.Writer) Encoder
 
 type Encoder interface {
 	Encode(v interface{}) error
