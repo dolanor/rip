@@ -9,15 +9,22 @@ import (
 	"net/http"
 )
 
+// ErrNoEncoderAvailable communicates that a codec is not available.
 var ErrNoEncoderAvailable = errors.New("codec not available")
 
+// EditMode allows to select an editable version of a codec.
+// eg. HTML Forms for HTML codec
 type EditMode bool
 
 const (
+	// EditOff indicates that the data is requested as read-only data.
 	EditOff EditMode = false
-	EditOn  EditMode = true
+
+	// EditOn indicates that the data is requested as editable data.
+	EditOn EditMode = true
 )
 
+// Codecs is a registry of codecs usually related to a route option.
 type Codecs struct {
 	Codecs           map[string]Codec
 	OrderedMimeTypes []string
@@ -25,6 +32,7 @@ type Codecs struct {
 
 const defaultCodecKey = "default_codec_key"
 
+// Register registers a new codec to the codec registry.
 func (c *Codecs) Register(codec Codec) {
 	_, ok := c.Codecs[defaultCodecKey]
 	if !ok {
@@ -37,19 +45,26 @@ func (c *Codecs) Register(codec Codec) {
 	}
 }
 
-
+// Codec combines an encoder, a decoder and a list of mime types.
 type Codec struct {
 	NewEncoder NewEncoderFunc
 	NewDecoder NewDecoderFunc
 	MimeTypes  []string
 }
 
+// NewDecoderFunc returns an decoder that reads from r.
 type NewDecoderFunc = func(r io.Reader) Decoder
 
+// Decoder decodes encoded value from a input stream.
 type Decoder interface {
+	// Decode decodes encoded value from the input stream into v.
 	Decode(v interface{}) error
 }
 
+// ContentTypeDecoder decodes the encoded data from r based on the Content-Type header value
+// and the codecs that are available.
+// If no codec is found, it falls back to JSON.
+// FIXME: use another fallback, maybe an error is better
 func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) Decoder {
 	decoder, ok := codecs.Codecs[contentTypeHeader]
 	if !ok {
@@ -59,24 +74,16 @@ func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) De
 	return decoder.NewDecoder(r)
 }
 
+// NewEncoderFunc returns an encoder that writes to w.
 type NewEncoderFunc = func(w io.Writer) Encoder
 
+// Encoder writes encoded value to an output stream.
 type Encoder interface {
+	// Encode writes the codec data of v to the output stream.
 	Encode(v interface{}) error
 }
 
-func WrapDecoder[D Decoder, F func(r io.Reader) D](f F) NewDecoderFunc {
-	return func(r io.Reader) Decoder {
-		return f(r)
-	}
-}
-
-func WrapEncoder[E Encoder, F func(w io.Writer) E](f F) NewEncoderFunc {
-	return func(w io.Writer) Encoder {
-		return f(w)
-	}
-}
-
+// WrapCodec is a helper that allows to easily wrap codecs from standard library into a rip codec.
 func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.Reader) D](encoderFunc EFunc, decoderFunc DFunc, mimeTypes ...string) Codec {
 	return Codec{
 		NewEncoder: func(w io.Writer) Encoder { return encoderFunc(w) },
@@ -85,6 +92,8 @@ func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.
 	}
 }
 
+// AcceptEncoder creates an new encoder for w based on the acceptHeader, the edit mode and
+// the codecs that are available.
 func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode, codecs Codecs) Encoder {
 	// TODO: add some hook to be able to tune this from the codec package
 	if acceptHeader == "text/html" && edit {
