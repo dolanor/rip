@@ -1,6 +1,7 @@
 package rip
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/dolanor/rip/encoding/json"
@@ -30,5 +31,26 @@ func TestChooseHeaderValue(t *testing.T) {
 				t.Fatalf("result not equal: got %v, expected %v", got, c.exp)
 			}
 		})
+	}
+}
+
+func TestBadHeaderQArgValue(t *testing.T) {
+	in := map[string][]string{"a": {"application/json; q=HAHA"}}
+	expErr := Error{Source: ErrorSource{Header: "a"}}
+
+	options := NewRouteOptions().WithCodecs(json.Codec, xml.Codec)
+	_, err := bestHeaderValue(in, "a", options.codecs.OrderedMimeTypes)
+	if err == nil {
+		t.Fatal(err)
+	}
+
+	var badQArgErr Error
+	if errors.As(err, &badQArgErr) {
+		if badQArgErr.Code != ErrorCodeBadQArg {
+			t.Fatal(err)
+		}
+		if badQArgErr.Source.Header != expErr.Source.Header {
+			t.Fatal(err)
+		}
 	}
 }
