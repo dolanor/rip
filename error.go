@@ -20,8 +20,8 @@ const (
 	// ErrorCodeNotImplemented is when the endpoint is not implemented.
 	ErrorCodeNotImplemented ErrorCode = http.StatusNotImplemented
 
-	// ErrorCodeBadQArg happens when a user gives a wrongly formatted header `; q=X.Y` argument.
-	ErrorCodeBadQArg ErrorCode = 499
+	// errorCodeBadQArg happens when a user gives a wrongly formatted header `; q=X.Y` argument.
+	errorCodeBadQArg ErrorCode = 499
 )
 
 var (
@@ -107,7 +107,7 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 	e.Detail = err.Error()
 
 	var bre badRequestError
-	if e.Code == ErrorCodeBadQArg || errors.As(err, &bre) {
+	if e.Code == errorCodeBadQArg || errors.As(err, &bre) {
 		e.Status = http.StatusBadRequest
 	}
 	var nfe notFoundError

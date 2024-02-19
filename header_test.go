@@ -46,7 +46,7 @@ func TestBadHeaderQArgValue(t *testing.T) {
 
 	var badQArgErr Error
 	if errors.As(err, &badQArgErr) {
-		if badQArgErr.Code != ErrorCodeBadQArg {
+		if badQArgErr.Code != errorCodeBadQArg {
 			t.Fatal(err)
 		}
 		if badQArgErr.Source.Header != expErr.Source.Header {
