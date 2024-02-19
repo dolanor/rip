@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/dolanor/rip/encoding"
 )
 
 type headerQ struct {
@@ -51,9 +53,8 @@ func bestHeaderValue(header http.Header, headerName string, serverPreferences []
 		return best, nil
 	}
 
-	// FIXME : use a pkg error
-	return "text/html", nil
-	// return "", errors.New("no client preferences value found")
+	// FIXME: return the available codec list, so it's discoverable (pass the route option?)
+	return "", encoding.ErrNoEncoderAvailable
 }
 
 func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) (string, bool) {
