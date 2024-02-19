@@ -3,10 +3,10 @@ package xml
 import (
 	"encoding/xml"
 
-	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
-var Codec = encoding.WrapCodec(xml.NewEncoder, xml.NewDecoder, MimeTypes...)
+var Codec = codecwrap.Wrap(xml.NewEncoder, xml.NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"application/xml",

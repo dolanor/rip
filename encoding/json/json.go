@@ -3,10 +3,10 @@ package json
 import (
 	"encoding/json"
 
-	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
-var Codec = encoding.WrapCodec(json.NewEncoder, json.NewDecoder, MimeTypes...)
+var Codec = codecwrap.Wrap(json.NewEncoder, json.NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"application/json",

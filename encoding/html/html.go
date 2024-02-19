@@ -5,10 +5,10 @@ import (
 	"errors"
 	"io"
 
-	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
-var Codec = encoding.WrapCodec(NewEncoder, NewDecoder, MimeTypes...)
+var Codec = codecwrap.Wrap(NewEncoder, NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"text/html",

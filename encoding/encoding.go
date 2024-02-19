@@ -47,13 +47,10 @@ func (c *Codecs) Register(codec Codec) {
 
 // Codec combines an encoder, a decoder and a list of mime types.
 type Codec struct {
-	NewEncoder NewEncoderFunc
-	NewDecoder NewDecoderFunc
+	NewEncoder func(w io.Writer) Encoder
+	NewDecoder func(r io.Reader) Decoder
 	MimeTypes  []string
 }
-
-// NewDecoderFunc returns an decoder that reads from r.
-type NewDecoderFunc = func(r io.Reader) Decoder
 
 // Decoder decodes encoded value from a input stream.
 type Decoder interface {
@@ -74,22 +71,10 @@ func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) De
 	return decoder.NewDecoder(r)
 }
 
-// NewEncoderFunc returns an encoder that writes to w.
-type NewEncoderFunc = func(w io.Writer) Encoder
-
 // Encoder writes encoded value to an output stream.
 type Encoder interface {
 	// Encode writes the codec data of v to the output stream.
 	Encode(v interface{}) error
-}
-
-// WrapCodec is a helper that allows to easily wrap codecs from standard library into a rip codec.
-func WrapCodec[E Encoder, EFunc func(w io.Writer) E, D Decoder, DFunc func(r io.Reader) D](encoderFunc EFunc, decoderFunc DFunc, mimeTypes ...string) Codec {
-	return Codec{
-		NewEncoder: func(w io.Writer) Encoder { return encoderFunc(w) },
-		NewDecoder: func(r io.Reader) Decoder { return decoderFunc(r) },
-		MimeTypes:  mimeTypes,
-	}
 }
 
 // AcceptEncoder creates an new encoder for w based on the acceptHeader, the edit mode and

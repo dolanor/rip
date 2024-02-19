@@ -11,11 +11,10 @@ import (
 	"time"
 
 	"github.com/ajg/form"
-
-	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
-var FormCodec = encoding.WrapCodec(NewFormEncoder, form.NewDecoder, FormMimeTypes...)
+var FormCodec = codecwrap.Wrap(NewFormEncoder, form.NewDecoder, FormMimeTypes...)
 
 var FormMimeTypes = []string{
 	"application/x-www-form-urlencoded",

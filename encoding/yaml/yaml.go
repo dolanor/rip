@@ -1,12 +1,11 @@
 package yaml
 
 import (
+	"github.com/dolanor/rip/encoding/codecwrap"
 	"gopkg.in/yaml.v3"
-
-	"github.com/dolanor/rip/encoding"
 )
 
-var Codec = encoding.WrapCodec(yaml.NewEncoder, yaml.NewDecoder, MimeTypes...)
+var Codec = codecwrap.Wrap(yaml.NewEncoder, yaml.NewDecoder, MimeTypes...)
 
 var MimeTypes = []string{
 	"text/vnd.yaml",
