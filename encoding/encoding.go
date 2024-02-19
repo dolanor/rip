@@ -2,7 +2,6 @@ package encoding
 
 import (
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -62,13 +61,13 @@ type Decoder interface {
 // and the codecs that are available.
 // If no codec is found, it falls back to JSON.
 // FIXME: use another fallback, maybe an error is better
-func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) Decoder {
+func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) (Decoder, error) {
 	decoder, ok := codecs.Codecs[contentTypeHeader]
 	if !ok {
-		return json.NewDecoder(r)
+		return nil, ErrNoEncoderAvailable
 	}
 
-	return decoder.NewDecoder(r)
+	return decoder.NewDecoder(r), nil
 }
 
 // Encoder writes encoded value to an output stream.

@@ -120,13 +120,23 @@ func checkPathID(requestPath, prefixPath string, id string) error {
 // decode use the content type to decode the data from r into t.
 func decode[T any](r io.Reader, contentType string, options *RouteOptions) (T, error) {
 	var t T
-	err := encoding.ContentTypeDecoder(r, contentType, options.codecs).Decode(&t)
+	decoder, err := encoding.ContentTypeDecoder(r, contentType, options.codecs)
+	if err != nil {
+		return t, err
+	}
+
+	err = decoder.Decode(&t)
 	return t, err
 }
 
 // decodeIn use the content type to decode the data from r into t (which should be a pointer).
 func decodeIn(t any, r io.Reader, contentType string, options *RouteOptions) (any, error) {
-	err := encoding.ContentTypeDecoder(r, contentType, options.codecs).Decode(t)
+	decoder, err := encoding.ContentTypeDecoder(r, contentType, options.codecs)
+	if err != nil {
+		return t, err
+	}
+
+	err = decoder.Decode(t)
 	return t, err
 }
 
@@ -200,7 +210,13 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 				})
 
 				var fieldData any
-				err = encoding.ContentTypeDecoder(r.Body, contentType, options.codecs).Decode(&fieldData)
+
+				decoder, err := encoding.ContentTypeDecoder(r.Body, contentType, options.codecs)
+				if err != nil {
+					return err
+				}
+
+				err = decoder.Decode(&fieldData)
 				if err != nil {
 					writeError(w, accept, fmt.Errorf("can decode entity field: %w", err), options)
 					return err
