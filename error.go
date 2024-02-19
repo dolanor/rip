@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/dolanor/rip/encoding"
@@ -94,10 +95,17 @@ func (e Error) Error() string {
 
 func writeError(w http.ResponseWriter, accept string, err error, options *RouteOptions) {
 	var e Error
+
 	if !errors.As(err, &e) {
 		e = Error{
 			Detail: err.Error(),
 		}
+	}
+
+	log.Println("dbgthe:", err)
+	if errors.Is(err, options.errorMap.NotFound) {
+		log.Println("dbgthe: is")
+		e.Status = http.StatusNotFound
 	}
 
 	if e.Status == 0 {

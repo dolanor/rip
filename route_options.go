@@ -25,6 +25,7 @@ var defaultOptions = newDefaultOptions()
 type RouteOptions struct {
 	middlewares []Middleware
 	codecs      encoding.Codecs
+	errorMap    ErrorMap
 }
 
 func NewRouteOptions() *RouteOptions {
@@ -46,6 +47,16 @@ func (ro *RouteOptions) WithCodecs(codecs ...encoding.Codec) *RouteOptions {
 func (ro *RouteOptions) WithMiddlewares(middlewares ...Middleware) *RouteOptions {
 	newRO := cloneRouteOptions(*ro)
 	newRO.middlewares = append(newRO.middlewares, middlewares...)
+	return &newRO
+}
+
+type ErrorMap struct {
+	NotFound error
+}
+
+func (ro *RouteOptions) WithErrors(errorMap ErrorMap) *RouteOptions {
+	newRO := cloneRouteOptions(*ro)
+	newRO.errorMap = errorMap
 	return &newRO
 }
 
