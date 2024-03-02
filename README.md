@@ -88,6 +88,11 @@ go run github.com/dolanor/rip/examples/srv-example@latest
 - middlewares
 - automatic generation of HTML forms for live editing of entities
 
+### Encoding
+
+You can add your own encoding for your own mime type (I plan on adding some domain type encoding for specific entities, see #13).
+It is quite easy to create if your encoding API follows generic standard library encoding packages like `encoding/json`. [Here is how `encoding/json` codec is implemented for RIP](encoding/json/json.go)
+
 ## Talks
 
 I gave a [talk at GoLab 2023](https://www.youtube.com/watch?v=_OgqCKrONX8).
