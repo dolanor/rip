@@ -88,10 +88,15 @@ go run github.com/dolanor/rip/examples/srv-example@latest
 - middlewares
 - automatic generation of HTML forms for live editing of entities
 
-## Talk
+## Talks
 
-I gave a talk at GoLab 2023.
+I gave a [talk at GoLab 2023](https://www.youtube.com/watch?v=_OgqCKrONX8).
+I presented it again at [FOSDEM 2024](https://www.youtube.com/watch?v=Z9DOhBCpQi4).
+
 The slides are [in my talks repository](https://github.com/dolanor/talks/blob/main/rip/rip.slide)
+
+(The FOSDEM talk present the more up-to-date API (per-route handler options), demo video (instead of live coding), + a live 3D demo, BUT, I couldn't display my note, so a lot of hesitation and parasite words, sorry about that)
+
 
 ## TODO
 
