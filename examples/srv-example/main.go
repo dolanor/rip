@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"log"
@@ -9,12 +10,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gorilla/handlers"
+	_ "modernc.org/sqlite"
+
 	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding/html"
 	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/encoding/xml"
 	"github.com/dolanor/rip/examples/srv-example/memuser"
-	"github.com/gorilla/handlers"
+	"github.com/dolanor/rip/examples/srv-example/sqluser"
 )
 
 const (
@@ -33,7 +37,7 @@ func main() {
 	}
 
 	logWriter := &yellowWriter{w: os.Stderr}
-	logger := log.New(logWriter, "", log.LstdFlags)
+	memLogger := log.New(logWriter, "inmem: ", log.LstdFlags)
 
 	// start route option OMIT
 	ro := rip.NewRouteOptions().
@@ -47,14 +51,27 @@ func main() {
 	// end route option OMIT
 
 	// start HandleFuncEntities OMIT
-	up := memuser.NewUserProvider(logger)
+	up := memuser.NewUserProvider(memLogger)
 
 	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
 	// end HandleFuncEntities OMIT
 
+	db, err := sql.Open("sqlite", "users.db")
+	if err != nil {
+		panic(err)
+	}
+
+	sqlLogger := log.New(logWriter, "sql: ", log.LstdFlags)
+	sup, err := sqluser.NewSQLUserProvider(db, sqlLogger)
+	if err != nil {
+		panic(err)
+	}
+
+	http.HandleFunc(rip.HandleEntities("/dbusers/", sup, ro))
+
 	fmt.Println("listening on " + hostPort)
 	go browse(hostPort)
-	err := http.ListenAndServe(hostPort, nil)
+	err = http.ListenAndServe(hostPort, nil)
 	if err != nil {
 		panic(err)
 	}
