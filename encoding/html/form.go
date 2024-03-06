@@ -11,10 +11,13 @@ import (
 	"time"
 
 	"github.com/ajg/form"
+	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
-var FormCodec = codecwrap.Wrap(NewFormEncoder, form.NewDecoder, FormMimeTypes...)
+func NewEntityFormCodec(pathPrefix string) encoding.Codec {
+	return codecwrap.Wrap(NewFormEncoder(pathPrefix), form.NewDecoder, FormMimeTypes...)
+}
 
 var FormMimeTypes = []string{
 	"application/x-www-form-urlencoded",
@@ -34,20 +37,24 @@ const editModeQueryParam = "mode=edit"
 var entityFormTmpl string
 
 type FormEncoder struct {
-	w io.Writer
+	w          io.Writer
+	pathPrefix string
 }
 
-func NewFormEncoder(w io.Writer) *FormEncoder {
-	return &FormEncoder{
-		w: w,
+func NewFormEncoder(pathPrefix string) func(w io.Writer) *FormEncoder {
+	return func(w io.Writer) *FormEncoder {
+		return &FormEncoder{
+			w:          w,
+			pathPrefix: pathPrefix,
+		}
 	}
 }
 
 func (e FormEncoder) Encode(v interface{}) error {
-	return htmlEncode(e.w, editOn, v)
+	return htmlEncode(e.pathPrefix, e.w, editOn, v)
 }
 
-func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
+func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) error {
 	err, ok := v.(error)
 	if err != nil {
 		// TODO: handle error better
@@ -81,6 +88,7 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 	}
 
 	pd := pageData{
+		PathPrefix: pathPrefix,
 		EntityName: entityName,
 		Entities:   entities,
 	}
@@ -93,10 +101,6 @@ func htmlEncode(w io.Writer, edit editMode, v interface{}) error {
 
 	tpl := template.New("entity").Funcs(template.FuncMap{
 		"toLower": strings.ToLower,
-		// FIXME: use real plural i18n lib
-		"toPlural": func(s string) string {
-			return s + "s"
-		},
 		"editModeQueryParam": func() string {
 			return editModeQueryParam
 		},
@@ -136,7 +140,7 @@ type entity struct {
 }
 
 type pageData struct {
-	PagePath   string
+	PathPrefix string
 	EntityName string
 
 	Entities []entity

@@ -5,10 +5,13 @@ import (
 	"errors"
 	"io"
 
+	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
-var Codec = codecwrap.Wrap(NewEncoder, NewDecoder, MimeTypes...)
+func NewEntityCodec(pathPrefix string) encoding.Codec {
+	return codecwrap.Wrap(NewEncoder(pathPrefix), NewDecoder, MimeTypes...)
+}
 
 var MimeTypes = []string{
 	"text/html",
@@ -32,15 +35,19 @@ func (e Decoder) Decode(v interface{}) error {
 }
 
 type Encoder struct {
-	w io.Writer
+	w          io.Writer
+	pathPrefix string
 }
 
-func NewEncoder(w io.Writer) *Encoder {
-	return &Encoder{
-		w: w,
+func NewEncoder(pathPrefix string) func(w io.Writer) *Encoder {
+	return func(w io.Writer) *Encoder {
+		return &Encoder{
+			w:          w,
+			pathPrefix: pathPrefix,
+		}
 	}
 }
 
 func (e Encoder) Encode(v interface{}) error {
-	return htmlEncode(e.w, editOff, v)
+	return htmlEncode(e.pathPrefix, e.w, editOff, v)
 }

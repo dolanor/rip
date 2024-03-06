@@ -1,18 +1,19 @@
 {{ define "entity" }}
+{{ $pathPrefix := .PathPrefix }}
 <html>
 	<head>
 		<meta charset="UTF-8">
 		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
 	</head>
 	<body>
-		<h2 id="entity-name"><a href="../{{ .EntityName | toLower | toPlural }}">{{ .EntityName }}</a></h2>
+		<h2 id="entity-name"><a href="{{ $pathPrefix }}">{{ .EntityName }}</a></h2>
 		{{ range $k, $v := .Entities }}
 			{{ $method := "put" }}
 			{{ if eq .ID 0 }}
 				{{ $method = "post" }}
-		<form class="entity" id="entity-{{ .ID }}" method="{{ $method }}" target="/{{ .Name | toLower | toPlural}}/">
+		<form class="entity" id="entity-{{ .ID }}" method="{{ $method }}" target="{{ $pathPrefix }}">
 			{{ else }}
-		<form class="entity" id="entity-{{ .ID }}" hx-{{ $method }}="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
+		<form class="entity" id="entity-{{ .ID }}" hx-{{ $method }}="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
 			{{ end }}
 			{{- range $f := $v.Fields }}
 				{{ if ne $f.Key "ID" }}
@@ -31,7 +32,7 @@
 			{{- end }}
 
 			<button class="btn btn-primary">Submit</button>
-			<button hx-get="/{{ .Name | toLower | toPlural}}/{{ .ID }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
+			<button hx-get="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
 		</form>
 		{{ end }}
 	</body>

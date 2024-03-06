@@ -44,8 +44,8 @@ func main() {
 		WithCodecs(
 			json.Codec,
 			xml.Codec,
-			html.Codec,
-			html.FormCodec,
+			html.NewEntityCodec("/users/"),
+			html.NewEntityFormCodec("/users/"),
 		).
 		WithMiddlewares(loggerMW(logWriter))
 	// end route option OMIT
@@ -67,7 +67,16 @@ func main() {
 		panic(err)
 	}
 
-	http.HandleFunc(rip.HandleEntities("/dbusers/", sup, ro))
+	sro := rip.NewRouteOptions().
+		WithCodecs(
+			json.Codec,
+			xml.Codec,
+			html.NewEntityCodec("/dbusers/"),
+			html.NewEntityFormCodec("/dbusers/"),
+		).
+		WithMiddlewares(loggerMW(logWriter))
+
+	http.HandleFunc(rip.HandleEntities("/dbusers/", sup, sro))
 
 	fmt.Println("listening on " + hostPort)
 	go browse(hostPort)
