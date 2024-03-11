@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gorilla/handlers"
 	_ "modernc.org/sqlite"
@@ -25,11 +23,6 @@ const (
 	defaultPort = "8888"
 )
 
-func uppercase(ctx context.Context, s string) (string, error) {
-	u := strings.ToUpper(s)
-	return u, nil
-}
-
 func main() {
 	hostPort := os.ExpandEnv("$HOST:$PORT")
 	if hostPort == ":" {
@@ -37,7 +30,7 @@ func main() {
 	}
 
 	logWriter := &yellowWriter{w: os.Stderr}
-	memLogger := log.New(logWriter, "inmem: ", log.LstdFlags)
+	memLogger := log.New(logWriter, "in-memory: ", log.LstdFlags)
 
 	// start route option OMIT
 	ro := rip.NewRouteOptions().
@@ -47,7 +40,7 @@ func main() {
 			html.NewEntityCodec("/users/"),
 			html.NewEntityFormCodec("/users/"),
 		).
-		WithMiddlewares(loggerMW(logWriter))
+		WithMiddlewares(loggerMiddleware(logWriter))
 	// end route option OMIT
 
 	// start HandleFuncEntities OMIT
@@ -67,16 +60,14 @@ func main() {
 		panic(err)
 	}
 
-	sro := rip.NewRouteOptions().
+	ro = ro.
 		WithCodecs(
-			json.Codec,
-			xml.Codec,
-			html.NewEntityCodec("/dbusers/"),
-			html.NewEntityFormCodec("/dbusers/"),
-		).
-		WithMiddlewares(loggerMW(logWriter))
+			// overwrite codec with another path
+			html.NewEntityCodec("/sqlusers/"),
+			html.NewEntityFormCodec("/sqlusers/"),
+		)
 
-	http.HandleFunc(rip.HandleEntities("/dbusers/", sup, sro))
+	http.HandleFunc(rip.HandleEntities("/sqlusers/", sup, ro))
 
 	fmt.Println("listening on " + hostPort)
 	go browse(hostPort)
@@ -86,23 +77,15 @@ func main() {
 	}
 }
 
-func logHandler(w io.Writer) func(f http.HandlerFunc) http.HandlerFunc {
-	return func(f http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("%s %s %d", r.Method, r.URL.Path, r.ContentLength)
-			f(w, r)
-		}
-	}
-}
-
-func loggerMW(logOut io.Writer) func(http.HandlerFunc) http.HandlerFunc {
+func loggerMiddleware(logOut io.Writer) func(http.HandlerFunc) http.HandlerFunc {
 	return func(hf http.HandlerFunc) http.HandlerFunc {
-		w := yellowWriter{w: logOut}
-		logHandler := handlers.LoggingHandler(&w, hf)
+		logHandler := handlers.LoggingHandler(logOut, hf)
 		return logHandler.ServeHTTP
 	}
 }
 
+// yellowWriter is just a io.Writer that writes in ANSI escape code
+// to write in yellow.
 type yellowWriter struct {
 	w io.Writer
 }
