@@ -340,7 +340,6 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 
 	id, field = getEntityField(urlPath, cleanedPath)
 
-	//return entityPath, field, accept, editMode, nil
 	return id, field, cleanedPath, contentType, accept, editMode, nil
 }
 
@@ -391,7 +390,6 @@ func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], optio
 			writeError(w, accept, err, options)
 			return
 		}
-		_ = field
 
 		var resID stringID
 		resID.IDFromString(id)
