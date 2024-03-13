@@ -12,7 +12,7 @@ import (
 func Example() {
 	up := newUserProvider()
 	ro := NewRouteOptions().
-		WithCodecs(json.Codec, html.Codec)
+		WithCodecs(json.Codec, html.NewEntityCodec("/users/"))
 	http.HandleFunc(HandleEntities("/users/", up, ro))
 
 	err := http.ListenAndServe(":8080", nil)
