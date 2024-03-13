@@ -37,14 +37,14 @@ func (up *UserProvider) Create(ctx context.Context, u *User) (*User, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, ent rip.Entity) (*User, error) {
-	up.logger.Printf("GetUser: %+v", ent.IDString())
+func (up UserProvider) Get(ctx context.Context, idString string) (*User, error) {
+	up.logger.Printf("GetUser: %+v", idString)
 
-	if ent.IDString() == rip.NewEntityID {
+	if idString == "" {
 		return &User{}, nil
 	}
 
-	id, err := strconv.Atoi(ent.IDString())
+	id, err := strconv.Atoi(idString)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,9 @@ func (up UserProvider) Get(ctx context.Context, ent rip.Entity) (*User, error) {
 	return u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, ent rip.Entity) error {
-	up.logger.Printf("DeleteUser: %+v", ent.IDString())
-	id, err := strconv.Atoi(ent.IDString())
+func (up *UserProvider) Delete(ctx context.Context, idString string) error {
+	up.logger.Printf("DeleteUser: %+v", idString)
+	id, err := strconv.Atoi(idString)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (up *UserProvider) Delete(ctx context.Context, ent rip.Entity) error {
 
 // start User Provider Update OMIT
 func (up *UserProvider) Update(ctx context.Context, u *User) error {
-	up.logger.Printf("UpdateUser: %+v", u.IDString())
+	up.logger.Printf("UpdateUser: %+v", u.ID)
 	_, ok := up.mem[u.ID]
 	if !ok {
 		return rip.ErrNotFound

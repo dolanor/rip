@@ -42,7 +42,7 @@ type Middleware = func(http.HandlerFunc) http.HandlerFunc
 //	GET    /entities/:id/name : get only the name field of the entity
 //	PUT    /entities/:id/name : updates only the name entity field
 func HandleEntities[
-	Ent Entity,
+	Ent any,
 	EP EntityProvider[Ent],
 ](
 	urlPath string,
@@ -63,14 +63,14 @@ func HandleEntities[
 }
 
 type (
-	createFunc[Ent any]         func(ctx context.Context, ent Ent) (Ent, error)
-	getFunc[ID Entity, Ent any] func(ctx context.Context, id ID) (Ent, error)
-	updateFunc[Ent any]         func(ctx context.Context, ent Ent) error
-	deleteFunc[ID Entity]       func(ctx context.Context, id Entity) error
-	listFunc[Ent any]           func(ctx context.Context) ([]Ent, error)
+	createFunc[Ent any] func(ctx context.Context, ent Ent) (Ent, error)
+	getFunc[Ent any]    func(ctx context.Context, idString string) (Ent, error)
+	updateFunc[Ent any] func(ctx context.Context, ent Ent) error
+	deleteFunc          func(ctx context.Context, id string) error
+	listFunc[Ent any]   func(ctx context.Context) ([]Ent, error)
 )
 
-func handleEntityWithPath[Ent Entity](urlPath string, create createFunc[Ent], get getFunc[Entity, Ent], update updateFunc[Ent], deleteFn deleteFunc[Entity], list listFunc[Ent], options *RouteOptions) (path string, handler http.HandlerFunc) {
+func handleEntityWithPath[Ent any](urlPath string, create createFunc[Ent], get getFunc[Ent], update updateFunc[Ent], deleteFn deleteFunc, list listFunc[Ent], options *RouteOptions) (path string, handler http.HandlerFunc) {
 	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -104,13 +104,10 @@ func handleEntityWithPath[Ent Entity](urlPath string, create createFunc[Ent], ge
 	return urlPath, handler
 }
 
-func resID(requestPath, prefixPath string) stringID {
+func resID(requestPath, prefixPath string) string {
 	pathID := strings.TrimPrefix(requestPath, prefixPath)
 
-	var resID stringID
-	resID.IDFromString(pathID)
-
-	return resID
+	return pathID
 }
 
 // decode use the content type to decode the data from r into t.
@@ -136,7 +133,8 @@ func decodeIn(t any, r io.Reader, contentType string, options *RouteOptions) (an
 	return t, err
 }
 
-func updateFieldInEntity[Ent Entity](entity Ent, fieldName string, fieldValue any) (err error) {
+// TODO: is it used? Delete?
+func updateFieldInEntity[Ent any](entity Ent, fieldName string, fieldValue any) (err error) {
 	defer func() {
 		rerr := recover()
 		if rerr != nil {
@@ -160,7 +158,7 @@ func updateFieldInEntity[Ent Entity](entity Ent, fieldName string, fieldValue an
 	return nil
 }
 
-func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get getFunc[Entity, Ent], options *RouteOptions) http.HandlerFunc {
+func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFunc[Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//TODO add edit mode on
 		id, field, _, contentType, accept, _, err := getIDAndEditMode(w, r, method, urlPath, options)
@@ -190,10 +188,8 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 						}
 					}
 				}()
-				var resID stringID
-				resID.IDFromString(id)
 
-				ent, err = get(r.Context(), &resID)
+				ent, err = get(r.Context(), id)
 				if err != nil {
 					writeError(w, accept, fmt.Errorf("can get original entity: %w", err), options)
 					return err
@@ -229,12 +225,6 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 			}
 		}
 
-		if ent.IDString() != id {
-			err = Error{Status: http.StatusBadRequest, Detail: fmt.Sprintf("ID from URL (%s) doesn't match ID in entity (%s)", ent.IDString(), id)}
-			writeError(w, accept, fmt.Errorf("incompatible entity id VS path ID: %w", err), options)
-			return
-		}
-
 		// To update a field, we need to get the entity first, then reflect on it to get the field and change it
 		// then we can update the whole entity with updateFunc
 		err = f(r.Context(), ent)
@@ -256,7 +246,7 @@ func updatePathID[Ent Entity](urlPath, method string, f updateFunc[Ent], get get
 	}
 }
 
-func deletePathID(urlPath, method string, f deleteFunc[Entity], options *RouteOptions) http.HandlerFunc {
+func deletePathID(urlPath, method string, f deleteFunc, options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
 		if err != nil {
@@ -271,7 +261,7 @@ func deletePathID(urlPath, method string, f deleteFunc[Entity], options *RouteOp
 		}
 
 		// we don't need the returning entity, it's mostly a no-op
-		err = f(r.Context(), &rID)
+		err = f(r.Context(), rID)
 		if err != nil {
 			var e Error
 			if errors.As(err, &e) {
@@ -324,7 +314,6 @@ func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, url
 
 	id = strings.TrimPrefix(cleanedPath, urlPath)
 	if id == "" {
-		id = NewEntityID
 		return id, field, cleanedPath, contentType, accept, editMode, err
 	}
 
@@ -373,7 +362,7 @@ func fieldValue(st reflect.Value, field string) any {
 	}
 }
 
-func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], options *RouteOptions) http.HandlerFunc {
+func handleGet[Ent any](urlPath, method string, f getFunc[Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, field, _, _, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath, options)
 		if err != nil {
@@ -381,10 +370,7 @@ func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], optio
 			return
 		}
 
-		var resID stringID
-		resID.IDFromString(id)
-
-		res, err := f(r.Context(), &resID)
+		res, err := f(r.Context(), id)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
@@ -426,7 +412,7 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 	}
 }
 
-func handleCreate[Ent Entity](method, urlPath string, f createFunc[Ent], options *RouteOptions) http.HandlerFunc {
+func handleCreate[Ent any](method, urlPath string, f createFunc[Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, "bad method", http.StatusMethodNotAllowed)
@@ -443,11 +429,6 @@ func handleCreate[Ent Entity](method, urlPath string, f createFunc[Ent], options
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
-		}
-
-		var newEntity bool
-		if res.IDString() == "0" {
-			newEntity = true
 		}
 
 		res, err = f(r.Context(), res)
@@ -467,10 +448,6 @@ func handleCreate[Ent Entity](method, urlPath string, f createFunc[Ent], options
 			return
 		}
 
-		if newEntity {
-			http.Redirect(w, r, path.Join(urlPath, res.IDString()), http.StatusSeeOther)
-			return
-		}
 		w.WriteHeader(http.StatusCreated)
 
 		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(res)

@@ -58,7 +58,7 @@ func (e FormEncoder) Encode(v interface{}) error {
 }
 
 func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) error {
-	err := v.(error)
+	err, _ := v.(error)
 	if err != nil {
 		// TODO: handle error better
 		w.Write([]byte(err.Error()))

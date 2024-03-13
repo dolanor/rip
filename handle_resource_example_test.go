@@ -52,21 +52,21 @@ func (up *UserProvider) Create(ctx context.Context, u *user) (*user, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, entity Entity) (*user, error) {
-	u, ok := up.mem[entity.IDString()]
+func (up UserProvider) Get(ctx context.Context, idString string) (*user, error) {
+	u, ok := up.mem[idString]
 	if !ok {
 		return &user{}, ErrNotFound
 	}
 	return &u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, entity Entity) error {
-	_, ok := up.mem[entity.IDString()]
+func (up *UserProvider) Delete(ctx context.Context, idString string) error {
+	_, ok := up.mem[idString]
 	if !ok {
 		return ErrNotFound
 	}
 
-	delete(up.mem, entity.IDString())
+	delete(up.mem, idString)
 	return nil
 }
 
