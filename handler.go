@@ -346,7 +346,7 @@ func structOf(v any) reflect.Value {
 	return val
 }
 
-func FieldValue(st reflect.Value, field string) any {
+func fieldValue(st reflect.Value, field string) any {
 	val := st.FieldByNameFunc(func(f string) bool {
 		if strings.ToLower(f) != strings.ToLower(field) {
 			return false
@@ -399,7 +399,7 @@ func handleGet[Ent Entity](urlPath, method string, f getFunc[Entity, Ent], optio
 		var ret any = res
 		if field != "" {
 			st := structOf(res)
-			ret = FieldValue(st, field)
+			ret = fieldValue(st, field)
 		}
 
 		err = encoding.AcceptEncoder(w, accept, editMode, options.codecs).Encode(ret)
