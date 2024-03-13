@@ -16,6 +16,7 @@ import (
 // start BackendFunc OMIT
 
 // InputOutputFunc is a function that takes a ctx and an input, and it can return an output or an err.
+// It should model any generic backend function that takes input, processes it and returns an output or an error.
 type InputOutputFunc[
 	Input, Output any,
 ] func(ctx context.Context, input Input) (output Output, err error)

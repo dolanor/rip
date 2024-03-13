@@ -2,6 +2,8 @@ package rip
 
 import "context"
 
+// NewEntityID is needed to know if an entity is a new one not created by the
+// EntityProvider yet.
 const NewEntityID = "rip-new-entity-id"
 
 // EntityCreator creates a resource that can be identified (an entity).
