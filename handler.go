@@ -112,17 +112,6 @@ func resID(requestPath, prefixPath string) stringID {
 	return resID
 }
 
-// TODO(dol): delete?
-func checkPathID(requestPath, prefixPath string, id string) error {
-	rID := resID(requestPath, prefixPath)
-
-	if rID.IDString() != id {
-		return Error{Status: http.StatusBadRequest, Detail: fmt.Sprintf("ID from URL (%s) doesn't match ID in entity (%s)", rID.IDString(), id)}
-	}
-
-	return nil
-}
-
 // decode use the content type to decode the data from r into t.
 func decode[T any](r io.Reader, contentType string, options *RouteOptions) (T, error) {
 	var t T

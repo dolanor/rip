@@ -24,6 +24,5 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Detail: fmt.Sprintf("bad content type header format: %v", err)}
 	}
 
-	// TODO add test for accept ""
 	return urlPath, accept, contentType, nil
 }

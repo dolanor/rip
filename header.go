@@ -14,8 +14,6 @@ type headerQ struct {
 }
 
 func bestHeaderValue(header http.Header, headerName string, serverPreferences []string) (string, error) {
-	// By default, we choose application/json
-	// TODO maybe switch to text/html if it's implemented
 	clientPreferences, err := headerValues(headerName, header[headerName])
 	if err != nil {
 		return "", err
