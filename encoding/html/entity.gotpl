@@ -43,7 +43,7 @@
 					{{ end }}
 				{{- end }}
 
-					<button hx-get="{{ $pathPrefix }}{{ .ID }}.html?{{ editModeQueryParam }}" class="btn btn-primary" style="font-size: 2em;">&#9998;</button>
+					<button hx-get="{{ $pathPrefix }}{{ .ID }}?{{ editModeQueryParam }}" hx-headers='{"Accept": "text/html"}' class="btn btn-primary" style="font-size: 2em;">&#9998;</button>
 					<button hx-delete="{{ $pathPrefix }}{{ .ID }}" hx-confirm="Are you sure you want to delete it?" class="btn btn-primary" style="font-size: 2em;">&#128465;</button>
 				</div>
 			</p>
