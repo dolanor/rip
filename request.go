@@ -14,6 +14,11 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		return "", "", "", Error{Status: http.StatusMethodNotAllowed, Detail: "bad method"}
 	}
 
+	if reqMethod == http.MethodGet {
+		// We can ignore content type as there should be no body for a GET
+		return urlPath, accept, contentType, nil
+	}
+
 	contentType, err = bestHeaderValue(header, "Content-Type", options.codecs.OrderedMimeTypes)
 	if err != nil {
 		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Detail: fmt.Sprintf("bad content type header format: %v", err)}
