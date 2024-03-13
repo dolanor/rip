@@ -18,7 +18,6 @@ func TestPreprocessRequest(t *testing.T) {
 	rURLPath := "/whatever/entity/id"
 
 	options := NewRouteOptions().WithCodecs(json.Codec, xml.Codec)
-	// TODO: add some .xml/.json/.html
 	_, accept, contentType, err := preprocessRequest(rMethod, hMethod, h, rURLPath, options)
 	if err != nil {
 		t.Fatal(err)
