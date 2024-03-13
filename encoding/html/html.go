@@ -9,7 +9,9 @@ import (
 	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
+// NewEntityCodec creates a HTML codec that uses pathPrefix for links creation.
 func NewEntityCodec(pathPrefix string) encoding.Codec {
+	// TODO: should have a better design so the path shouldn't be passed many times around.
 	return codecwrap.Wrap(NewEncoder(pathPrefix), NewDecoder, MimeTypes...)
 }
 
