@@ -52,6 +52,12 @@ func HandleEntities[
 	if options == nil {
 		options = defaultOptions
 	}
+
+	if len(options.codecs.Codecs) == 0 {
+		err := fmt.Sprintf("no codecs defined on route: %s", urlPath)
+		panic(err)
+	}
+
 	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.ListAll, options)
 }
 
