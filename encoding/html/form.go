@@ -16,7 +16,7 @@ import (
 )
 
 // NewEntityFormCodec creates a HTML Form codec that uses pathPrefix for links creation.
-// It will generate a form with editable inputs for each field of your [rip.Entity].
+// It will generate a form with editable inputs for each field of your [github.com/dolanor/rip.Entity].
 func NewEntityFormCodec(pathPrefix string) encoding.Codec {
 	// TODO: should have a better design so the path shouldn't be passed many times around.
 	return codecwrap.Wrap(NewFormEncoder(pathPrefix), form.NewDecoder, FormMimeTypes...)
