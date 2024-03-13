@@ -8,7 +8,7 @@ import (
 func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string, options *RouteOptions) (cleanedPath string, accept, contentType string, err error) {
 	accept, err = bestHeaderValue(header, "Accept", options.codecs.OrderedMimeTypes)
 	if err != nil {
-		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Detail: fmt.Sprintf("bad accept header format: %v", err)}
+		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Detail: fmt.Sprintf("bad accept header format: %v, codecs available: %v", err, options.codecs.OrderedMimeTypes)}
 	}
 	if reqMethod != handlerMethod {
 		return "", "", "", Error{Status: http.StatusMethodNotAllowed, Detail: "bad method"}
