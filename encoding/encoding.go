@@ -59,8 +59,7 @@ type Decoder interface {
 
 // ContentTypeDecoder decodes the encoded data from r based on the Content-Type header value
 // and the codecs that are available.
-// If no codec is found, it falls back to JSON.
-// FIXME: use another fallback, maybe an error is better
+// If no codec is found, it returns a [ErrNoEncoderAvailable].
 func ContentTypeDecoder(r io.Reader, contentTypeHeader string, codecs Codecs) (Decoder, error) {
 	decoder, ok := codecs.Codecs[contentTypeHeader]
 	if !ok {
