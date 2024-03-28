@@ -5,7 +5,7 @@
 		<meta charset="UTF-8">
 		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
 		<style type="text/css">
-.label {
+label {
 	font-weight: bold;
 }
 
@@ -33,12 +33,12 @@
 				<div class="entity" id="entity-{{ .ID }}" hx-target="this" hx-select=".entity" hx-swap="outerHTML">
 				{{- range $v := .Fields }}
 					{{ if eq $v.Key "ID" }}
-					<div><label class="label">{{ $v.Key }}</label>: <a href="{{ $v.Value }}">{{ $v.Value }}</a></div>
+					<div><label>{{ $v.Key }}</label>: <a href="{{ $v.Value }}">{{ $v.Value }}</a></div>
 					{{ else }}
 						{{ if eq $v.Type "time.Time" }}
-					<div><label class="label">{{ $v.Key }}</label>: <time datetime="{{ $v.Value }}">{{$v.Value}}<time></div>
+					<div><label>{{ $v.Key }}</label>: <time datetime="{{ $v.Value }}">{{$v.Value}}<time></div>
 						{{ else }}
-					<div><label class="label">{{ $v.Key }}</label>: {{ $v.Value }}</div>
+					<div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div>
 						{{ end }}
 					{{ end }}
 				{{- end }}
