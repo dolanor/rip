@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/dolanor/rip/encoding"
 )
@@ -89,8 +89,36 @@ type ErrorSource struct {
 	Header string `json:"header,omitempty"`
 }
 
+// ErrorSourcePointer allows for a user to document the request header that is creating the error.
+type ErrorSourceHeader interface {
+	// ErrorSourceHeader returns the request header name that is creating the error.
+	//
+	// e.g.: "X-App-My-Header" for an HTTP request with this header
+	ErrorSourceHeader() string
+}
+
+// ErrorSourcePointer allows for a user to document the query parameter that is creating the error.
+type ErrorSourceParameter interface {
+	// ErrorSourceParameter returns the query parameter name that is creating the error.
+	//
+	// e.g.: "page" for a http://host/users/?page=2
+	ErrorSourceParameter() string
+}
+
+// ErrorSourcePointer allows for a user to document the field that is creating the error.
+type ErrorSourcePointer interface {
+	// ErrorSourcePointer returns the data field name that is creating the error.
+	//
+	// e.g.: "OwnerID" for a
+	//
+	//	type Asset struct {
+	//		OwnerID int
+	//	}
+	ErrorSourcePointer() string
+}
+
 func (e Error) Error() string {
-	return fmt.Sprintf("%d - %s", e.Code, e.Detail)
+	return fmt.Sprintf("%d - %s - %s", e.Code, e.Detail, e.Source)
 }
 
 func writeError(w http.ResponseWriter, accept string, err error, options *RouteOptions) {
@@ -102,11 +130,11 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 		}
 	}
 
-	log.Println("dbgthe:", err)
 	if errors.Is(err, options.errorMap.NotFound) {
-		log.Println("dbgthe: is")
 		e.Status = http.StatusNotFound
 	}
+
+	e.Source = extractErrorsSource(err)
 
 	if e.Status == 0 {
 		e.Status = http.StatusInternalServerError
@@ -184,4 +212,50 @@ type ErrorLink struct {
 
 	// HRefLang indicates the language(s) of the link’s target. An array of strings indicates that the link’s target is available in multiple languages. Each string MUST be a valid language tag [RFC5646].
 	HRefLang []string `json:"hreflang,omitempty"`
+}
+
+func extractErrorsSource(err error) ErrorSource {
+	var errorSource ErrorSource
+
+	// use the Unwrap() []error from an errors.Join() just in case
+	errs, ok := err.(interface{ Unwrap() []error })
+	if ok {
+		for _, err := range errs.Unwrap() {
+			errorSource = extractErrorSource(errorSource, err)
+		}
+	} else {
+		errorSource = extractErrorSource(errorSource, err)
+	}
+
+	return errorSource
+
+}
+
+func extractErrorSource(errorSource ErrorSource, err error) ErrorSource {
+	eType := reflect.TypeOf(err)
+
+	_, ok := eType.MethodByName("ErrorSourceHeader")
+	if ok {
+		var esh ErrorSourceHeader
+		if errors.As(err, &esh) {
+			errorSource.Header = esh.ErrorSourceHeader()
+		}
+	}
+
+	_, ok = eType.MethodByName("ErrorSourceParameter")
+	if ok {
+		var esp ErrorSourceParameter
+		if errors.As(err, &esp) {
+			errorSource.Parameter = esp.ErrorSourceParameter()
+		}
+	}
+
+	_, ok = eType.MethodByName("ErrorSourcePointer")
+	if ok {
+		var esp ErrorSourcePointer
+		if errors.As(err, &esp) {
+			errorSource.Pointer = esp.ErrorSourcePointer()
+		}
+	}
+	return errorSource
 }
