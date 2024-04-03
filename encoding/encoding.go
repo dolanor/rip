@@ -29,13 +29,13 @@ type Codecs struct {
 	OrderedMimeTypes []string
 }
 
-const defaultCodecKey = "default_codec_key"
+const DefaultCodecKey = "default_codec_key"
 
 // Register registers a new codec to the codec registry.
 func (c *Codecs) Register(codec Codec) {
-	_, ok := c.Codecs[defaultCodecKey]
+	_, ok := c.Codecs[DefaultCodecKey]
 	if !ok {
-		c.Codecs[defaultCodecKey] = codec
+		c.Codecs[DefaultCodecKey] = codec
 	}
 
 	for _, mime := range codec.MimeTypes {
@@ -89,11 +89,7 @@ func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode, co
 
 	encoder, ok := codecs.Codecs[acceptHeader]
 	if !ok {
-		encoder, ok := codecs.Codecs[defaultCodecKey]
-		if !ok {
-			return &noEncoder{missingEncoder: "default"}
-		}
-		return encoder.NewEncoder(w)
+		return &noEncoder{missingEncoder: "default"}
 	}
 
 	return encoder.NewEncoder(w)

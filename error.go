@@ -1,11 +1,11 @@
 package rip
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/dolanor/rip/encoding"
 )
@@ -146,25 +146,24 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 	if e.Code == errorCodeBadQArg || errors.As(err, &bre) {
 		e.Status = http.StatusBadRequest
 	}
+
 	var nfe notFoundError
 	if e.Code == ErrorCodeNotFound || errors.As(err, &nfe) {
 		e.Status = http.StatusNotFound
 	}
+
 	if errors.Is(err, encoding.ErrNoEncoderAvailable) {
 		e.Status = http.StatusNotAcceptable
+		e.Detail = fmt.Sprintf("Accept header cannot be satisfied: enabled content types for this route: %v", options.codecs.OrderedMimeTypes)
+		accept = strings.Join(options.codecs.Codecs[encoding.DefaultCodecKey].MimeTypes, "; ")
 	}
 
 	encoder := encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs)
-	if e.Status == http.StatusNotAcceptable {
-		// if we have encoding problems, we will use json as default
-		// to serialize the error to user
-		encoder = json.NewEncoder(w)
-	}
 
 	w.WriteHeader(e.Status)
 	err = encoder.Encode(e)
-	// We can't do anything, we need to make the HTTP server intercept the panic
 	if err != nil {
+		// We can't do anything, we need to make the HTTP server intercept the panic
 		panic(err)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/encoding/msgpack"
 	"github.com/dolanor/rip/encoding/xml"
@@ -41,7 +42,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 		err := codec.NewEncoder(&b).Encode(u)
 		panicErr(t, err)
 		t.Run(name, func(t *testing.T) {
-			if name == "default_codec_key" {
+			if name == encoding.DefaultCodecKey {
 				// it's an internal logic, it's not a known mime type
 				t.Skip("skipping default codec key")
 			}
