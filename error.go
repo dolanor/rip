@@ -158,6 +158,13 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 		accept = strings.Join(options.codecs.Codecs[encoding.DefaultCodecKey].MimeTypes, "; ")
 	}
 
+	// if no acceptable codec is chosen, we will write to the client in the default codec available.
+	// There should be one at least, otherwise it would have paniced when configuring the route options
+	// codecs.
+	if accept == "" {
+		accept = encoding.DefaultCodecKey
+	}
+
 	encoder := encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs)
 
 	w.WriteHeader(e.Status)

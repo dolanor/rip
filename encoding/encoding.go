@@ -89,7 +89,7 @@ func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode, co
 
 	encoder, ok := codecs.Codecs[acceptHeader]
 	if !ok {
-		return &noEncoder{missingEncoder: "default"}
+		return &noEncoder{missingEncoder: acceptHeader}
 	}
 
 	return encoder.NewEncoder(w)
