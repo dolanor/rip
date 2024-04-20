@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-type headerQ struct {
-	Value string
-	Q     float32
+type headerChoice struct {
+	Value         string
+	QualityFactor float32
 }
 
-func bestHeaderValue(header http.Header, headerName string, serverPreferences []string) (string, error) {
-	clientPreferences, err := headerValues(headerName, header[headerName])
+func contentNegociateBestHeaderValue(header http.Header, headerName string, serverPreferences []string) (string, error) {
+	clientPreferences, err := headerChoices(headerName, header[headerName])
 	if err != nil {
 		return "", err
 	}
@@ -26,14 +26,14 @@ func bestHeaderValue(header http.Header, headerName string, serverPreferences []
 			clientPreferences = clientPreferences[1:]
 		} else {
 			// Otherwise, we just declare we have no preferences
-			clientPreferences = []headerQ{}
+			clientPreferences = []headerChoice{}
 		}
 	}
 
 	if len(clientPreferences) == 0 {
 		// check in request Content-Type
 		headerName := "Content-Type"
-		clientPreferences, err = headerValues(headerName, header[headerName])
+		clientPreferences, err = headerChoices(headerName, header[headerName])
 		if err != nil {
 			return "", err
 		}
@@ -47,7 +47,7 @@ func bestHeaderValue(header http.Header, headerName string, serverPreferences []
 	return "", nil
 }
 
-func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) (string, bool) {
+func matchHeaderValue(clientPreferences []headerChoice, serverPreferences []string) (string, bool) {
 	for _, c := range clientPreferences {
 		for _, s := range serverPreferences {
 			// we found a match
@@ -59,50 +59,63 @@ func matchHeaderValue(clientPreferences []headerQ, serverPreferences []string) (
 	return "", false
 }
 
-func headerValues(headerName string, header []string) ([]headerQ, error) {
-	var hqs []headerQ
+// headerChoices parse headerName values and sort them by their quality q preferences.
+//
+// eg. header of text/html; q=0.2, text/xml; q=0.6, application/json; q=0.4
+// will return: [ {text/xml, 0.6}, {application/json, 0.4}, {text/html, 0.2} ]
+func headerChoices(headerName string, header []string) ([]headerChoice, error) {
+	var headerChoices []headerChoice
 	for _, h := range header {
-		for _, aQStrs := range strings.Split(h, ",") {
-			aQStrs = strings.TrimSpace(aQStrs)
-			aQ := strings.Split(aQStrs, ";")
-			if len(aQ) == 1 {
-				hq := headerQ{Value: aQ[0], Q: 1.0}
-				hqs = append(hqs, hq)
+		for _, choiceStrs := range strings.Split(h, ",") {
+			choiceStrs = strings.TrimSpace(choiceStrs)
+			choiceAndQuality := strings.Split(choiceStrs, ";")
+			choiceValue := choiceAndQuality[0]
+
+			if len(choiceAndQuality) == 1 {
+				choice := headerChoice{Value: choiceValue, QualityFactor: 1.0}
+				headerChoices = append(headerChoices, choice)
 			} else {
-				var hasQ bool
-				for _, v := range aQ[1:] {
-					qp := strings.Split(v, "=")
-					if len(qp) < 2 {
+				choiceOptions := choiceAndQuality[1:]
+
+				var hasQuality bool
+
+				for _, opt := range choiceOptions {
+					qualityAndPercent := strings.Split(opt, "=")
+					if len(qualityAndPercent) < 2 {
 						continue
 					}
-					if strings.TrimSpace(qp[0]) != "q" {
+
+					if strings.TrimSpace(qualityAndPercent[0]) != "q" {
 						continue
 					}
-					hasQ = true
-					q, err := strconv.ParseFloat(qp[1], 32)
+
+					hasQuality = true
+					percentStr := qualityAndPercent[1]
+					quality, err := strconv.ParseFloat(percentStr, 32)
 					if err != nil {
-						err := fmt.Errorf("parsing q value in header %v of %v: %w", headerName, aQStrs, err)
-						return hqs, Error{Code: errorCodeBadQArg, Detail: err.Error(), Source: ErrorSource{Header: headerName}}
+						err := fmt.Errorf("parsing q value in header %v of %v: %w", headerName, choiceStrs, err)
+						return headerChoices, Error{Code: errorCodeBadQArg, Detail: err.Error(), Source: ErrorSource{Header: headerName}}
 					}
-					hq := headerQ{Value: aQ[0], Q: float32(q)}
-					hqs = append(hqs, hq)
+					choice := headerChoice{Value: choiceValue, QualityFactor: float32(quality)}
+					headerChoices = append(headerChoices, choice)
 				}
-				if !hasQ {
-					hq := headerQ{Value: aQ[0], Q: 1.0}
-					hqs = append(hqs, hq)
+
+				if !hasQuality {
+					choice := headerChoice{Value: choiceValue, QualityFactor: 1.0}
+					headerChoices = append(headerChoices, choice)
 				}
 			}
 		}
 	}
 
-	if len(hqs) == 0 {
-		return hqs, nil
+	if len(headerChoices) == 0 {
+		return headerChoices, nil
 	}
 
 	// TODO the: sort during slice creation
-	sort.Slice(hqs, func(a, b int) bool {
-		return hqs[a].Q > hqs[b].Q
+	sort.Slice(headerChoices, func(a, b int) bool {
+		return headerChoices[a].QualityFactor > headerChoices[b].QualityFactor
 	})
 
-	return hqs, nil
+	return headerChoices, nil
 }

@@ -419,7 +419,7 @@ func handleCreate[Ent any](method, urlPath string, f createFunc[Ent], options *R
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
+		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -442,7 +442,7 @@ func handleCreate[Ent any](method, urlPath string, f createFunc[Ent], options *R
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -477,7 +477,7 @@ func Handle[
 			return
 		}
 
-		contentType, err := bestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
+		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -500,7 +500,7 @@ func Handle[
 			return
 		}
 
-		accept, err := bestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
 		if err != nil {
 			http.Error(w, "bad content type header format", http.StatusBadRequest)
 			return
@@ -515,7 +515,7 @@ func Handle[
 
 func badMethodHandler(w http.ResponseWriter, r *http.Request, options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, err := bestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
 		if err != nil {
 			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), options)
 			return
