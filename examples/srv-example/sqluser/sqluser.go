@@ -27,45 +27,45 @@ func NewSQLUserProvider(db *sql.DB, logger *log.Logger) (*SQLUserProvider, error
 	}, nil
 }
 
-func (up *SQLUserProvider) Create(ctx context.Context, u *User) (*User, error) {
-	up.logger.Printf("SaveUser: %+v", *u)
+func (up *SQLUserProvider) Create(ctx context.Context, u User) (User, error) {
+	up.logger.Printf("SaveUser: %+v", u)
 
 	res, err := up.db.Exec("INSERT INTO users(name) values(?)", u.Name)
 	if err != nil {
-		return nil, err
+		return User{}, err
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return nil, err
+		return User{}, err
 	}
 	u.ID = int(id)
 	return u, nil
 }
 
-func (up *SQLUserProvider) Get(ctx context.Context, idString string) (*User, error) {
+func (up *SQLUserProvider) Get(ctx context.Context, idString string) (User, error) {
 	up.logger.Printf("GetUser: %+v", idString)
 	if idString == "" {
-		return &User{}, nil
+		return User{}, nil
 	}
 
 	id, err := strconv.Atoi(idString)
 	if err != nil {
-		return nil, err
+		return User{}, err
 	}
 
 	rows := up.db.QueryRow("SELECT id, name FROM users WHERE id = ?", id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, rip.ErrNotFound
+			return User{}, rip.ErrNotFound
 		}
-		return nil, err
+		return User{}, err
 	}
 	u := User{}
 	err = rows.Scan(&u.ID, &u.Name)
 	if err != nil {
-		return nil, err
+		return User{}, err
 	}
-	return &u, nil
+	return u, nil
 }
 
 func (up *SQLUserProvider) Delete(ctx context.Context, idString string) error {
@@ -85,7 +85,7 @@ func (up *SQLUserProvider) Delete(ctx context.Context, idString string) error {
 	return nil
 }
 
-func (up *SQLUserProvider) Update(ctx context.Context, u *User) error {
+func (up *SQLUserProvider) Update(ctx context.Context, u User) error {
 	up.logger.Printf("UpdateUser: %+v", u.IDString())
 	_, err := up.db.Exec("UPDATE users SET name = ? WHERE id = ?", u.Name, u.ID)
 	if err != nil {
@@ -98,9 +98,9 @@ func (up *SQLUserProvider) Update(ctx context.Context, u *User) error {
 	return nil
 }
 
-func (up SQLUserProvider) ListAll(ctx context.Context) ([]*User, error) {
+func (up SQLUserProvider) ListAll(ctx context.Context) ([]User, error) {
 	up.logger.Printf("ListAllUser")
-	var users []*User
+	var users []User
 	rows, err := up.db.Query("SELECT id, name FROM users")
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -115,7 +115,7 @@ func (up SQLUserProvider) ListAll(ctx context.Context) ([]*User, error) {
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, &u)
+		users = append(users, u)
 	}
 	return users, nil
 }
