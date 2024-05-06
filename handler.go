@@ -276,7 +276,7 @@ func deletePathID(urlPath, method string, f deleteFunc, options *RouteOptions) h
 		}
 
 		if accept == "text/html" || accept == "application/x-www-form-urlencoded" {
-			http.Redirect(w, r, urlPath, http.StatusSeeOther)
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 
