@@ -25,7 +25,7 @@ func contentNegociateBestHeaderValue(header http.Header, headerName string, serv
 		if len(clientPreferences) > 1 {
 			clientPreferences = clientPreferences[1:]
 		} else {
-			// Otherwise, we just declare we have no preferences
+			// Otherwise, we just declare we have no preferences as we accept `*/*`
 			clientPreferences = []headerChoice{}
 		}
 	}
@@ -48,6 +48,11 @@ func contentNegociateBestHeaderValue(header http.Header, headerName string, serv
 }
 
 func matchHeaderValue(clientPreferences []headerChoice, serverPreferences []string) (string, bool) {
+	// if client has no preferences and server has at least 1, we select the 1st server preference.
+	if len(clientPreferences) == 0 && len(serverPreferences) > 0 {
+		return serverPreferences[0], true
+	}
+
 	for _, c := range clientPreferences {
 		for _, s := range serverPreferences {
 			// we found a match
