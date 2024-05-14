@@ -265,6 +265,9 @@ func deletePathID(urlPath, method string, f deleteFunc, options *RouteOptions) h
 		if err != nil {
 			var e Error
 			if errors.As(err, &e) {
+				// if the entity is not found, we don't return 404
+				// we should continue with 204/200 as it is idempotent: the entity
+				// the entity doesn't exist anymore.
 				if e.Code != ErrorCodeNotFound {
 					writeError(w, accept, e, options)
 					return
@@ -275,6 +278,9 @@ func deletePathID(urlPath, method string, f deleteFunc, options *RouteOptions) h
 			}
 		}
 
+		// Handle HTMX delete that returns 200 instead of HTTP 204
+		// as explained in: https://htmx.org/attributes/hx-delete/
+		// TODO: can I move it in the HTML encoder instead?
 		if accept == "text/html" || accept == "application/x-www-form-urlencoded" {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -414,37 +420,32 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 
 func handleCreate[Ent any](method, urlPath string, f createFunc[Ent], options *RouteOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		if err != nil {
+			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), options)
+			return
+		}
+
 		if r.Method != method {
-			http.Error(w, "bad method", http.StatusMethodNotAllowed)
+			writeError(w, accept, fmt.Errorf("method not allowed: %s", r.Method), options)
 			return
 		}
 
 		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
 		if err != nil {
-			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			writeError(w, accept, fmt.Errorf("bad content type header format: %w", err), options)
 			return
 		}
 
 		res, err := decode[Ent](r.Body, contentType, options)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeError(w, accept, fmt.Errorf("decode POST body: %w", err), options)
 			return
 		}
 
 		res, err = f(r.Context(), res)
 		if err != nil {
-			switch e := err.(type) {
-			case notFoundError:
-				http.Error(w, e.Error(), http.StatusNotFound)
-				return
-			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
-		if err != nil {
-			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			writeError(w, accept, fmt.Errorf("entity provider create: %w", err), options)
 			return
 		}
 
@@ -452,7 +453,7 @@ func handleCreate[Ent any](method, urlPath string, f createFunc[Ent], options *R
 
 		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(res)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeError(w, accept, fmt.Errorf("encode POST body: %w", err), options)
 			return
 		}
 	}
@@ -472,42 +473,38 @@ func Handle[
 		options = defaultOptions
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		if err != nil {
+			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), options)
+			return
+		}
+
 		if r.Method != method {
-			http.Error(w, "bad method", http.StatusMethodNotAllowed)
+			writeError(w, accept, fmt.Errorf("method not allowed: %s", r.Method), options)
 			return
 		}
 
 		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
 		if err != nil {
-			http.Error(w, "bad content type header format", http.StatusBadRequest)
+			writeError(w, accept, fmt.Errorf("bad content type header format: %w", err), options)
 			return
 		}
 
 		req, err := decode[Input](r.Body, contentType, options)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeError(w, accept, fmt.Errorf("decode %s body: %w", r.Method, err), options)
 			return
 		}
 
 		res, err := f(r.Context(), req)
 		if err != nil {
-			switch e := err.(type) {
-			case notFoundError:
-				http.Error(w, e.Error(), http.StatusNotFound)
-				return
-			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeError(w, accept, fmt.Errorf("handle: %w", err), options)
 			return
 		}
 
-		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
-		if err != nil {
-			http.Error(w, "bad content type header format", http.StatusBadRequest)
-			return
-		}
 		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(res)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeError(w, accept, fmt.Errorf("encode %s body: %w", r.Method, err), options)
 			return
 		}
 	}
