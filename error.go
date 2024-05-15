@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/dolanor/rip/encoding"
@@ -238,30 +237,23 @@ func extractErrorsSource(err error) ErrorSource {
 }
 
 func extractErrorSource(errorSource ErrorSource, err error) ErrorSource {
-	eType := reflect.TypeOf(err)
-
-	_, ok := eType.MethodByName("ErrorSourceHeader")
+	esh, ok := err.(ErrorSourceHeader)
 	if ok {
-		var esh ErrorSourceHeader
-		if errors.As(err, &esh) {
-			errorSource.Header = esh.ErrorSourceHeader()
-		}
+		log.Println("have source header")
+		errorSource.Header = esh.ErrorSourceHeader()
 	}
 
-	_, ok = eType.MethodByName("ErrorSourceParameter")
+	esp, ok := err.(ErrorSourceParameter)
 	if ok {
-		var esp ErrorSourceParameter
-		if errors.As(err, &esp) {
-			errorSource.Parameter = esp.ErrorSourceParameter()
-		}
+		log.Println("have source parameter")
+		errorSource.Parameter = esp.ErrorSourceParameter()
 	}
 
-	_, ok = eType.MethodByName("ErrorSourcePointer")
+	espt, ok := err.(ErrorSourcePointer)
 	if ok {
-		var esp ErrorSourcePointer
-		if errors.As(err, &esp) {
-			errorSource.Pointer = esp.ErrorSourcePointer()
-		}
+		log.Println("have source pointer")
+		errorSource.Pointer = espt.ErrorSourcePointer()
 	}
+
 	return errorSource
 }
