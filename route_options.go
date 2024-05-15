@@ -25,7 +25,7 @@ var defaultOptions = newDefaultOptions()
 type RouteOptions struct {
 	middlewares []Middleware
 	codecs      encoding.Codecs
-	errorMap    ErrorMap
+	statusMap   StatusMap
 }
 
 func NewRouteOptions() *RouteOptions {
@@ -50,13 +50,12 @@ func (ro *RouteOptions) WithMiddlewares(middlewares ...Middleware) *RouteOptions
 	return &newRO
 }
 
-type ErrorMap struct {
-	NotFound error
-}
+type StatusMap map[error]int
 
-func (ro *RouteOptions) WithErrors(errorMap ErrorMap) *RouteOptions {
+// WithErrors maps errors with an HTTP status code.
+func (ro *RouteOptions) WithErrors(statusMap StatusMap) *RouteOptions {
 	newRO := cloneRouteOptions(*ro)
-	newRO.errorMap = errorMap
+	newRO.statusMap = statusMap
 	return &newRO
 }
 

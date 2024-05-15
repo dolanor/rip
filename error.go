@@ -122,19 +122,20 @@ func (e Error) Error() string {
 
 func writeError(w http.ResponseWriter, accept string, err error, options *RouteOptions) {
 	var e Error
-
 	if !errors.As(err, &e) {
 		e = Error{
 			Detail: err.Error(),
 		}
 	}
 
-	if errors.Is(err, options.errorMap.NotFound) {
-		e.Status = http.StatusNotFound
-	}
 
 	e.Source = extractErrorsSource(err)
 
+	for statusError, s := range options.statusMap {
+		if errors.Is(err, statusError) {
+			e.Status = s
+		}
+	}
 	if e.Status == 0 {
 		e.Status = http.StatusInternalServerError
 	}

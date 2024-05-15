@@ -42,9 +42,9 @@ func main() {
 			html.NewEntityFormCodec("/users/"),
 		).
 		WithMiddlewares(loggerMiddleware(os.Stdout)).
-		WithErrors(rip.ErrorMap{
-			NotFound:          domain.ErrAppNotFound,
-			ErrNotImplemented: domain.ErrAppNotImplemented,
+		WithErrors(rip.StatusMap{
+			domain.ErrAppNotFound:                http.StatusNotFound,
+			domain.ErrAppNotImplemented:          http.StatusNotImplemented,
 		})
 
 	db, err := sql.Open("sqlite", "local.db")
