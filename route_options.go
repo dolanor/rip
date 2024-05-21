@@ -23,9 +23,10 @@ var defaultOptions = newDefaultOptions()
 // or codecs.
 // It also allows to be reused betwenn multiple routes.
 type RouteOptions struct {
-	middlewares []Middleware
-	codecs      encoding.Codecs
-	statusMap   StatusMap
+	middlewares     []Middleware
+	codecs          encoding.Codecs
+	statusMap       StatusMap
+	entitiesPerPage int
 }
 
 func NewRouteOptions() *RouteOptions {
@@ -33,6 +34,7 @@ func NewRouteOptions() *RouteOptions {
 		codecs: encoding.Codecs{
 			Codecs: map[string]encoding.Codec{},
 		},
+		entitiesPerPage: 20,
 	}
 }
 
@@ -59,6 +61,12 @@ func (ro *RouteOptions) WithErrors(statusMap StatusMap) *RouteOptions {
 	return &newRO
 }
 
+func (ro *RouteOptions) WithEntitiesPerPage(perPage int) *RouteOptions {
+	newRO := cloneRouteOptions(*ro)
+	newRO.entitiesPerPage = perPage
+	return &newRO
+}
+
 func cloneRouteOptions(ro RouteOptions) RouteOptions {
 	middlewares := slices.Clone(ro.middlewares)
 	codecs := maps.Clone(ro.codecs.Codecs)
@@ -71,5 +79,6 @@ func cloneRouteOptions(ro RouteOptions) RouteOptions {
 			Codecs:           codecs,
 			OrderedMimeTypes: orderedMimeTypes,
 		},
+		entitiesPerPage: ro.entitiesPerPage,
 	}
 }

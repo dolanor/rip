@@ -20,8 +20,8 @@ type EntityProvider[Ent any] interface {
 	// Delete deletes a entity with its id.
 	Delete(ctx context.Context, id string) error
 
-	// ListAll lists a group of entities.
-	ListAll(ctx context.Context) ([]Ent, error)
+	// List lists a group of entities.
+	List(ctx context.Context, offset, limit int) ([]Ent, error)
 }
 
 // end EntityProvider OMIT

@@ -80,13 +80,23 @@ func (up *UserProvider) Update(ctx context.Context, u *user) error {
 	return nil
 }
 
-func (up *UserProvider) ListAll(ctx context.Context) ([]*user, error) {
+func (up *UserProvider) List(ctx context.Context, offset, limit int) ([]*user, error) {
 	var users []*user
+
+	max := len(up.mem)
+	if offset > max {
+		offset = max
+	}
+
+	if offset+limit > max {
+		limit = max - offset
+	}
+
 	for _, u := range up.mem {
 		// we copy to avoid referring the same pointer that would get updated
 		u := u
 		users = append(users, &u)
 	}
 
-	return users, nil
+	return users[offset : offset+limit], nil
 }

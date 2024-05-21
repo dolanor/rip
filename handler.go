@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/dolanor/rip/encoding"
@@ -59,7 +60,7 @@ func HandleEntities[
 		panic(err)
 	}
 
-	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.ListAll, options)
+	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, options)
 }
 
 type (
@@ -67,7 +68,7 @@ type (
 	getFunc[Ent any]    func(ctx context.Context, idString string) (Ent, error)
 	updateFunc[Ent any] func(ctx context.Context, ent Ent) error
 	deleteFunc          func(ctx context.Context, id string) error
-	listFunc[Ent any]   func(ctx context.Context) ([]Ent, error)
+	listFunc[Ent any]   func(ctx context.Context, limit, offset int) ([]Ent, error)
 )
 
 func handleEntityWithPath[Ent any](urlPath string, create createFunc[Ent], get getFunc[Ent], update updateFunc[Ent], deleteFn deleteFunc, list listFunc[Ent], options *RouteOptions) (path string, handler http.HandlerFunc) {
@@ -404,7 +405,32 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 			return
 		}
 
-		ents, err := f(r.Context())
+		offset := 0
+		if r.URL.Query().Has("page") {
+			pageStr := r.URL.Query().Get("page")
+			page, err := strconv.ParseUint(pageStr, 10, 64)
+			if err != nil {
+				err := Error{
+					Status: http.StatusBadRequest,
+					Detail: `malformed "page" query parameter`,
+					Source: ErrorSource{
+						Parameter: "page",
+					},
+				}
+				writeError(w, accept, err, options)
+				return
+			}
+
+			// we switch to 0 index (page 1 = page 0)
+			if page > 0 {
+				page--
+			}
+
+			offset = int(page) * options.entitiesPerPage
+		}
+		limit := offset + options.entitiesPerPage
+
+		ents, err := f(r.Context(), offset, limit)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return

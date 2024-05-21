@@ -73,8 +73,8 @@ func (up *SQLUserProvider) Update(ctx context.Context, u User) error {
 	return nil
 }
 
-func (up SQLUserProvider) ListAll(ctx context.Context) ([]User, error) {
-	users, err := up.repo.ListUsers(ctx)
+func (up SQLUserProvider) List(ctx context.Context, offset, limit int) ([]User, error) {
+	users, err := up.repo.ListUsers(ctx, offset, limit)
 	if err != nil {
 		return nil, err
 	}

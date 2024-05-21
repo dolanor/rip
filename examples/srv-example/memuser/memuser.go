@@ -86,12 +86,23 @@ func (up *UserProvider) Update(ctx context.Context, u User) error {
 
 // end User Provider Update OMIT
 
-func (up UserProvider) ListAll(ctx context.Context) ([]User, error) {
-	up.logger.Printf("ListAllUser")
+func (up UserProvider) List(ctx context.Context, offset, limit int) ([]User, error) {
+	up.logger.Printf("ListUser")
+
+	max := len(up.mem)
+	if offset > max {
+		offset = max
+	}
+
+	if offset+limit > max {
+		limit = max - offset
+	}
+
 	var users []User
 	for _, u := range up.mem {
 		u := u
 		users = append(users, *u)
 	}
-	return users, nil
+
+	return users[offset : offset+limit], nil
 }

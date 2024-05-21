@@ -154,13 +154,17 @@ func (up *userRepo) UpdateUser(ctx context.Context, u domain.User) error {
 	return nil
 }
 
-func (up userRepo) ListUsers(ctx context.Context) ([]domain.User, error) {
+func (up userRepo) ListUsers(ctx context.Context, offset, limit int) ([]domain.User, error) {
 	log.Printf("ListUsers")
 	var users []domain.User
 	//	rows, err := up.db.QueryContext(ctx, "SELECT id, name FROM users")
 	rows, err := up.db.QueryContext(ctx, `
 		SELECT id, name, email, birth_date
-		FROM users`,
+		FROM users
+		LIMIT ?
+		OFFSET ?`,
+		limit,
+		offset,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

@@ -98,10 +98,10 @@ func (up *SQLUserProvider) Update(ctx context.Context, u User) error {
 	return nil
 }
 
-func (up SQLUserProvider) ListAll(ctx context.Context) ([]User, error) {
-	up.logger.Printf("ListAllUser")
+func (up SQLUserProvider) List(ctx context.Context, offset, limit int) ([]User, error) {
+	up.logger.Printf("ListUser")
 	var users []User
-	rows, err := up.db.Query("SELECT id, name FROM users")
+	rows, err := up.db.Query("SELECT id, name FROM users LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, rip.ErrNotFound

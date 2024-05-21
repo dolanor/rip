@@ -8,5 +8,5 @@ type UserRepo interface {
 	FindUserByName(ctx context.Context, name string) (User, error)
 	DeleteUser(ctx context.Context, id int) error
 	UpdateUser(ctx context.Context, u User) error
-	ListUsers(ctx context.Context) ([]User, error)
+	ListUsers(ctx context.Context, offset, limit int) ([]User, error)
 }
