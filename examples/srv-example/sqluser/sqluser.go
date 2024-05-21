@@ -55,14 +55,14 @@ func (up *SQLUserProvider) Get(ctx context.Context, idString string) (User, erro
 
 	rows := up.db.QueryRow("SELECT id, name FROM users WHERE id = ?", id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return User{}, rip.ErrNotFound
-		}
 		return User{}, err
 	}
 	u := User{}
 	err = rows.Scan(&u.ID, &u.Name)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return User{}, rip.ErrNotFound
+		}
 		return User{}, err
 	}
 	return u, nil
@@ -113,6 +113,9 @@ func (up SQLUserProvider) ListAll(ctx context.Context) ([]User, error) {
 		u := User{}
 		err = rows.Scan(&u.ID, &u.Name)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, rip.ErrNotFound
+			}
 			return nil, err
 		}
 		users = append(users, u)
