@@ -36,7 +36,7 @@ type Middleware = func(http.HandlerFunc) http.HandlerFunc
 //	GET    /entities/:id : get the entity
 //	PUT    /entities/:id : updates the entity (needs to pass the full entity data)
 //	DELETE /entities/:id : deletes the entity
-//	GET    /entities/    : lists the entities
+//	GET    /entities/    : lists the entities (accepts page and page_size query param)
 //
 // It also handles fields
 //
