@@ -405,6 +405,38 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 			return
 		}
 
+		pageSize := options.listPageSize
+		if r.URL.Query().Has("page_size") {
+			pageSizeErr := Error{
+				Status: http.StatusBadRequest,
+				Source: ErrorSource{
+					Parameter: "page_size",
+				},
+			}
+
+			pageSizeStr := r.URL.Query().Get("page_size")
+			pageSizeUint, err := strconv.ParseUint(pageSizeStr, 10, 64)
+			if err != nil {
+				pageSizeErr.Detail = `malformed "page_size" query parameter`
+				writeError(w, accept, pageSizeErr, options)
+				return
+			}
+
+			if int(pageSizeUint) > options.listPageSizeMax {
+				pageSizeErr.Detail = fmt.Sprintf(`%q query parameter cannot be bigger than: %d`, "page_size", options.listPageSizeMax)
+				writeError(w, accept, pageSizeErr, options)
+				return
+			}
+
+			if int(pageSizeUint) == 0 {
+				pageSizeErr.Detail = fmt.Sprintf(`%q query parameter should be > 0`, "page_size")
+				writeError(w, accept, pageSizeErr, options)
+				return
+			}
+
+			pageSize = int(pageSizeUint)
+		}
+
 		offset := 0
 		if r.URL.Query().Has("page") {
 			pageStr := r.URL.Query().Get("page")
@@ -426,9 +458,10 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 				page--
 			}
 
-			offset = int(page) * options.entitiesPerPage
+			offset = int(page) * pageSize
 		}
-		limit := offset + options.entitiesPerPage
+
+		limit := offset + pageSize
 
 		ents, err := f(r.Context(), offset, limit)
 		if err != nil {

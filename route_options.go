@@ -26,7 +26,8 @@ type RouteOptions struct {
 	middlewares     []Middleware
 	codecs          encoding.Codecs
 	statusMap       StatusMap
-	entitiesPerPage int
+	listPageSize    int
+	listPageSizeMax int
 }
 
 func NewRouteOptions() *RouteOptions {
@@ -34,7 +35,8 @@ func NewRouteOptions() *RouteOptions {
 		codecs: encoding.Codecs{
 			Codecs: map[string]encoding.Codec{},
 		},
-		entitiesPerPage: 20,
+		listPageSize:    20,
+		listPageSizeMax: 100,
 	}
 }
 
@@ -61,9 +63,17 @@ func (ro *RouteOptions) WithErrors(statusMap StatusMap) *RouteOptions {
 	return &newRO
 }
 
-func (ro *RouteOptions) WithEntitiesPerPage(perPage int) *RouteOptions {
+// WithListPageSize configures the number of entities displayed in a list page.
+func (ro *RouteOptions) WithListPageSize(pageSize int) *RouteOptions {
 	newRO := cloneRouteOptions(*ro)
-	newRO.entitiesPerPage = perPage
+	newRO.listPageSize = pageSize
+	return &newRO
+}
+
+// WithListPageSizeMax configures the maximum number of entities displayed in a list page.
+func (ro *RouteOptions) WithListPageSizeMax(pageSizeMax int) *RouteOptions {
+	newRO := cloneRouteOptions(*ro)
+	newRO.listPageSizeMax = pageSizeMax
 	return &newRO
 }
 
@@ -79,6 +89,7 @@ func cloneRouteOptions(ro RouteOptions) RouteOptions {
 			Codecs:           codecs,
 			OrderedMimeTypes: orderedMimeTypes,
 		},
-		entitiesPerPage: ro.entitiesPerPage,
+		listPageSize:    ro.listPageSize,
+		listPageSizeMax: ro.listPageSizeMax,
 	}
 }
