@@ -128,7 +128,6 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 		}
 	}
 
-
 	e.Source = extractErrorsSource(err)
 
 	for statusError, s := range options.statusMap {
@@ -240,19 +239,16 @@ func extractErrorsSource(err error) ErrorSource {
 func extractErrorSource(errorSource ErrorSource, err error) ErrorSource {
 	esh, ok := err.(ErrorSourceHeader)
 	if ok {
-		log.Println("have source header")
 		errorSource.Header = esh.ErrorSourceHeader()
 	}
 
 	esp, ok := err.(ErrorSourceParameter)
 	if ok {
-		log.Println("have source parameter")
 		errorSource.Parameter = esp.ErrorSourceParameter()
 	}
 
 	espt, ok := err.(ErrorSourcePointer)
 	if ok {
-		log.Println("have source pointer")
 		errorSource.Pointer = espt.ErrorSourcePointer()
 	}
 
