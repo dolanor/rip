@@ -86,7 +86,7 @@ func (up *SQLUserProvider) Delete(ctx context.Context, idString string) error {
 }
 
 func (up *SQLUserProvider) Update(ctx context.Context, u User) error {
-	up.logger.Printf("UpdateUser: %+v", u.IDString())
+	up.logger.Printf("UpdateUser: %+v", u.ID)
 	_, err := up.db.Exec("UPDATE users SET name = ? WHERE id = ?", u.Name, u.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
