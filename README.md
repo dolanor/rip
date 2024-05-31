@@ -26,7 +26,7 @@ and it would generate all the necessary boilerplate to have some sane (IMO) HTTP
 //	GET    /entities/:id : get the entity
 //	PUT    /entities/:id : updates the entity (needs to pass the full entity data)
 //	DELETE /entities/:id : deletes the entity
-//	GET    /entities/    : lists the entities
+//	GET    /entities/    : lists the entities (accepts page and page_size query param)
 //
 // It also handles fields
 //
@@ -44,23 +44,9 @@ type EntityProvider[Ent Entity] interface {
 	Get(ctx context.Context, id Entity) (Ent, error)
 	Update(ctx context.Context, ent Ent) error
 	Delete(ctx context.Context, id Entity) error
-	ListAll(ctx context.Context) ([]Ent, error)
+	List(ctx context.Context, offset, limit int) ([]Ent, error)
 }
 ```
-
-and your resource implements the `Entity` interface
-
-```go
-type Entity interface {
-	IDString() string
-	IDFromString(s string) error
-}
-```
-
-Right now, it can talk several encoding in reading and writing: JSON, protobuf, XML, YAML, msgpack, HTML and HTML form.
-Based on `Accept` and `Content-Type` headers, you can be asymmetrical in encoding: send JSON and read XML.
-
-HTML/HTML Forms allows you to edit your resources directly from your web browser. It's very basic for now.
 
 ⚠️: Disclaimer, the API is not stable yet, use or contribute at your own risks
 
