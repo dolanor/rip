@@ -3,7 +3,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<script src="https://unpkg.com/htmx.org@1.8.6"></script>
+		<script src="/js/htmx.min.js"></script>
 	</head>
 	<body>
 		<h2 id="entity-name"><a href="{{ $pathPrefix }}">{{ .EntityName }}</a></h2>

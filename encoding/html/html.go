@@ -1,16 +1,33 @@
 package html
 
 import (
+	"embed"
 	_ "embed"
 	"errors"
 	"io"
+	"log"
+	"net/http"
+	"sync"
 
 	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
+// htmxHandled make sure the server serves the htmx source file
+var htmxHandled sync.Once
+
 // NewEntityCodec creates a HTML codec that uses pathPrefix for links creation.
 func NewEntityCodec(pathPrefix string) encoding.Codec {
+	htmxHandled.Do(func() {
+		http.HandleFunc("/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
+			_, err := w.Write(htmxJS)
+			if err != nil {
+				log.Println("error sending htmx js script file")
+				return
+			}
+		})
+	})
+
 	// TODO: should have a better design so the path shouldn't be passed many times around.
 	return codecwrap.Wrap(NewEncoder(pathPrefix), NewDecoder, MimeTypes...)
 }
@@ -19,8 +36,14 @@ var MimeTypes = []string{
 	"text/html",
 }
 
-//go:embed entity.gotpl
-var entityTmpl string
+//go:embed htmx.org@*.min.js
+var htmxJS []byte
+
+//go:embed *.gotpl
+var templateFiles embed.FS
+
+const entityPageTmpl = "entity_page"
+const entityTmpl = "entity"
 
 type Decoder struct {
 	r io.Reader
