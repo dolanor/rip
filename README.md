@@ -39,11 +39,11 @@ and it would generate all the necessary boilerplate to have some sane (IMO) HTTP
 given that `UserProvider` implements the `rip.EntityProvider` interface
 
 ```go
-type EntityProvider[Ent Entity] interface {
+type EntityProvider[Ent any] interface {
 	Create(ctx context.Context, ent Ent) (Ent, error)
-	Get(ctx context.Context, id Entity) (Ent, error)
+	Get(ctx context.Context, id string) (Ent, error)
 	Update(ctx context.Context, ent Ent) error
-	Delete(ctx context.Context, id Entity) error
+	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, offset, limit int) ([]Ent, error)
 }
 ```
