@@ -46,7 +46,7 @@ func main() {
 			domain.ErrAppNotFound:       http.StatusNotFound,
 			domain.ErrAppNotImplemented: http.StatusNotImplemented,
 		}).
-		WithEntitiesPerPage(3)
+		WithListPageSize(3)
 
 	db, err := sql.Open("sqlite", "local.db")
 	if err != nil {
