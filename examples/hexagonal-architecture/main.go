@@ -48,7 +48,7 @@ func main() {
 		}).
 		WithListPageSize(3)
 
-	db, err := sql.Open("sqlite", "local.db")
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		log.Fatal(err)
 	}
