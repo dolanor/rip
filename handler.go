@@ -239,7 +239,11 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 			return
 		}
 
-		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(ent)
+		rrw := encoding.RequestResponseWriter{
+			ResponseWriter: w,
+			Request:        r,
+		}
+		err = encoding.AcceptEncoder(rrw, accept, encoding.EditOff, options.codecs).Encode(ent)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return
@@ -388,8 +392,12 @@ func handleGet[Ent any](urlPath, method string, f getFunc[Ent], options *RouteOp
 			st := structOf(res)
 			ret = fieldValue(st, field)
 		}
+		rrw := encoding.RequestResponseWriter{
+			ResponseWriter: w,
+			Request:        r,
+		}
 
-		err = encoding.AcceptEncoder(w, accept, editMode, options.codecs).Encode(ret)
+		err = encoding.AcceptEncoder(rrw, accept, editMode, options.codecs).Encode(ret)
 		if err != nil {
 			writeError(w, accept, err, options)
 			return

@@ -1,40 +1,13 @@
-{{ define "entity" }}
+{{ define "entity_form_page" }}
 {{ $pathPrefix := .PathPrefix }}
 <html>
 	<head>
-		<meta charset="UTF-8">
-		<script src="/js/htmx.min.js"></script>
+		{{ template "entity_header" }}
 	</head>
 	<body>
-		<h2 id="entity-name"><a href="{{ $pathPrefix }}">{{ .EntityName }}</a></h2>
-		{{ range $k, $v := .Entities }}
-			{{ $method := "put" }}
-			{{ if eq .ID 0 }}
-				{{ $method = "post" }}
-		<form class="entity" id="entity-{{ .ID }}" method="{{ $method }}" target="{{ $pathPrefix }}">
-			{{ else }}
-		<form class="entity" id="entity-{{ .ID }}" hx-{{ $method }}="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
-			{{ end }}
-			{{- range $f := $v.Fields }}
-				{{ if ne $f.Key "ID" }}
-					{{ if ne ($f.Value | toString) "0" }}
-			<div >
-				<label>{{ $f.Key }}</label>:
-				<input type="text" name="{{ $f.Key }}" value="{{ $f.Value }}">
-			</div>
-					{{ end }}
-				{{ else }}
-					{{ if ne ($f.Value | toString) "0" }}
-			<a href="{{ $f.Value }}"><div><label>{{ $f.Key }}</label>: {{ $f.Value }}</div></a>
-				<input type="hidden" name="{{ $f.Key }}" value="{{ $f.Value }}">
-					{{ end }}
-				{{ end }}
-			{{- end }}
+		<h2 id="entity-name"><a href="{{ $pathPrefix }}">{{ .Name }}</a></h2>
+		{{ template "entity_form" . }}
 
-			<button class="btn btn-primary">Submit</button>
-			<button hx-get="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
-		</form>
-		{{ end }}
 	</body>
 </html>
 {{ end }}

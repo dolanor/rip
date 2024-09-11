@@ -1,0 +1,10 @@
+{{ define "entity_list_page" }}
+<html>
+	<head>
+		{{ template "entity_header" }}
+	</head>
+	<body>
+		{{ template "entity_list" . }}
+	</body>
+</html>
+{{ end }}

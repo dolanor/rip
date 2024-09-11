@@ -42,8 +42,12 @@ var htmxJS []byte
 //go:embed *.gotpl
 var templateFiles embed.FS
 
-const entityPageTmpl = "entity_page"
-const entityTmpl = "entity"
+const (
+	entityPageTmpl     = "entity_page"
+	entityListPageTmpl = "entity_list_page"
+
+	entityTmpl = "entity"
+)
 
 type Decoder struct {
 	r io.Reader

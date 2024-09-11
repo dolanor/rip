@@ -1,0 +1,32 @@
+{{ define "entity_form" }}
+	{{ $pathPrefix := .PathPrefix }}
+	{{ $method := "put" }}
+	{{ with .Entity }}
+
+	{{ if eq .ID 0 }}
+		{{ $method = "post" }}
+<form class="entity" id="entity-{{ .ID }}" method="{{ $method }}" target="{{ $pathPrefix }}">
+	{{ else }}
+<form class="entity" id="entity-{{ .ID }}" hx-{{ $method }}="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
+	{{ end }}
+	{{- range $f := .Fields }}
+		{{ if ne $f.Key "ID" }}
+			{{ if ne ($f.Value | toString) "0" }}
+	<div >
+		<label>{{ $f.Key }}</label>:
+		<input type="text" name="{{ $f.Key }}" value="{{ $f.Value }}">
+	</div>
+			{{ end }}
+		{{ else }}
+			{{ if ne ($f.Value | toString) "0" }}
+	<a href="{{ $f.Value }}"><div><label>{{ $f.Key }}</label>: {{ $f.Value }}</div></a>
+		<input type="hidden" name="{{ $f.Key }}" value="{{ $f.Value }}">
+			{{ end }}
+		{{ end }}
+	{{- end }}
+
+	<button class="btn btn-primary">Submit</button>
+	<button hx-get="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
+</form>
+	{{ end }}
+{{ end }}

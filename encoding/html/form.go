@@ -15,6 +15,14 @@ import (
 	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
+type entityMetadata struct {
+	PathPrefix string
+	Name       string
+	Entity     any
+}
+
+const HXRequest = "Hx-Request" // it gets normalized by net/http from HX-Request to Hx-Request
+
 // NewEntityFormCodec creates a HTML Form codec that uses pathPrefix for links creation.
 // It will generate a form with editable inputs for each field of your [github.com/dolanor/rip.Entity].
 func NewEntityFormCodec(pathPrefix string) encoding.Codec {
@@ -36,8 +44,10 @@ const (
 
 const editModeQueryParam = "mode=edit"
 
-//go:embed entity_form.gotpl
-var entityFormTmpl string
+const (
+	entityFormPageTmpl = "entity_form_page"
+	entityFormTmpl     = "entity_form"
+)
 
 type FormEncoder struct {
 	w          io.Writer
@@ -70,30 +80,43 @@ func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) er
 		s = s.Elem()
 	}
 
+	var pd any
 	var entities []entity
 	var entityName string
-	if s.Kind() == reflect.Slice {
+	isList := false
+
+	if s.Kind() == reflect.Slice ||
+		s.Kind() == reflect.Array {
+		isList = true
+
 		for i := 0; i < s.Len(); i++ {
 			s := s.Index(i)
 
-			res := expandFields(s)
+			ent := expandFields(s)
 			if entityName == "" {
-				entityName = res.Name
+				entityName = ent.Name
 			}
-			entities = append(entities, res)
+			entities = append(entities, ent)
+
+			pd = pageData{
+				PathPrefix: pathPrefix,
+				EntityName: entityName,
+
+				Entities: entities,
+			}
 		}
 	} else {
 		res := expandFields(s)
 		if entityName == "" {
 			entityName = res.Name
 		}
-		entities = append(entities, res)
-	}
 
-	pd := pageData{
-		PathPrefix: pathPrefix,
-		EntityName: entityName,
-		Entities:   entities,
+		pd = entityMetadata{
+			PathPrefix: pathPrefix,
+			Name:       entityName,
+
+			Entity: res,
+		}
 	}
 
 	rw, ok := w.(http.ResponseWriter)
@@ -102,7 +125,46 @@ func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) er
 		rw.Header().Set("Content-Type", "text/html")
 	}
 
-	tpl := template.New("entity").Funcs(template.FuncMap{
+	isHTMXRequest := func(w io.Writer) bool {
+		rrw, ok := w.(encoding.RequestResponseWriter)
+		if !ok {
+			return false
+		}
+
+		htmxReq, ok := rrw.Request.Header[HXRequest]
+		if !ok {
+			return false
+		}
+		isHTMXStr := strings.ToLower(htmxReq[0])
+
+		return isHTMXStr == "true"
+	}
+
+	selectTemplate := func(isHTMX bool) string {
+		tmplSrc := entityPageTmpl
+
+		if isList {
+			tmplSrc = entityListPageTmpl
+		}
+
+		if edit {
+			tmplSrc = entityFormPageTmpl
+		}
+
+		if isHTMX {
+			tmplSrc = entityTmpl
+			if edit {
+				tmplSrc = entityFormTmpl
+			}
+		}
+
+		return tmplSrc
+	}
+
+	isHTMX := isHTMXRequest(w)
+	tmplSrc := selectTemplate(isHTMX)
+
+	tpl := template.New("html").Funcs(template.FuncMap{
 		"toLower": strings.ToLower,
 		"editModeQueryParam": func() string {
 			return editModeQueryParam
@@ -110,19 +172,21 @@ func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) er
 		"toString": func(a any) string {
 			return fmt.Sprintf("%v", a)
 		},
+		"wrapMetadata": func(pathPrefix string, a any) any {
+			return entityMetadata{
+				PathPrefix: pathPrefix,
+
+				Entity: a,
+			}
+		},
 	})
 
-	tmplSrc := entityTmpl
-	if edit {
-		tmplSrc = entityFormTmpl
-	}
-
-	tpl, err = tpl.Parse(tmplSrc)
+	tpl, err = tpl.ParseFS(templateFiles, "*.gotpl")
 	if err != nil {
 		return err
 	}
 
-	err = tpl.ExecuteTemplate(w, "entity", pd)
+	err = tpl.ExecuteTemplate(w, tmplSrc, pd)
 	if err != nil {
 		return err
 	}
@@ -160,6 +224,7 @@ func expandFields(s reflect.Value) entity {
 	res := entity{
 		Name: name,
 	}
+
 	switch s.Kind() {
 	case reflect.String:
 		res.Fields = append(res.Fields, field{"value", s.String(), "string"})
