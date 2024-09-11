@@ -221,13 +221,13 @@ func expandFields(s reflect.Value) entity {
 		t = s.Type()
 	}
 
-	res := entity{
+	ent := entity{
 		Name: name,
 	}
 
 	switch s.Kind() {
 	case reflect.String:
-		res.Fields = append(res.Fields, field{"value", s.String(), "string"})
+		ent.Fields = append(ent.Fields, field{"value", s.String(), "string"})
 	case reflect.Struct:
 		for i := 0; i < s.NumField(); i++ {
 			f := s.Field(i)
@@ -243,13 +243,13 @@ func expandFields(s reflect.Value) entity {
 				fVal = f.Interface().(time.Time).Format(time.RFC3339)
 			}
 			if fName == "ID" {
-				res.ID = fVal
+				ent.ID = fVal
 			}
-			res.Fields = append(res.Fields, field{fName, fVal, fTypeStr})
+			ent.Fields = append(ent.Fields, field{fName, fVal, fTypeStr})
 		}
 	default:
 		panic("reflect type not handled, yet: " + s.Kind().String())
 	}
 
-	return res
+	return ent
 }
