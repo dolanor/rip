@@ -39,7 +39,7 @@ var MimeTypes = []string{
 //go:embed htmx.org@*.min.js
 var htmxJS []byte
 
-//go:embed *.gotpl
+//go:embed templates/*.gotpl
 var templateFiles embed.FS
 
 const (

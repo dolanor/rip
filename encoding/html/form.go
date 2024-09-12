@@ -181,7 +181,7 @@ func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) er
 		},
 	})
 
-	tpl, err = tpl.ParseFS(templateFiles, "*.gotpl")
+	tpl, err = tpl.ParseFS(templateFiles, "templates/*.gotpl")
 	if err != nil {
 		return err
 	}
