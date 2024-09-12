@@ -125,44 +125,8 @@ func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) er
 		rw.Header().Set("Content-Type", "text/html")
 	}
 
-	isHTMXRequest := func(w io.Writer) bool {
-		rrw, ok := w.(encoding.RequestResponseWriter)
-		if !ok {
-			return false
-		}
-
-		htmxReq, ok := rrw.Request.Header[HXRequest]
-		if !ok {
-			return false
-		}
-		isHTMXStr := strings.ToLower(htmxReq[0])
-
-		return isHTMXStr == "true"
-	}
-
-	selectTemplate := func(isHTMX bool) string {
-		tmplSrc := entityPageTmpl
-
-		if isList {
-			tmplSrc = entityListPageTmpl
-		}
-
-		if edit {
-			tmplSrc = entityFormPageTmpl
-		}
-
-		if isHTMX {
-			tmplSrc = entityTmpl
-			if edit {
-				tmplSrc = entityFormTmpl
-			}
-		}
-
-		return tmplSrc
-	}
-
 	isHTMX := isHTMXRequest(w)
-	tmplSrc := selectTemplate(isHTMX)
+	tmplSrc := selectTemplate(edit, isList, isHTMX)
 
 	tpl := template.New("html").Funcs(template.FuncMap{
 		"toLower": strings.ToLower,
@@ -192,6 +156,42 @@ func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) er
 	}
 
 	return nil
+}
+
+func isHTMXRequest(w io.Writer) bool {
+	rrw, ok := w.(encoding.RequestResponseWriter)
+	if !ok {
+		return false
+	}
+
+	htmxReq, ok := rrw.Request.Header[HXRequest]
+	if !ok {
+		return false
+	}
+	isHTMXStr := strings.ToLower(htmxReq[0])
+
+	return isHTMXStr == "true"
+}
+
+func selectTemplate(edit editMode, isList, isHTMX bool) string {
+	tmplSrc := entityPageTmpl
+
+	if isList {
+		tmplSrc = entityListPageTmpl
+	}
+
+	if edit {
+		tmplSrc = entityFormPageTmpl
+	}
+
+	if isHTMX {
+		tmplSrc = entityTmpl
+		if edit {
+			tmplSrc = entityFormTmpl
+		}
+	}
+
+	return tmplSrc
 }
 
 type field struct {
