@@ -176,19 +176,15 @@ func isHTMXRequest(w io.Writer) bool {
 func selectTemplate(edit editMode, isList, isHTMX bool) string {
 	tmplSrc := entityPageTmpl
 
-	if isList {
+	switch {
+	case isList:
 		tmplSrc = entityListPageTmpl
-	}
-
-	if edit {
+	case edit == true:
 		tmplSrc = entityFormPageTmpl
-	}
-
-	if isHTMX {
+	case isHTMX && edit == true:
+		tmplSrc = entityFormTmpl
+	case isHTMX && edit == false:
 		tmplSrc = entityTmpl
-		if edit {
-			tmplSrc = entityFormTmpl
-		}
 	}
 
 	return tmplSrc
