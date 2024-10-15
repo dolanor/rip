@@ -21,7 +21,7 @@ var defaultOptions = newDefaultOptions()
 // RouteOptions allows to pass options to the route handler.
 // It make each route able to have its own set of middlewares
 // or codecs.
-// It also allows to be reused betwenn multiple routes.
+// It also allows to be reused between multiple routes.
 type RouteOptions struct {
 	middlewares     []Middleware
 	codecs          encoding.Codecs
