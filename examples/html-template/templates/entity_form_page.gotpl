@@ -1,0 +1,13 @@
+{{ define "entity_form_page" }}
+{{ $pathPrefix := .PathPrefix }}
+<html>
+	<head>
+		{{ template "entity_header" }}
+	</head>
+	<body>
+		<h2 id="entity-name"><a href="{{ $pathPrefix }}">{{ .Name }}</a></h2>
+		{{ template "entity_form" . }}
+
+	</body>
+</html>
+{{ end }}

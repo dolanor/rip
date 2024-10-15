@@ -1,7 +1,6 @@
 package html
 
 import (
-	"embed"
 	_ "embed"
 	"errors"
 	"io"
@@ -17,7 +16,7 @@ import (
 var htmxHandled sync.Once
 
 // NewEntityCodec creates a HTML codec that uses pathPrefix for links creation.
-func NewEntityCodec(pathPrefix string) encoding.Codec {
+func NewEntityCodec(pathPrefix string, opts ...Option) encoding.Codec {
 	htmxHandled.Do(func() {
 		http.HandleFunc("/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
 			_, err := w.Write(htmxJS)
@@ -29,7 +28,7 @@ func NewEntityCodec(pathPrefix string) encoding.Codec {
 	})
 
 	// TODO: should have a better design so the path shouldn't be passed many times around.
-	return codecwrap.Wrap(NewEncoder(pathPrefix), NewDecoder, MimeTypes...)
+	return codecwrap.Wrap(NewEncoder(pathPrefix, opts...), NewDecoder, MimeTypes...)
 }
 
 var MimeTypes = []string{
@@ -38,9 +37,6 @@ var MimeTypes = []string{
 
 //go:embed htmx.org@*.min.js
 var htmxJS []byte
-
-//go:embed templates/*.gotpl
-var templateFiles embed.FS
 
 const (
 	entityPageTmpl     = "entity_page"
@@ -66,17 +62,24 @@ func (e Decoder) Decode(v interface{}) error {
 type Encoder struct {
 	w          io.Writer
 	pathPrefix string
+	config     EncoderConfig
 }
 
-func NewEncoder(pathPrefix string) func(w io.Writer) *Encoder {
+func NewEncoder(pathPrefix string, opts ...Option) func(w io.Writer) *Encoder {
+	cfg := EncoderConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	return func(w io.Writer) *Encoder {
 		return &Encoder{
 			w:          w,
 			pathPrefix: pathPrefix,
+			config:     cfg,
 		}
 	}
 }
 
 func (e Encoder) Encode(v interface{}) error {
-	return htmlEncode(e.pathPrefix, e.w, editOff, v)
+	return htmlEncode(e.pathPrefix, e.config.templatesFS, e.w, editOff, v)
 }

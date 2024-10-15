@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"net/http"
 	"reflect"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/ajg/form"
 	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/codecwrap"
+	"github.com/dolanor/rip/encoding/html/templates"
 )
 
 type entityMetadata struct {
@@ -25,9 +27,9 @@ const HXRequest = "Hx-Request" // it gets normalized by net/http from HX-Request
 
 // NewEntityFormCodec creates a HTML Form codec that uses pathPrefix for links creation.
 // It will generate a form with editable inputs for each field of your [github.com/dolanor/rip.Entity].
-func NewEntityFormCodec(pathPrefix string) encoding.Codec {
+func NewEntityFormCodec(pathPrefix string, opts ...Option) encoding.Codec {
 	// TODO: should have a better design so the path shouldn't be passed many times around.
-	return codecwrap.Wrap(NewFormEncoder(pathPrefix), form.NewDecoder, FormMimeTypes...)
+	return codecwrap.Wrap(NewFormEncoder(pathPrefix, opts...), form.NewDecoder, FormMimeTypes...)
 }
 
 var FormMimeTypes = []string{
@@ -52,22 +54,29 @@ const (
 type FormEncoder struct {
 	w          io.Writer
 	pathPrefix string
+	config     EncoderConfig
 }
 
-func NewFormEncoder(pathPrefix string) func(w io.Writer) *FormEncoder {
+func NewFormEncoder(pathPrefix string, opts ...Option) func(w io.Writer) *FormEncoder {
+	cfg := EncoderConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	return func(w io.Writer) *FormEncoder {
 		return &FormEncoder{
 			w:          w,
 			pathPrefix: pathPrefix,
+			config:     cfg,
 		}
 	}
 }
 
 func (e FormEncoder) Encode(v interface{}) error {
-	return htmlEncode(e.pathPrefix, e.w, editOn, v)
+	return htmlEncode(e.pathPrefix, e.config.templatesFS, e.w, editOn, v)
 }
 
-func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) error {
+func htmlEncode(pathPrefix string, templatesFS fs.FS, w io.Writer, edit editMode, v interface{}) error {
 	err, _ := v.(error)
 	if err != nil {
 		// TODO: handle error better
@@ -145,7 +154,10 @@ func htmlEncode(pathPrefix string, w io.Writer, edit editMode, v interface{}) er
 		},
 	})
 
-	tpl, err = tpl.ParseFS(templateFiles, "templates/*.gotpl")
+	if templatesFS == nil {
+		templatesFS = templates.Files
+	}
+	tpl, err = tpl.ParseFS(templatesFS, "*.gotpl")
 	if err != nil {
 		return err
 	}

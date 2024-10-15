@@ -1,0 +1,11 @@
+{{ define "entity_page" }}
+<html>
+	<head>
+		{{ template "entity_header" }}
+	</head>
+	<body>
+		<h2 id="entity-name"><a href="{{ .PathPrefix }}">{{ .Name }}</a></h2>
+		{{ template "entity" . }}
+	</body>
+</html>
+{{ end }}
