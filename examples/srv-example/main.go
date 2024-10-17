@@ -12,13 +12,16 @@ import (
 	"strconv"
 
 	"github.com/gorilla/handlers"
+	"github.com/samonzeweb/godb"
+	"github.com/samonzeweb/godb/adapters/sqlite"
+	"github.com/samonzeweb/godb/tablenamer"
 	_ "modernc.org/sqlite"
 
 	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding/html"
 	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/encoding/xml"
-	"github.com/dolanor/rip/examples/srv-example/sqluser"
+	"github.com/dolanor/rip/providers/godbprovider"
 	"github.com/dolanor/rip/providers/mapprovider"
 )
 
@@ -29,7 +32,7 @@ const (
 func main() {
 	hostPort := os.ExpandEnv("$HOST:$PORT")
 	if hostPort == ":" {
-		hostPort += defaultPort
+		hostPort = "localhost:" + defaultPort
 	}
 
 	logWriter := &yellowWriter{w: os.Stderr}
@@ -49,15 +52,16 @@ func main() {
 	// start HandleFuncEntities OMIT
 
 	type User struct {
-		Lol  string `rip:"id"`
-		Name string
+		ID   string `rip:"id" db:"id,key"`
+		Name string `db:"name"`
 	}
 
 	up := mapprovider.New[User](memLogger)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
+		id := strconv.Itoa(i)
 		up.Create(context.Background(), User{
-			Lol:  strconv.Itoa(i),
-			Name: "Mohamed",
+			ID:   id,
+			Name: "George-" + id,
 		})
 	}
 
@@ -69,10 +73,27 @@ func main() {
 		panic(err)
 	}
 
-	sqlLogger := log.New(logWriter, "sql: ", log.LstdFlags)
-	sup, err := sqluser.NewSQLUserProvider(db, sqlLogger)
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users(id text primary key, name text);")
 	if err != nil {
 		panic(err)
+	}
+
+	godb := godb.Wrap(sqlite.Adapter, db)
+	godb.SetLogger(log.New(os.Stderr, "", 0))
+	godb.SetDefaultTableNamer(tablenamer.SnakePlural())
+
+	sqlLogger := slog.New(slog.NewTextHandler(logWriter, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	sup := godbprovider.New[User](godb, sqlLogger)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < 10; i++ {
+		id := strconv.Itoa(i)
+		sup.Create(context.Background(), User{
+			ID:   id,
+			Name: "George-" + id,
+		})
 	}
 
 	ro = ro.
@@ -84,8 +105,7 @@ func main() {
 
 	http.HandleFunc(rip.HandleEntities("/sqlusers/", sup, ro))
 
-	fmt.Println("listening on " + hostPort)
-	//	go browse(hostPort)
+	fmt.Println("check http://" + hostPort + "/users/ or http://" + hostPort + "/sqlusers/")
 	err = http.ListenAndServe(hostPort, nil)
 	if err != nil {
 		panic(err)

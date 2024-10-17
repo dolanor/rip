@@ -3,6 +3,7 @@ package godbprovider
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -11,8 +12,8 @@ import (
 	"github.com/dolanor/rip/internal/ripreflect"
 )
 
-func New[Ent any](db *godb.DB, logger *slog.Logger) godbEntityProvider[Ent] {
-	return godbEntityProvider[Ent]{
+func New[Ent any](db *godb.DB, logger *slog.Logger) *godbEntityProvider[Ent] {
+	return &godbEntityProvider[Ent]{
 		db:     db,
 		logger: logger,
 	}
@@ -91,12 +92,14 @@ func (ep *godbEntityProvider[Ent]) Get(ctx context.Context, id string) (Ent, err
 
 	ep.logger.Info("get", "id", id)
 
-	err := ripreflect.SetID(&e, id)
-	if err != nil {
-		return e, err
+	idFieldName := ripreflect.FieldIDName(e)
+	if idFieldName == "" {
+		panic("no ID field")
 	}
 
-	err = ep.db.Select(&e).Do()
+	err := ep.db.Select(&e).
+		Where(fmt.Sprintf("%s = ?", idFieldName), id).
+		Do()
 	if err != nil {
 		return e, err
 	}
