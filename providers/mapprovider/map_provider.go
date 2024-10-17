@@ -14,32 +14,6 @@ import (
 	"github.com/dolanor/rip/internal/ripreflect"
 )
 
-// getID gets the id of an entity.
-// Make it use reflect for getting fields of `rip:"id"`.
-func getID(entity any) (string, error) {
-	idVal, _, err := ripreflect.FindEntityID(entity)
-	if err != nil {
-		return "", err
-	}
-
-	id := idVal.String()
-
-	return id, nil
-}
-
-// setID set the ID of the entity.
-// the entity must be passed by reference.
-func setID(entity any, uuid string) error {
-	idVal, _, err := ripreflect.FindEntityID(entity)
-	if err != nil {
-		return err
-	}
-
-	idVal.SetString(uuid)
-
-	return nil
-}
-
 func New[Ent any](logger *slog.Logger) entityMapProvider[Ent] {
 	return entityMapProvider[Ent]{
 		store:  map[string]Ent{},
@@ -61,7 +35,7 @@ func (dp *entityMapProvider[Ent]) Create(ctx context.Context, d Ent) (Ent, error
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
 
-	id, err := getID(d)
+	id, err := ripreflect.GetID(d)
 	dp.logger.Info("create", "id", id)
 	if err != nil {
 		return d, err
@@ -73,7 +47,7 @@ func (dp *entityMapProvider[Ent]) Create(ctx context.Context, d Ent) (Ent, error
 			return d, errors.New("can not generate unique id")
 		}
 
-		err = setID(&d, uuid.String())
+		err = ripreflect.SetID(&d, uuid.String())
 		if err != nil {
 			return d, errors.New("can not set unique id")
 		}
@@ -100,7 +74,7 @@ func (dp *entityMapProvider[Ent]) Update(ctx context.Context, e Ent) error {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
 
-	id, err := getID(e)
+	id, err := ripreflect.GetID(e)
 	dp.logger.Info("update", "id", id)
 	if err != nil {
 		return err
@@ -143,12 +117,12 @@ func (dp *entityMapProvider[Ent]) List(ctx context.Context, offset, limit int) (
 	}
 
 	slices.SortFunc(dd, func(a, b Ent) int {
-		idA, err := getID(a)
+		idA, err := ripreflect.GetID(a)
 		if err != nil {
 			return -1
 		}
 
-		idB, err := getID(b)
+		idB, err := ripreflect.GetID(b)
 		if err != nil {
 			return -1
 		}
