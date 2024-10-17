@@ -2,18 +2,24 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding/html"
 	"github.com/dolanor/rip/examples/html-template/templates"
-	"github.com/dolanor/rip/examples/srv-example/memuser"
+	"github.com/dolanor/rip/providers/mapprovider"
 )
 
+type User struct {
+	ID    string
+	Name  string
+	Email string
+}
+
 func main() {
-	hostPort := ":8989"
+	hostPort := ":8888"
 
 	ro := rip.NewRouteOptions().
 		WithCodecs(
@@ -21,9 +27,9 @@ func main() {
 			html.NewEntityFormCodec("/users/", html.WithTemplatesFS(templates.FS)),
 		)
 
-	memLogger := log.New(os.Stderr, "in-memory: ", log.LstdFlags)
-	up := memuser.NewUserProvider(memLogger)
-	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
+	memLogger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	up := mapprovider.New[User](memLogger)
+	http.HandleFunc(rip.HandleEntities("/users/", &up, ro))
 
 	fmt.Println("listening on " + hostPort)
 	err := http.ListenAndServe(hostPort, nil)
