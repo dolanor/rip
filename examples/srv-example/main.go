@@ -65,7 +65,7 @@ func main() {
 		})
 	}
 
-	http.HandleFunc(rip.HandleEntities("/users/", &up, ro))
+	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
 	// end HandleFuncEntities OMIT
 
 	db, err := sql.Open("sqlite", ":memory:")

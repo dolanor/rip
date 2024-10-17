@@ -14,8 +14,8 @@ import (
 	"github.com/dolanor/rip/internal/ripreflect"
 )
 
-func New[Ent any](logger *slog.Logger) entityMapProvider[Ent] {
-	return entityMapProvider[Ent]{
+func New[Ent any](logger *slog.Logger) *entityMapProvider[Ent] {
+	return &entityMapProvider[Ent]{
 		store:  map[string]Ent{},
 		logger: logger,
 	}
