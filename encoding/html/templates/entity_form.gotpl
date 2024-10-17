@@ -11,20 +11,16 @@
 	{{ end }}
 	{{- range $f := .Fields }}
 		{{ if not $f.IsID }}
-			{{ if ne ($f.Value | toString) "" }}
 	<div >
 		<label>{{ $f.Key }}</label>:
 		<input type="text" name="{{ $f.Key }}" value="{{ $f.Value }}">
 	</div>
-			{{ end }}
 		{{ else }}
-			{{ if ne ($f.Value | toString) "" }}
 	<div>
 		<label>{{ $f.Key }}</label>:
 		<a href="{{ $f.Value }}">{{ $f.Value }}</a>
 	</div>
 	<input type="hidden" name="{{ $f.Key }}" value="{{ $f.Value }}">
-			{{ end }}
 		{{ end }}
 	{{- end }}
 
