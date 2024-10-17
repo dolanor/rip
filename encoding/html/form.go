@@ -15,6 +15,7 @@ import (
 	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/codecwrap"
 	"github.com/dolanor/rip/encoding/html/templates"
+	"github.com/dolanor/rip/internal/ripreflect"
 )
 
 type entityMetadata struct {
@@ -138,7 +139,9 @@ func htmlEncode(pathPrefix string, templatesFS fs.FS, w io.Writer, edit editMode
 	tmplSrc := selectTemplate(edit, isList, isHTMX)
 
 	tpl := template.New("html").Funcs(template.FuncMap{
-		"toLower": strings.ToLower,
+		"idField":     ripreflect.FieldIDString,
+		"idFieldName": ripreflect.FieldIDName,
+		"toLower":     strings.ToLower,
 		"editModeQueryParam": func() string {
 			return editModeQueryParam
 		},
@@ -206,6 +209,7 @@ type field struct {
 	Key   string
 	Value any
 	Type  string
+	IsID  bool
 }
 
 type entity struct {
@@ -235,7 +239,7 @@ func expandFields(s reflect.Value) entity {
 
 	switch s.Kind() {
 	case reflect.String:
-		ent.Fields = append(ent.Fields, field{"value", s.String(), "string"})
+		ent.Fields = append(ent.Fields, field{"value", s.String(), "string", false})
 	case reflect.Struct:
 		for i := 0; i < s.NumField(); i++ {
 			f := s.Field(i)
@@ -250,10 +254,12 @@ func expandFields(s reflect.Value) entity {
 			if f.Type() == reflect.TypeOf(time.Time{}) {
 				fVal = f.Interface().(time.Time).Format(time.RFC3339)
 			}
-			if fName == "ID" {
+			var isID bool
+			if fName == "ID" || ripreflect.HasRIPIDField(t.Field(i)) {
 				ent.ID = fVal
+				isID = true
 			}
-			ent.Fields = append(ent.Fields, field{fName, fVal, fTypeStr})
+			ent.Fields = append(ent.Fields, field{fName, fVal, fTypeStr, isID})
 		}
 	default:
 		panic("reflect type not handled, yet: " + s.Kind().String())
