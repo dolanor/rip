@@ -3,7 +3,6 @@ package ripreflect
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"slices"
 	"strings"
@@ -22,14 +21,11 @@ func FindEntityID(entity any) (value reflect.Value, fieldName string, err error)
 	idVal := v.FieldByName("ID")
 	fieldFound := "ID"
 
-	log.Println("louise2:", idVal, fieldFound, err)
 	var zero reflect.Value
 	if idVal != zero {
-		log.Println("louise4:", idVal, fieldFound, err)
 		return idVal, fieldFound, nil
 	}
 
-	log.Println("louise3:", idVal, fieldFound, err)
 	t := reflect.TypeOf(entity)
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
