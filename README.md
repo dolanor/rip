@@ -21,7 +21,7 @@ Let's get the best of both worlds with **GENERICS** ðŸŽ† *everybody screams* ðŸ˜
 The idea would be to use the classic `net/http` package with handlers created from Go types.
 
 ```go
-http.HandleFunc(rip.HandleEntities("/users", NewUserProvider(), nil)
+http.HandleFunc(rip.HandleEntities("/users", NewUserProvider(), nil))
 ```
 
 and it would generate all the necessary boilerplate to have some sane (IMO) HTTP routes.
