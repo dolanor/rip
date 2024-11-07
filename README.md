@@ -4,6 +4,12 @@ REST in peace
 
 ![gopher resting in peace](.meta/assets/rip.png)
 
+## TL;DR
+
+Look at the [examples](examples).
+
+The smallest/simplest is the one with the [godb provider](/examples/godbprovider/main.go).
+
 ## Why?
 
 Creating RESTful API in Go is in a way simple and fun in the first time, but also repetitive and error prone the more resources you handle.  
@@ -96,6 +102,8 @@ The slides are [in my talks repository](https://github.com/dolanor/talks/blob/ma
 - [ ] improve the error API
 - [ ] support for hypermedia discoverability
 - [x] support for multiple data representation
+- [ ] add automatic OpenAPI schema
+- [ ] add automatic API client
 
 ## Thanks
 
