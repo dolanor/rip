@@ -51,6 +51,6 @@ func main() {
 
 	http.HandleFunc(rip.HandleEntities("/albums/", ap, ro))
 
-	logger.Info("listening on :55555")
+	logger.Info("listening on http://localhost:55555/albums")
 	http.ListenAndServe(":55555", nil)
 }
