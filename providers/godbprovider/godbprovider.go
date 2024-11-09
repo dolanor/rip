@@ -13,6 +13,13 @@ import (
 )
 
 func New[Ent any](db *godb.DB, logger *slog.Logger) *godbEntityProvider[Ent] {
+	var e Ent
+	idFieldName := ripreflect.FieldIDName(e)
+	if idFieldName == ripreflect.MissingIDField {
+		// we should stop here as the entity is not valid
+		panic("no ID field")
+	}
+
 	return &godbEntityProvider[Ent]{
 		db:     db,
 		logger: logger,
@@ -93,8 +100,8 @@ func (ep *godbEntityProvider[Ent]) Get(ctx context.Context, id string) (Ent, err
 	ep.logger.Info("get", "id", id)
 
 	idFieldName := ripreflect.FieldIDName(e)
-	if idFieldName == "" {
-		panic("no ID field")
+	if idFieldName == ripreflect.MissingIDField {
+		return e, errors.New("no ID field")
 	}
 
 	err := ep.db.Select(&e).

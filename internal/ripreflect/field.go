@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const MissingIDField = "<MISSING ID FIELD>"
+
 // FindEntityID will find a struct field named ID or a public struct field
 // with the `rip:id` struct tag.
 // If there are many `rip:id` struct tags in the struct, it will return the first one.
@@ -46,7 +48,7 @@ func FindEntityID(entity any) (value reflect.Value, fieldName string, err error)
 func FieldIDString(entity any) string {
 	v, _, err := FindEntityID(entity)
 	if err != nil {
-		return "<NO ID FIELD FOUND>"
+		return MissingIDField
 	}
 
 	return fmt.Sprintf("%v", v)
@@ -55,7 +57,7 @@ func FieldIDString(entity any) string {
 func FieldIDName(entity any) string {
 	_, fieldName, err := FindEntityID(entity)
 	if err != nil {
-		return "<NO ID FIELD FOUND>"
+		return MissingIDField
 	}
 
 	return fieldName
