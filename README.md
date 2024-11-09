@@ -54,6 +54,14 @@ type EntityProvider[Ent any] interface {
 }
 ```
 
+A few providers are already available in [providers](providers) and allow for 1-line implementation of a CRUD backend for a custom type. With:
+
+```go
+	p := gormprovider.New[Album](db, logger)
+```
+
+You have a provider you can pass to `rip.HandleEntities()` and get a full REST server running, querying and saving data in a database.
+
 ⚠️: Disclaimer, the API is not stable yet, use or contribute at your own risks
 
 
