@@ -8,7 +8,7 @@ REST in peace
 
 Look at the [examples](examples).
 
-The smallest/simplest is the one with the [godb provider](/examples/godbprovider/main.go).
+The smallest/simplest is the one with the [GORM provider](examples/gormprovider/main.go).
 
 ## Why?
 
