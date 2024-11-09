@@ -12,6 +12,7 @@ import (
 
 	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding/html"
+	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/providers/godbprovider"
 )
 
@@ -45,6 +46,7 @@ func main() {
 	ap := godbprovider.New[Album](db, logger)
 	ro := rip.NewRouteOptions().
 		WithCodecs(
+			json.Codec,
 			html.NewEntityCodec("/albums/"),
 			html.NewEntityFormCodec("/albums/"),
 		)
