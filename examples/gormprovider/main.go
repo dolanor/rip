@@ -16,7 +16,7 @@ import (
 )
 
 type Album struct {
-	ID          string `rip:"id"`
+	ID          string
 	Name        string
 	BandName    string
 	ReleaseDate time.Time
