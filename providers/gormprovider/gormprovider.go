@@ -12,6 +12,9 @@ import (
 )
 
 func New[Ent any](db *gorm.DB, logger *slog.Logger) *gormEntityProvider[Ent] {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	var e Ent
 	idFieldName := ripreflect.FieldIDName(e)
 	if idFieldName == ripreflect.MissingIDField {

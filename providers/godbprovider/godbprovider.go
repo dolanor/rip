@@ -13,6 +13,9 @@ import (
 )
 
 func New[Ent any](db *godb.DB, logger *slog.Logger) *godbEntityProvider[Ent] {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	var e Ent
 	idFieldName := ripreflect.FieldIDName(e)
 	if idFieldName == ripreflect.MissingIDField {
