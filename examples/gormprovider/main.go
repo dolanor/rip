@@ -3,7 +3,6 @@ package main
 import (
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"gorm.io/driver/sqlite"
@@ -29,9 +28,7 @@ func main() {
 	}
 	db.AutoMigrate(&Album{})
 
-	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
-
-	ap := gormprovider.New[Album](db, logger)
+	ap := gormprovider.New[Album](db, slog.Default())
 
 	ro := rip.NewRouteOptions().
 		WithCodecs(
@@ -42,6 +39,6 @@ func main() {
 
 	http.HandleFunc(rip.HandleEntities("/albums/", ap, ro))
 
-	logger.Info("listening on http://localhost:55555/albums")
+	slog.Info("listening on http://localhost:55555/albums")
 	http.ListenAndServe(":55555", nil)
 }
