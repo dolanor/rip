@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/internal/ripreflect"
 )
 
 // start BackendFunc OMIT
@@ -226,6 +227,18 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 			}
 		}
 
+		entID, err := ripreflect.GetID(ent)
+		if err != nil {
+			writeError(w, accept, err, options)
+			return
+		}
+
+		// if the user didn't put an ID in the entity as well as in the path, let's add
+		// it to the entity data as well.
+		if entID == "" {
+			ripreflect.SetID(&ent, id)
+		}
+
 		// To update a field, we need to get the entity first, then reflect on it to get the field and change it
 		// then we can update the whole entity with updateFunc
 		err = f(r.Context(), ent)
@@ -243,6 +256,7 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 			ResponseWriter: w,
 			Request:        r,
 		}
+
 		err = encoding.AcceptEncoder(rrw, accept, encoding.EditOff, options.codecs).Encode(ent)
 		if err != nil {
 			writeError(w, accept, err, options)
