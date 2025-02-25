@@ -17,7 +17,7 @@ import (
 type Album struct {
 	ID          string
 	Name        string
-	BandName    string
+	Artist      string
 	ReleaseDate time.Time
 }
 
