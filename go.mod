@@ -1,6 +1,8 @@
 module github.com/dolanor/rip
 
-go 1.18
+go 1.21
+
+toolchain go1.23.2
 
 require (
 	github.com/ajg/form v1.5.1
@@ -8,7 +10,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/samonzeweb/godb v1.0.15
 	github.com/vmihailenco/msgpack/v5 v5.3.5
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.12
