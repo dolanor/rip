@@ -14,6 +14,7 @@ import (
 	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding/html"
 	"github.com/dolanor/rip/encoding/json"
+
 	"github.com/dolanor/rip/examples/hexagonal-architecture/adapters/sqladapter"
 	"github.com/dolanor/rip/examples/hexagonal-architecture/domain"
 )
