@@ -29,7 +29,7 @@ func main() {
 
 	memLogger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	up := mapprovider.New[User](memLogger)
-	http.HandleFunc(rip.HandleEntities("/users/", &up, ro))
+	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
 
 	fmt.Println("listening on " + hostPort)
 	err := http.ListenAndServe(hostPort, nil)
