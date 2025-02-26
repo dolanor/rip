@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"path"
 	"reflect"
@@ -193,7 +194,7 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 
 				ent, err = get(r.Context(), id)
 				if err != nil {
-					writeError(w, accept, fmt.Errorf("can get original entity: %w", err), options)
+					writeError(w, accept, fmt.Errorf("can not get original entity: %w", err), options)
 					return err
 				}
 
@@ -202,6 +203,14 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 				fieldValue := st.FieldByNameFunc(func(s string) bool {
 					return strings.ToLower(s) == strings.ToLower(field)
 				})
+
+				if !fieldValue.CanSet() {
+					fieldValue = fieldValue.Elem()
+					log.Println("fvalue can set: false")
+					if fieldValue.CanSet() {
+						log.Println("fvalue can set: true again")
+					}
+				}
 
 				var fieldData any
 
@@ -212,17 +221,22 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 
 				err = decoder.Decode(&fieldData)
 				if err != nil {
-					writeError(w, accept, fmt.Errorf("can decode entity field: %w", err), options)
+					writeError(w, accept, fmt.Errorf("can not decode entity field: %w", err), options)
 					return err
 				}
 				fieldDataValue := reflect.ValueOf(fieldData)
-				fieldValue.Set(fieldDataValue)
+
+				if fieldValue.CanSet() {
+					fieldValue.Set(fieldDataValue)
+				} else {
+					writeError(w, accept, fmt.Errorf("can not set entity field: %s", fieldValue.String()), options)
+				}
 
 				// We've updated the field. We're good to go.
 				return nil
 			}()
 			if err != nil {
-				writeError(w, accept, fmt.Errorf("can decode entity field: %w", err), options)
+				writeError(w, accept, fmt.Errorf("can not decode entity field: %w", err), options)
 				return
 			}
 		}
