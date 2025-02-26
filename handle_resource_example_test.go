@@ -22,6 +22,7 @@ func Example() {
 }
 
 type user struct {
+	ID           string    `json:"id" xml:"id"`
 	Name         string    `json:"name" xml:"name"`
 	EmailAddress string    `json:"email_address" xml:"email_address"`
 	BirthDate    time.Time `json:"birth_date" xml:"birth_date"`

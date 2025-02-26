@@ -111,7 +111,9 @@ func TestHandleResourceWithPath(t *testing.T) {
 				panicErr(t, err)
 				defer resp.Body.Close()
 				if resp.StatusCode != http.StatusOK {
-					t.Fatal("updated status code is not 200:", resp.StatusCode)
+					t.Error("updated status code is not 200:", resp.StatusCode)
+					b, err := io.ReadAll(resp.Body)
+					t.Error("body:", string(b), ", error:", err)
 				}
 
 				err = codec.NewDecoder(resp.Body).Decode(&uUpdated)

@@ -15,8 +15,8 @@ const MissingIDField = "<MISSING ID FIELD>"
 // If there are many `rip:id` struct tags in the struct, it will return the first one.
 func FindEntityID(entity any) (value reflect.Value, fieldName string, err error) {
 	v := reflect.ValueOf(entity)
-	kind := v.Kind()
-	if kind == reflect.Pointer {
+	var kind reflect.Kind
+	for kind = v.Kind(); kind == reflect.Pointer; kind = v.Kind() {
 		v = v.Elem()
 	}
 
@@ -28,7 +28,7 @@ func FindEntityID(entity any) (value reflect.Value, fieldName string, err error)
 		return idVal, fieldFound, nil
 	}
 
-	t := reflect.TypeOf(entity)
+	t := v.Type()
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 
