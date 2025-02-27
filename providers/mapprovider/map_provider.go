@@ -46,6 +46,7 @@ func (dp *entityMapProvider[Ent]) Create(ctx context.Context, d Ent) (Ent, error
 		if err != nil {
 			return d, errors.New("can not generate unique id")
 		}
+		id = uuid.String()
 
 		err = ripreflect.SetID(&d, uuid.String())
 		if err != nil {
