@@ -6,11 +6,11 @@ import (
 	"time"
 )
 
-type SQLUserProvider struct {
+type UserProvider struct {
 	repo UserRepo
 }
 
-func NewSQLUserProvider(repo UserRepo) (*SQLUserProvider, error) {
+func NewUserProvider(repo UserRepo) (*UserProvider, error) {
 	ctx := context.Background()
 	// we check if we've already populated the DB with Jean
 	_, err := repo.FindUserByName(ctx, "Jean")
@@ -21,12 +21,12 @@ func NewSQLUserProvider(repo UserRepo) (*SQLUserProvider, error) {
 		}
 	}
 
-	return &SQLUserProvider{
+	return &UserProvider{
 		repo: repo,
 	}, nil
 }
 
-func (up *SQLUserProvider) Create(ctx context.Context, u User) (User, error) {
+func (up *UserProvider) Create(ctx context.Context, u User) (User, error) {
 	createdUser, err := up.repo.CreateUser(ctx, u)
 	if err != nil {
 		return u, err
@@ -34,7 +34,7 @@ func (up *SQLUserProvider) Create(ctx context.Context, u User) (User, error) {
 	return createdUser, nil
 }
 
-func (up *SQLUserProvider) Get(ctx context.Context, ent string) (User, error) {
+func (up *UserProvider) Get(ctx context.Context, ent string) (User, error) {
 	if ent == "" {
 		return User{}, nil
 	}
@@ -51,7 +51,7 @@ func (up *SQLUserProvider) Get(ctx context.Context, ent string) (User, error) {
 	return u, nil
 }
 
-func (up *SQLUserProvider) Delete(ctx context.Context, idString string) error {
+func (up *UserProvider) Delete(ctx context.Context, idString string) error {
 	id, err := strconv.Atoi(idString)
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (up *SQLUserProvider) Delete(ctx context.Context, idString string) error {
 	return nil
 }
 
-func (up *SQLUserProvider) Update(ctx context.Context, u User) error {
+func (up *UserProvider) Update(ctx context.Context, u User) error {
 	err := up.repo.UpdateUser(ctx, u)
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (up *SQLUserProvider) Update(ctx context.Context, u User) error {
 	return nil
 }
 
-func (up SQLUserProvider) List(ctx context.Context, offset, limit int) ([]User, error) {
+func (up UserProvider) List(ctx context.Context, offset, limit int) ([]User, error) {
 	users, err := up.repo.ListUsers(ctx, offset, limit)
 	if err != nil {
 		return nil, err

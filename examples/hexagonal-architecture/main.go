@@ -59,7 +59,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	up, err := domain.NewSQLUserProvider(repo)
+	up, err := domain.NewUserProvider(repo)
 	if err != nil {
 		log.Fatal(err)
 	}
