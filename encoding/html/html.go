@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/codecwrap"
 )
@@ -15,10 +16,9 @@ import (
 // htmxHandled make sure the server serves the htmx source file
 var htmxHandled sync.Once
 
-// NewEntityCodec creates a HTML codec that uses pathPrefix for links creation.
-func NewEntityCodec(pathPrefix string, opts ...Option) encoding.Codec {
+func serveHTMX(mux rip.HTTPServeMux) {
 	htmxHandled.Do(func() {
-		http.HandleFunc("/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
+		mux.HandleFunc("/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
 			_, err := w.Write(htmxJS)
 			if err != nil {
 				log.Println("error sending htmx js script file")
@@ -26,6 +26,10 @@ func NewEntityCodec(pathPrefix string, opts ...Option) encoding.Codec {
 			}
 		})
 	})
+}
+
+// NewEntityCodec creates a HTML codec that uses pathPrefix for links creation.
+func NewEntityCodec(pathPrefix string, opts ...Option) encoding.Codec {
 
 	// TODO: should have a better design so the path shouldn't be passed many times around.
 	return codecwrap.Wrap(NewEncoder(pathPrefix, opts...), NewDecoder, MimeTypes...)
