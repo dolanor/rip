@@ -2,8 +2,6 @@ package html
 
 import (
 	"io/fs"
-
-	"github.com/dolanor/rip"
 )
 
 type Option func(cfg *EncoderConfig)
@@ -18,7 +16,7 @@ func WithTemplatesFS(templatesFS fs.FS) Option {
 	}
 }
 
-func WithServeMux(mux rip.HTTPServeMux) Option {
+func WithServeMux(mux HandleFuncer) Option {
 	return func(cfg *EncoderConfig) {
 		// serve HTMX from mux
 		serveHTMX(mux)

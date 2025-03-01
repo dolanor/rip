@@ -8,15 +8,19 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding"
 	"github.com/dolanor/rip/encoding/codecwrap"
 )
 
+// HandleFuncer is an interface that matches http.ServeMux's HandleFunc method
+type HandleFuncer interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+}
+
 // htmxHandled make sure the server serves the htmx source file
 var htmxHandled sync.Once
 
-func serveHTMX(mux rip.HTTPServeMux) {
+func serveHTMX(mux HandleFuncer) {
 	htmxHandled.Do(func() {
 		mux.HandleFunc("/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
 			_, err := w.Write(htmxJS)

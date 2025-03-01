@@ -11,8 +11,9 @@ type Router struct {
 	handler HTTPServeMux
 }
 
+// HTTPServeMux is an interface for HTTP multiplexers
 type HTTPServeMux interface {
-	HandleFunc(pattern string, handler func(w http.ResponseWriter, r *http.Request))
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
 	Handle(pattern string, handler http.Handler)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
