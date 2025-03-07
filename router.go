@@ -56,11 +56,9 @@ func (rt *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rt *Router) HandleFunc(pattern string, handler func(w http.ResponseWriter, r *http.Request)) {
-	// TODO add open api hooks
 	rt.handler.HandleFunc(pattern, handler)
 }
 
 func (rt *Router) Handle(pattern string, handler http.Handler) {
-	// TODO add open api hooks
 	rt.handler.Handle(pattern, handler)
 }
