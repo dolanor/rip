@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"log/slog"
 	"net/http"
 
@@ -12,9 +13,9 @@ import (
 
 func main() {
 	type Album struct {
-		ID     string
-		Name   string
-		Artist string
+		ID     string `json:"id"`
+		Name   string `json:"name"`
+		Artist string `json:"artist"`
 	}
 
 	ap := mapprovider.New[Album](slog.Default())
@@ -28,5 +29,26 @@ func main() {
 
 	r.HandleFunc(rip.HandleEntities("/albums/", ap, ro))
 
-	http.ListenAndServe(":9999", r)
+	// Generate OpenAPI documentation
+	config := rip.OpenAPIConfig{
+		Info: rip.OpenAPIInfo{
+			Title:        "Album API",
+			Description:  "REST API for managing music albums",
+			Version:      "1.0.0",
+			ContactName:  "API Support",
+			ContactEmail: "support@example.com",
+		},
+		ServerURLs: []string{"http://localhost:9999"},
+		OutputPath: "openapi.json",
+	}
+
+	err := r.GenerateOpenAPI(config)
+	if err != nil {
+		log.Fatalf("Failed to generate OpenAPI documentation: %v", err)
+	}
+	log.Printf("OpenAPI documentation generated at %s", config.OutputPath)
+
+	// Start the HTTP server
+	log.Printf("Starting HTTP server on :9999")
+	log.Fatal(http.ListenAndServe(":9999", r))
 }

@@ -62,6 +62,11 @@ func HandleEntities[
 		panic(err)
 	}
 
+	// Register route metadata for OpenAPI generation
+	var zeroEnt Ent
+	entityType := reflect.TypeOf(zeroEnt)
+	RegisterEntityRoute(urlPath, entityType, []string{"create", "get", "update", "delete", "list"})
+
 	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, options)
 }
 
