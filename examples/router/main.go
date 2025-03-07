@@ -18,6 +18,7 @@ func main() {
 	}
 
 	ap := mapprovider.New[Album](slog.Default())
+
 	r := rip.NewRouter(http.NewServeMux())
 	ro := rip.NewRouteOptions().
 		WithCodecs(
@@ -26,7 +27,7 @@ func main() {
 			html.NewEntityFormCodec("/albums/", html.WithServeMux(r)),
 		)
 
-	r.HandleFunc(rip.HandleEntities("/albums/", ap, ro))
+	r.HandleFunc(rip.NewEntityRoute("/albums/", ap, ro))
 
 	http.ListenAndServe(":9999", r)
 }

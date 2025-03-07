@@ -1,6 +1,7 @@
 package rip
 
 import (
+	"log/slog"
 	"maps"
 	"slices"
 
@@ -91,5 +92,17 @@ func cloneRouteOptions(ro RouteOptions) RouteOptions {
 		},
 		listPageSize:    ro.listPageSize,
 		listPageSizeMax: ro.listPageSizeMax,
+	}
+}
+
+type EntityRouteConfig struct {
+	logger *slog.Logger
+}
+
+type EntityRouteOption func(cfg *EntityRouteConfig)
+
+func WithEntityRouteLogger(logger *slog.Logger) EntityRouteOption {
+	return func(cfg *EntityRouteConfig) {
+		cfg.logger = logger
 	}
 }
