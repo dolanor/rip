@@ -26,8 +26,7 @@ func main() {
 			html.NewEntityCodec("/albums/", html.WithServeMux(r)),
 			html.NewEntityFormCodec("/albums/", html.WithServeMux(r)),
 		)
-
-	r.HandleFunc(rip.NewEntityRoute("/albums/", ap, ro))
+	r.HandleEntity(rip.NewEntityRoute("/albums/", ap, ro))
 
 	http.ListenAndServe(":9999", r)
 }
