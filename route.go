@@ -12,14 +12,31 @@ import (
 	"github.com/getkin/kin-openapi/openapi3gen"
 )
 
+type Route interface {
+	Path() string
+	Handler() http.HandlerFunc
+	OpenAPISchema() *openapi3.T
+}
+
 type EntityRoute[
 	Ent any,
 	EP EntityProvider[Ent],
 ] struct {
-	path          string
-	provider      EP
+	path        string
+	handlerFunc http.HandlerFunc
+
+	provider EP
+
 	openAPISchema *openapi3.T
 	generator     *openapi3gen.Generator
+}
+
+func (er *EntityRoute[Ent, EP]) Path() string {
+	return er.path
+}
+
+func (er *EntityRoute[Ent, EP]) Handler() http.HandlerFunc {
+	return er.handlerFunc
 }
 
 func (er *EntityRoute[Ent, EP]) OpenAPISchema() *openapi3.T {
@@ -32,11 +49,11 @@ func (er *EntityRoute[Ent, EP]) OpenAPISchema() *openapi3.T {
 func NewEntityRoute[
 	Ent any,
 	EP EntityProvider[Ent],
-](path string, entityProvider EP, options *RouteOptions) (string, http.HandlerFunc, *openapi3.T) {
-
+](path string, entityProvider EP, options *RouteOptions) Route {
 	generator := openapi3gen.NewGenerator(
 		openapi3gen.UseAllExportedFields(),
 	)
+
 	// just a base that we can merge with other entity routes on the router
 	oaSpec := newOpenApiSpec("", "should not be use as is", "")
 	rt := EntityRoute[Ent, EP]{
@@ -48,16 +65,16 @@ func NewEntityRoute[
 
 	rt.generateOperation()
 
-	path, handler := rt.HandleEntities(path, entityProvider, options)
-	return path, handler, rt.openAPISchema
+	_, handler := rt.createEntityHandler(path, entityProvider, options)
+	rt.handlerFunc = handler
+	return &rt
 }
 
-func (rt *EntityRoute[Ent, EP]) HandleEntities(
+func (rt *EntityRoute[Ent, EP]) createEntityHandler(
 	urlPath string,
 	ep EP,
 	options *RouteOptions,
 ) (path string, handler http.HandlerFunc) {
-	// end HandleEntities OMIT
 	if options == nil {
 		options = defaultOptions
 	}
@@ -71,7 +88,6 @@ func (rt *EntityRoute[Ent, EP]) HandleEntities(
 }
 
 func (rt *EntityRoute[Ent, EP]) generateOperation() {
-
 	var ent Ent
 	tag, ok := ripreflect.TagFromType(ent)
 	if !ok {

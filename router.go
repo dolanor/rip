@@ -76,22 +76,20 @@ func (rt *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rt.handler.ServeHTTP(w, r)
 }
 
-func (rt *Router) HandleFunc(pattern string, handler func(w http.ResponseWriter, r *http.Request)) {
-	// TODO add open api hooks
-	rt.handler.HandleFunc(pattern, handler)
-	//rt.openapiSpec.AddOperation
+func (rt *Router) HandleFunc(path string, handler func(w http.ResponseWriter, r *http.Request)) {
+	rt.handler.HandleFunc(path, handler)
 }
 
-func (rt *Router) HandleEntity(path string, handler http.HandlerFunc, openAPISchema *openapi3.T) {
-	for k, v := range openAPISchema.Components.Schemas {
+func (rt *Router) HandleRoute(route Route) { //path string, handler http.HandlerFunc, openAPISchema *openapi3.T) {
+	for k, v := range route.OpenAPISchema().Components.Schemas {
 		rt.openapiSpec.Components.Schemas[k] = v
 	}
 
-	for k, v := range openAPISchema.Paths.Map() {
+	for k, v := range route.OpenAPISchema().Paths.Map() {
 		rt.openapiSpec.Paths.Set(k, v)
 	}
 
-	rt.HandleFunc(path, handler)
+	rt.handler.HandleFunc(route.Path(), route.Handler())
 }
 
 func (rt *Router) PrintInfo() {

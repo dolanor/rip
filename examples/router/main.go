@@ -26,7 +26,7 @@ func main() {
 			html.NewEntityCodec("/albums/", html.WithServeMux(r)),
 			html.NewEntityFormCodec("/albums/", html.WithServeMux(r)),
 		)
-	r.HandleEntity(rip.NewEntityRoute("/albums/", ap, ro))
+	r.HandleRoute(rip.NewEntityRoute("/albums/", ap, ro))
 
 	slog.Info("server started listening", "port", "9999")
 	err := http.ListenAndServe(":9999", r)

@@ -73,7 +73,15 @@ type (
 	listFunc[Ent any]   func(ctx context.Context, limit, offset int) ([]Ent, error)
 )
 
-func handleEntityWithPath[Ent any](urlPath string, create createFunc[Ent], get getFunc[Ent], update updateFunc[Ent], deleteFn deleteFunc, list listFunc[Ent], options *RouteOptions) (path string, handler http.HandlerFunc) {
+func handleEntityWithPath[Ent any](
+	urlPath string,
+	create createFunc[Ent],
+	get getFunc[Ent],
+	update updateFunc[Ent],
+	deleteFn deleteFunc,
+	list listFunc[Ent],
+	options *RouteOptions,
+) (path string, handler http.HandlerFunc) {
 	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
