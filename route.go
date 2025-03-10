@@ -170,11 +170,9 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 		}
 		rt.openAPISchema.AddOperation(entityPath, method, op)
 
-		dumpSchema("full schema", rt.openAPISchema)
 	}
 
 	rt.generateList()
-	dumpSchema("full schema", rt.openAPISchema)
 }
 
 func (rt *EntityRoute[Ent, EP]) generateList() {
