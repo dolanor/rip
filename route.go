@@ -134,28 +134,31 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 			}
 		}
 
-		// Response body
-		responseSchema, ok := rt.openAPISchema.Components.Schemas[tag]
-		if !ok {
-			var err error
-			// TODO test with the entity ent or a pointer to it
-			responseSchema, err = rt.generator.NewSchemaRefForValue(ent, rt.openAPISchema.Components.Schemas)
-			if err != nil {
-				// there is no point of going further, and silently failing would be bad.
-				panic("generate OpenAPI operation: can not generate schema ref for response value: " + fmt.Sprintf("%+v: %v", ent, err))
-			}
-			rt.openAPISchema.Components.Schemas[tag] = responseSchema
-		}
-
 		// TODO: handle more API responses.
 		response := openapi3.NewResponse().WithDescription("OK")
-		if responseSchema == nil {
-			panic("could not find response schema: " + tag)
+
+		if method != http.MethodDelete {
+			// Response body
+			responseSchema, ok := rt.openAPISchema.Components.Schemas[tag]
+			if !ok {
+				var err error
+				// TODO test with the entity ent or a pointer to it
+				responseSchema, err = rt.generator.NewSchemaRefForValue(ent, rt.openAPISchema.Components.Schemas)
+				if err != nil {
+					// there is no point of going further, and silently failing would be bad.
+					panic("generate OpenAPI operation: can not generate schema ref for response value: " + fmt.Sprintf("%+v: %v", ent, err))
+				}
+				rt.openAPISchema.Components.Schemas[tag] = responseSchema
+			}
+			if responseSchema == nil {
+				panic("could not find response schema: " + tag)
+			}
+
+			content := openapi3.NewContentWithSchema(responseSchema.Value, []string{"application/json"})
+			content["application/json"].Schema.Ref = "#/components/schemas/" + tag
+			response.WithContent(content)
 		}
 
-		content := openapi3.NewContentWithSchema(responseSchema.Value, []string{"application/json"})
-		content["application/json"].Schema.Ref = "#/components/schemas/" + tag
-		response.WithContent(content)
 		op.AddResponse(200, response)
 
 		entityPath := rt.path
