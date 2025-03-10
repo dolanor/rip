@@ -9,6 +9,8 @@ import (
 
 var DefaultRouter = &Router{}
 
+// Router allows to regroup all entity routes together and hold a description of the API in
+// the OpenAPI format.
 type Router struct {
 	handler     HTTPServeMux
 	openapiSpec openapi3.T
@@ -27,7 +29,9 @@ type RouterConfig struct {
 	APIVersion     string
 }
 
-func NewRouter(handler HTTPServeMux, opts ...RouterOption) *Router {
+// NewRouter creates a new [Router], using mux for the http routing and
+// takes options for configuring the documentation.
+func NewRouter(mux HTTPServeMux, options ...RouterOption) *Router {
 	var version string
 	buildInfo, ok := debug.ReadBuildInfo()
 	if ok {
@@ -39,13 +43,14 @@ func NewRouter(handler HTTPServeMux, opts ...RouterOption) *Router {
 		APIVersion: version,
 	}
 
-	for _, o := range opts {
+	for _, o := range options {
 		o(&cfg)
 	}
 
 	openAPISpec := newOpenApiSpec(cfg.APITitle, cfg.APIDescription, cfg.APIVersion)
-	handler.HandleFunc("/api-docs/", handleSwaggerUI(cfg.APITitle))
-	handler.HandleFunc("/api-docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+
+	mux.HandleFunc("/api-docs/", handleSwaggerUI(cfg.APITitle))
+	mux.HandleFunc("/api-docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		b, err := openAPISpec.MarshalJSON()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -56,7 +61,7 @@ func NewRouter(handler HTTPServeMux, opts ...RouterOption) *Router {
 	})
 
 	return &Router{
-		handler:     handler,
+		handler:     mux,
 		openapiSpec: openAPISpec,
 	}
 }
@@ -83,11 +88,6 @@ func (rt *Router) HandleEntity(path string, handler http.HandlerFunc, openAPISch
 	}
 
 	rt.HandleFunc(path, handler)
-}
-
-func (rt *Router) Handle(pattern string, handler http.Handler) {
-	// TODO add open api hooks
-	rt.handler.Handle(pattern, handler)
 }
 
 func (rt *Router) PrintInfo() {

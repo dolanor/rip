@@ -26,10 +26,13 @@ func (er *EntityRoute[Ent, EP]) OpenAPISchema() *openapi3.T {
 	return er.openAPISchema
 }
 
+// NewEntityRoute generates an endpoint that will handle all the methods for the entityProvider at the
+// given path and with specific options.
+// It returns the path, the endpoint handler and the schema of this route.
 func NewEntityRoute[
 	Ent any,
 	EP EntityProvider[Ent],
-](path string, ep EP, options *RouteOptions) (string, http.HandlerFunc, *openapi3.T) {
+](path string, entityProvider EP, options *RouteOptions) (string, http.HandlerFunc, *openapi3.T) {
 
 	generator := openapi3gen.NewGenerator(
 		openapi3gen.UseAllExportedFields(),
@@ -38,13 +41,14 @@ func NewEntityRoute[
 	oaSpec := newOpenApiSpec("", "should not be use as is", "")
 	rt := EntityRoute[Ent, EP]{
 		path:          path,
-		provider:      ep,
+		provider:      entityProvider,
 		openAPISchema: &oaSpec,
 		generator:     generator,
 	}
 
 	rt.generateOperation()
-	path, handler := rt.HandleEntities(path, ep, options)
+
+	path, handler := rt.HandleEntities(path, entityProvider, options)
 	return path, handler, rt.openAPISchema
 }
 
@@ -75,6 +79,8 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 	}
 
 	// we register the /{entity}/{id} path ID parameter once
+	// and save it as an OpenAPI  path parameter (so we don't have to duplicate it on
+	// every OpenAPI operation.
 	{
 		entityPath := path.Join(rt.path, "{id}")
 		param := openapi3.NewPathParameter("id")
@@ -141,6 +147,7 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 			rt.openAPISchema.Components.Schemas[tag] = responseSchema
 		}
 
+		// TODO: handle more API responses.
 		response := openapi3.NewResponse().WithDescription("OK")
 		if responseSchema != nil {
 			content := openapi3.NewContentWithSchema(responseSchema.Value, []string{"application/json"})
