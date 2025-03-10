@@ -149,11 +149,13 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 
 		// TODO: handle more API responses.
 		response := openapi3.NewResponse().WithDescription("OK")
-		if responseSchema != nil {
-			content := openapi3.NewContentWithSchema(responseSchema.Value, []string{"application/json"})
-			content["application/json"].Schema.Ref = "#/components/schemas/" + tag
-			response.WithContent(content)
+		if responseSchema == nil {
+			panic("could not find response schema: " + tag)
 		}
+
+		content := openapi3.NewContentWithSchema(responseSchema.Value, []string{"application/json"})
+		content["application/json"].Schema.Ref = "#/components/schemas/" + tag
+		response.WithContent(content)
 		op.AddResponse(200, response)
 
 		entityPath := rt.path
@@ -201,11 +203,8 @@ func (rt *EntityRoute[Ent, EP]) generateList() {
 		panic("could not find response schema: " + tag)
 	}
 
-	itemsResponseSchema := openapi3.NewSchema().WithItems(itemResponseSchema.Value)
+	itemsResponseSchema := openapi3.NewArraySchema().WithItems(itemResponseSchema.Value)
 	content := openapi3.NewContentWithSchema(itemsResponseSchema, []string{"application/json"})
-	//	content["application/json"].Schema.Ref = "#/components/schemas/" + tag
-	//	content["application/json"].Schema.Value
-	//	content["application/json"].Schema.Value.Type = &openapi3.Types{openapi3.TypeArray}
 
 	response := openapi3.NewResponse().WithDescription("OK").WithContent(content)
 
