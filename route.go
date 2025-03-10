@@ -164,8 +164,55 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 			entityPath = path.Join(rt.path, "{id}")
 		}
 		rt.openAPISchema.AddOperation(entityPath, method, op)
+
 		dumpSchema("full schema", rt.openAPISchema)
 	}
+
+	rt.generateList()
+	dumpSchema("full schema", rt.openAPISchema)
+}
+
+func (rt *EntityRoute[Ent, EP]) generateList() {
+	method := http.MethodGet
+	var ent Ent
+	tag, ok := ripreflect.TagFromType(ent)
+	if !ok {
+		panic("generate OpenAPI operation: can not get type tag")
+	}
+
+	op := openapi3.NewOperation()
+	op.Tags = append(op.Tags, tag)
+
+	// Response body
+	itemResponseSchema, ok := rt.openAPISchema.Components.Schemas[tag]
+	if !ok {
+		var err error
+		// TODO test with the entity ent or a pointer to it
+		itemResponseSchema, err = rt.generator.NewSchemaRefForValue(ent, rt.openAPISchema.Components.Schemas)
+		if err != nil {
+			// there is no point of going further, and silently failing would be bad.
+			panic("generate OpenAPI operation: can not generate schema ref for response value: " + fmt.Sprintf("%+v: %v", ent, err))
+		}
+		rt.openAPISchema.Components.Schemas[tag] = itemResponseSchema
+	}
+
+	// TODO: handle more API responses.
+	if itemResponseSchema == nil {
+		panic("could not find response schema: " + tag)
+	}
+
+	itemsResponseSchema := openapi3.NewSchema().WithItems(itemResponseSchema.Value)
+	content := openapi3.NewContentWithSchema(itemsResponseSchema, []string{"application/json"})
+	//	content["application/json"].Schema.Ref = "#/components/schemas/" + tag
+	//	content["application/json"].Schema.Value
+	//	content["application/json"].Schema.Value.Type = &openapi3.Types{openapi3.TypeArray}
+
+	response := openapi3.NewResponse().WithDescription("OK").WithContent(content)
+
+	op.AddResponse(200, response)
+
+	entityPath := rt.path
+	rt.openAPISchema.AddOperation(entityPath, method, op)
 }
 
 func dumpSchema(title string, schema any) {
