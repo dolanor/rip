@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/dolanor/rip/dist/css"
+	"github.com/dolanor/rip/dist/js"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -49,6 +51,8 @@ func NewRouter(mux HTTPServeMux, options ...RouterOption) *Router {
 
 	openAPISpec := newOpenApiSpec(cfg.APITitle, cfg.APIDescription, cfg.APIVersion)
 
+	mux.Handle("/api-docs/js/", http.StripPrefix("/api-docs/js/", http.FileServerFS(js.FS)))
+	mux.Handle("/api-docs/css/", http.StripPrefix("/api-docs/css/", http.FileServerFS(css.FS)))
 	mux.HandleFunc("/api-docs/", handleSwaggerUI(cfg.APITitle))
 	mux.HandleFunc("/api-docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		b, err := openAPISpec.MarshalJSON()

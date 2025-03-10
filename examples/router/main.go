@@ -28,5 +28,9 @@ func main() {
 		)
 	r.HandleEntity(rip.NewEntityRoute("/albums/", ap, ro))
 
-	http.ListenAndServe(":9999", r)
+	slog.Info("server started listening", "port", "9999")
+	err := http.ListenAndServe(":9999", r)
+	if err != nil {
+		slog.Error("listen and serve", "error", err)
+	}
 }
