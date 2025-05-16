@@ -21,20 +21,17 @@ import (
 
 type Rip struct{}
 
-// Returns a container that echoes whatever string argument is provided
-func (m *Rip) Test(ctx context.Context) (string, error) {
+// Returns the std out of a go test
+func (m *Rip) Test(
+	ctx context.Context,
+
+	// +defaultPath=/
+	source *dagger.Directory,
+) (string, error) {
 	return dag.Container().
 		From("golang:1.24.3").
+		WithDirectory("/src/rip", source).
+		WithWorkdir("/src/rip").
 		WithExec([]string{"go", "test", "./..."}).
-		Stdout(ctx)
-}
-
-// Returns lines that match a pattern in the files of the provided Directory
-func (m *Rip) GrepDir(ctx context.Context, directoryArg *dagger.Directory, pattern string) (string, error) {
-	return dag.Container().
-		From("alpine:latest").
-		WithMountedDirectory("/mnt", directoryArg).
-		WithWorkdir("/mnt").
-		WithExec([]string{"grep", "-R", pattern, "."}).
 		Stdout(ctx)
 }
