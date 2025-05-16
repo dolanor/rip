@@ -22,8 +22,11 @@ import (
 type Rip struct{}
 
 // Returns a container that echoes whatever string argument is provided
-func (m *Rip) ContainerEcho(stringArg string) *dagger.Container {
-	return dag.Container().From("alpine:latest").WithExec([]string{"echo", stringArg})
+func (m *Rip) Test(ctx context.Context) (string, error) {
+	return dag.Container().
+		From("golang:1.24.3").
+		WithExec([]string{"go", "test", "./..."}).
+		Stdout(ctx)
 }
 
 // Returns lines that match a pattern in the files of the provided Directory
