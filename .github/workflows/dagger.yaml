@@ -25,17 +25,9 @@ jobs:
           version: "latest"
           verb: call
 
-          module: github.com/daggerverse/dagger-ghcr-demo@v0.1.5
-          args: build-and-push --registry=$DOCKER_REGISTRY --image-name=$DOCKER_IMAGE_NAME --username=$DOCKER_USERNAME --password=env://DOCKER_PASSWORD --build-context=github.com/daggerverse/dagger-ghcr-demo
+          module: .dagger
+          args: test
           # assumes the Dagger Cloud token is in
           # a repository secret named DAGGER_CLOUD_TOKEN
           # set via the GitHub UI/CLI
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-        env:
-          DOCKER_REGISTRY: ghcr.io
-          DOCKER_IMAGE_NAME: ${{ github.repository }}
-          DOCKER_USERNAME: ${{ github.actor }}
-          # assumes the container registry password is in
-          # a repository secret named REGISTRY_PASSWORD
-          # set via the GitHub UI/CL
-          DOCKER_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
