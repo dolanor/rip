@@ -32,6 +32,6 @@ func (m *Rip) Test(
 		From("golang:1.24.3").
 		WithDirectory("/src/rip", source).
 		WithWorkdir("/src/rip").
-		WithExec([]string{"go", "test", "./..."}).
+		WithExec([]string{"go", "test", "-v", "./..."}).
 		Stdout(ctx)
 }
