@@ -12,7 +12,7 @@ on:
 
 jobs:
   build-publish:
-    runs-on: depot-ubuntu-24.04,dagger=0.18.7
+    runs-on: depot-ubuntu-latest,dagger=0.18.4
     permissions:
       contents: read
       packages: write
