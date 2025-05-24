@@ -29,6 +29,14 @@ func serveHTMX(mux HandleFuncer) {
 				return
 			}
 		})
+
+		mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+			_, err := w.Write(favicon)
+			if err != nil {
+				log.Println("error sending favicon.ico")
+				return
+			}
+		})
 	})
 }
 
@@ -45,6 +53,9 @@ var MimeTypes = []string{
 
 //go:embed htmx.org@*.min.js
 var htmxJS []byte
+
+//go:embed favicon.ico
+var favicon []byte
 
 const (
 	entityPageTmpl     = "entity_page"
