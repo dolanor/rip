@@ -79,6 +79,11 @@ func NewEncoder(pathPrefix string, opts ...Option) func(w io.Writer) *Encoder {
 		o(&cfg)
 	}
 
+	if cfg.mux == nil {
+		cfg.mux = http.DefaultServeMux
+		serveHTMX(cfg.mux)
+	}
+
 	return func(w io.Writer) *Encoder {
 		return &Encoder{
 			w:          w,

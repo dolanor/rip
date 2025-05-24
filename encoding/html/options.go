@@ -8,6 +8,7 @@ type Option func(cfg *EncoderConfig)
 
 type EncoderConfig struct {
 	templatesFS fs.FS
+	mux         HandleFuncer
 }
 
 func WithTemplatesFS(templatesFS fs.FS) Option {
@@ -18,7 +19,6 @@ func WithTemplatesFS(templatesFS fs.FS) Option {
 
 func WithServeMux(mux HandleFuncer) Option {
 	return func(cfg *EncoderConfig) {
-		// serve HTMX from mux
-		serveHTMX(mux)
+		cfg.mux = mux
 	}
 }
