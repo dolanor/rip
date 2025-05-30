@@ -11,6 +11,7 @@ import (
 	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding/html"
 	"github.com/dolanor/rip/encoding/json"
+	"github.com/dolanor/rip/encoding/yaml"
 	"github.com/dolanor/rip/providers/gormprovider"
 )
 
@@ -47,6 +48,7 @@ func main() {
 	ro := rip.NewRouteOptions().
 		WithCodecs(
 			json.Codec,
+			yaml.Codec,
 			html.NewEntityCodec("/albums/"),
 			html.NewEntityFormCodec("/albums/"),
 		)
