@@ -76,7 +76,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 			})
 
 			t.Run("get", func(t *testing.T) {
-				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.IDString(), nil)
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.Name, nil)
 				panicErr(t, err)
 				req.Header["Accept"] = []string{name}
 
@@ -102,7 +102,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 				err := codec.NewEncoder(&b).Encode(uUpdated)
 				panicErr(t, err)
 
-				req, err := http.NewRequest(http.MethodPut, s.URL+"/users/"+u.IDString(), &b)
+				req, err := http.NewRequest(http.MethodPut, s.URL+"/users/"+u.Name, &b)
 				panicErr(t, err)
 				req.Header["Content-Type"] = []string{name}
 				req.Header["Accept"] = []string{name}
@@ -125,7 +125,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 
 			// Get after update
 			t.Run("get after update", func(t *testing.T) {
-				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.IDString(), nil)
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.Name, nil)
 				panicErr(t, err)
 				req.Header["Accept"] = []string{name}
 
@@ -208,7 +208,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 			})
 
 			t.Run("delete", func(t *testing.T) {
-				req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.IDString(), nil)
+				req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.Name, nil)
 				panicErr(t, err)
 
 				resp, err := c.Do(req)
@@ -220,7 +220,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 			})
 
 			t.Run("get after delete", func(t *testing.T) {
-				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.IDString(), nil)
+				req, err := http.NewRequest(http.MethodGet, s.URL+"/users/"+u.Name, nil)
 				panicErr(t, err)
 				req.Header["Accept"] = []string{name}
 
@@ -270,7 +270,7 @@ func TestHandleResourceWithPath(t *testing.T) {
 			})
 
 			t.Run("delete again (check idempotency)", func(t *testing.T) {
-				req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.IDString(), nil)
+				req, err := http.NewRequest(http.MethodDelete, s.URL+"/users/"+u.Name, nil)
 				panicErr(t, err)
 				req.Header["Accept"] = []string{name}
 
