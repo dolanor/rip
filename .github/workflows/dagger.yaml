@@ -11,7 +11,7 @@ on:
           - ready_for_review
 
 jobs:
-  build-publish:
+  test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
