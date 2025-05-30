@@ -28,8 +28,7 @@ func (m *Rip) Test(
 	// +defaultPath=/
 	source *dagger.Directory,
 ) (string, error) {
-	return dag.Container().
-		From("golang:1.24.3").
+	return dag.Go().Container("1.24").
 		WithDirectory("/src/rip", source).
 		WithWorkdir("/src/rip").
 		WithExec([]string{"go", "test", "-v", "./..."}).
