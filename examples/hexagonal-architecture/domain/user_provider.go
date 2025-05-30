@@ -34,30 +34,30 @@ func (up *UserProvider) Create(ctx context.Context, u User) (User, error) {
 	return createdUser, nil
 }
 
-func (up *UserProvider) Get(ctx context.Context, ent string) (User, error) {
-	if ent == "" {
+func (up *UserProvider) Get(ctx context.Context, id string) (User, error) {
+	if id == "" {
 		return User{}, nil
 	}
 
-	id, err := strconv.Atoi(ent)
+	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return User{}, err
 	}
 
-	u, err := up.repo.FindUserByID(ctx, id)
+	u, err := up.repo.FindUserByID(ctx, idInt)
 	if err != nil {
 		return User{}, err
 	}
 	return u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, idString string) error {
-	id, err := strconv.Atoi(idString)
+func (up *UserProvider) Delete(ctx context.Context, id string) error {
+	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return err
 	}
 
-	err = up.repo.DeleteUser(ctx, id)
+	err = up.repo.DeleteUser(ctx, idInt)
 	if err != nil {
 		return err
 	}
