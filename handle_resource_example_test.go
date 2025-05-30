@@ -42,21 +42,21 @@ func (up *UserProvider) Create(ctx context.Context, u *user) (*user, error) {
 	return u, nil
 }
 
-func (up UserProvider) Get(ctx context.Context, idString string) (*user, error) {
-	u, ok := up.mem[idString]
+func (up UserProvider) Get(ctx context.Context, id string) (*user, error) {
+	u, ok := up.mem[id]
 	if !ok {
 		return &user{}, ErrNotFound
 	}
 	return &u, nil
 }
 
-func (up *UserProvider) Delete(ctx context.Context, idString string) error {
-	_, ok := up.mem[idString]
+func (up *UserProvider) Delete(ctx context.Context, id string) error {
+	_, ok := up.mem[id]
 	if !ok {
 		return ErrNotFound
 	}
 
-	delete(up.mem, idString)
+	delete(up.mem, id)
 	return nil
 }
 

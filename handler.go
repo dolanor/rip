@@ -67,7 +67,7 @@ func HandleEntities[
 
 type (
 	createFunc[Ent any] func(ctx context.Context, ent Ent) (Ent, error)
-	getFunc[Ent any]    func(ctx context.Context, idString string) (Ent, error)
+	getFunc[Ent any]    func(ctx context.Context, id string) (Ent, error)
 	updateFunc[Ent any] func(ctx context.Context, ent Ent) error
 	deleteFunc          func(ctx context.Context, id string) error
 	listFunc[Ent any]   func(ctx context.Context, limit, offset int) ([]Ent, error)
