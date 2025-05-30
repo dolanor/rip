@@ -2,26 +2,22 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/glebarez/sqlite"
 	"github.com/gorilla/handlers"
-	"github.com/samonzeweb/godb"
-	"github.com/samonzeweb/godb/adapters/sqlite"
-	"github.com/samonzeweb/godb/tablenamer"
-	_ "modernc.org/sqlite"
+	"gorm.io/gorm"
 
 	"github.com/dolanor/rip"
 	"github.com/dolanor/rip/encoding/html"
 	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/encoding/xml"
-	"github.com/dolanor/rip/providers/godbprovider"
+	"github.com/dolanor/rip/providers/gormprovider"
 	"github.com/dolanor/rip/providers/mapprovider"
 )
 
@@ -68,22 +64,18 @@ func main() {
 	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
 	// end HandleFuncEntities OMIT
 
-	db, err := sql.Open("sqlite", ":memory:")
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users(id text primary key, name text);")
+	err = db.AutoMigrate(&User{})
 	if err != nil {
 		panic(err)
 	}
-
-	godb := godb.Wrap(sqlite.Adapter, db)
-	godb.SetLogger(log.New(os.Stderr, "", 0))
-	godb.SetDefaultTableNamer(tablenamer.SnakePlural())
 
 	sqlLogger := slog.New(slog.NewTextHandler(logWriter, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	sup := godbprovider.New[User](godb, sqlLogger)
+	sup := gormprovider.New[User](db, sqlLogger)
 	if err != nil {
 		panic(err)
 	}

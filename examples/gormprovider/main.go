@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/dolanor/rip"
