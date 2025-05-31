@@ -34,7 +34,7 @@ func toUpper(ctx context.Context, input string) (output string, err error) {
 	return output, nil
 }
 
-func ExampleHandle_v2() {
+func ExampleHandle_withClient() {
 	handler := rip.Handle(http.MethodPost, toUpper, rip.NewRouteOptions().WithCodecs(json.Codec))
 	http.HandleFunc("/uppercase/", handler)
 
