@@ -1,4 +1,4 @@
-# RIP ⚰ [![Go Reference](https://pkg.go.dev/badge/github.com/dolanor/rip.svg)](https://pkg.go.dev/github.com/dolanor/rip) [![Dagger](https://github.com/dolanor/rip/actions/workflows/dagger.yaml/badge.svg)](https://dagger.cloud/tuxago/ci?branch=main&repo=github.com%2Fdolanor%2Frip) [![Go Report Card](https://goreportcard.com/badge/github.com/dolanor/rip)](https://goreportcard.com/report/github.com/dolanor/rip)
+# RIP ⚰ [![Go Reference](https://pkg.go.dev/badge/github.com/dolanor/rip.svg)](https://pkg.go.dev/github.com/dolanor/rip) [![Dagger](https://img.shields.io/badge/dagger%20%F0%9F%9A%80-passing-005c3d)](https://dagger.cloud/tuxago/ci?branch=main&repo=github.com%2Fdolanor%2Frip) [![Go Report Card](https://goreportcard.com/badge/github.com/dolanor/rip)](https://goreportcard.com/report/github.com/dolanor/rip)
 
 REST in peace
 
