@@ -21,15 +21,16 @@ type User struct {
 func main() {
 	hostPort := ":8888"
 
-	ro := rip.NewRouteOptions().
-		WithCodecs(
+	ro := []rip.EntityRouteOption{
+		rip.WithCodecs(
 			html.NewEntityCodec("/users/", html.WithTemplatesFS(templates.FS)),
 			html.NewEntityFormCodec("/users/", html.WithTemplatesFS(templates.FS)),
-		)
+		),
+	}
 
 	memLogger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	up := mapprovider.New[User](memLogger)
-	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
+	http.HandleFunc(rip.HandleEntities("/users/", up, ro...))
 
 	fmt.Println("listening on " + hostPort)
 	err := http.ListenAndServe(hostPort, nil)

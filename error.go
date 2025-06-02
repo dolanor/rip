@@ -120,7 +120,7 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%d - %s - %s", e.Code, e.Detail, e.Source)
 }
 
-func writeError(w http.ResponseWriter, accept string, err error, options *RouteOptions) {
+func writeError(w http.ResponseWriter, accept string, err error, cfg entityRouteConfig) {
 	var e Error
 	if !errors.As(err, &e) {
 		e = Error{
@@ -130,7 +130,7 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 
 	e.Source = extractErrorsSource(err)
 
-	for statusError, s := range options.statusMap {
+	for statusError, s := range cfg.statusMap {
 		if errors.Is(err, statusError) {
 			e.Status = s
 		}
@@ -153,8 +153,8 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 
 	if errors.Is(err, encoding.ErrNoEncoderAvailable) {
 		e.Status = http.StatusNotAcceptable
-		e.Detail = fmt.Sprintf("Accept header cannot be satisfied: enabled content types for this route: %v", options.codecs.OrderedMimeTypes)
-		accept = strings.Join(options.codecs.Codecs[encoding.DefaultCodecKey].MimeTypes, "; ")
+		e.Detail = fmt.Sprintf("Accept header cannot be satisfied: enabled content types for this route: %v", cfg.codecs.OrderedMimeTypes)
+		accept = strings.Join(cfg.codecs.Codecs[encoding.DefaultCodecKey].MimeTypes, "; ")
 	}
 
 	// if no acceptable codec is chosen, we will write to the client in the default codec available.
@@ -164,7 +164,7 @@ func writeError(w http.ResponseWriter, accept string, err error, options *RouteO
 		accept = encoding.DefaultCodecKey
 	}
 
-	encoder := encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs)
+	encoder := encoding.AcceptEncoder(w, accept, encoding.EditOff, cfg.codecs)
 
 	w.WriteHeader(e.Status)
 	err = encoder.Encode(e)

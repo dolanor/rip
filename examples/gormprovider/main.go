@@ -45,17 +45,16 @@ func main() {
 	// end gormprovider init OMIT
 
 	// start rip init OMIT
-	ro := rip.NewRouteOptions().
-		WithCodecs(
-			json.Codec,
-			yaml.Codec,
-			html.NewEntityCodec("/albums/"),
-			html.NewEntityFormCodec("/albums/"),
-		)
+	codecOpt := rip.WithCodecs(
+		json.Codec,
+		yaml.Codec,
+		html.NewEntityCodec("/albums/"),
+		html.NewEntityFormCodec("/albums/"),
+	)
 	// end rip init OMIT
 
 	// start http init OMIT
-	http.HandleFunc(rip.HandleEntities("/albums/", ap, ro)) //HLinterestingCall
+	http.HandleFunc(rip.HandleEntities("/albums/", ap, codecOpt)) //HLinterestingCall
 
 	logger.Info("listening on http://localhost:55555/albums") // HLinterestingCall
 	http.ListenAndServe(":55555", nil)

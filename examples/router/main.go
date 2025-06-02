@@ -20,13 +20,12 @@ func main() {
 	ap := mapprovider.New[Album](slog.Default())
 
 	r := rip.NewRouter(http.NewServeMux())
-	ro := rip.NewRouteOptions().
-		WithCodecs(
-			json.Codec,
-			html.NewEntityCodec("/albums/", html.WithServeMux(r)),
-			html.NewEntityFormCodec("/albums/", html.WithServeMux(r)),
-		)
-	r.HandleRoute(rip.NewEntityRoute("/albums/", ap, ro))
+	r.HandleRoute(rip.NewEntityRoute("/albums/", ap, rip.WithCodecs(
+		json.Codec,
+		html.NewEntityCodec("/albums/", html.WithServeMux(r)),
+		html.NewEntityFormCodec("/albums/", html.WithServeMux(r)),
+	),
+	))
 
 	slog.Info("server started listening", "port", "9999")
 	err := http.ListenAndServe(":9999", r)

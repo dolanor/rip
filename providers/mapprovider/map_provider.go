@@ -109,7 +109,7 @@ func (dp *entityMapProvider[Ent]) List(ctx context.Context, offset, limit int) (
 	defer dp.mu.Unlock()
 
 	if dp.listCacheFresh {
-		return dp.listCache, nil
+		return dp.listCache[offset:limit], nil
 	}
 
 	var dd []Ent
@@ -144,7 +144,7 @@ func (dp *entityMapProvider[Ent]) List(ctx context.Context, offset, limit int) (
 	dp.listCacheFresh = true
 	dp.listCache = dd
 
-	return dp.listCache, nil
+	return dp.listCache[offset:limit], nil
 }
 
 func compareAsNumbers(idA, idB string) (comparison int, ok bool) {

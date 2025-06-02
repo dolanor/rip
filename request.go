@@ -5,12 +5,12 @@ import (
 	"net/http"
 )
 
-func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string, options *RouteOptions) (cleanedPath string, accept, contentType string, err error) {
-	accept, err = contentNegociateBestHeaderValue(header, "Accept", options.codecs.OrderedMimeTypes)
+func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlPath string, cfg entityRouteConfig) (cleanedPath string, accept, contentType string, err error) {
+	accept, err = contentNegociateBestHeaderValue(header, "Accept", cfg.codecs.OrderedMimeTypes)
 	if err != nil {
 		return "", "", "", Error{
 			Status: http.StatusBadRequest,
-			Detail: fmt.Sprintf("bad accept header format: %v, codecs available: %v", header["Accept"], options.codecs.OrderedMimeTypes),
+			Detail: fmt.Sprintf("bad accept header format: %v, codecs available: %v", header["Accept"], cfg.codecs.OrderedMimeTypes),
 		}
 	}
 
@@ -18,7 +18,7 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		(reqMethod == http.MethodPost || reqMethod == http.MethodGet) {
 		return "", "", "", Error{
 			Status: http.StatusNotAcceptable,
-			Detail: fmt.Sprintf("bad accept type: %v, codecs available: %v", header["Accept"], options.codecs.OrderedMimeTypes),
+			Detail: fmt.Sprintf("bad accept type: %v, codecs available: %v", header["Accept"], cfg.codecs.OrderedMimeTypes),
 		}
 	}
 
@@ -31,7 +31,7 @@ func preprocessRequest(reqMethod, handlerMethod string, header http.Header, urlP
 		return urlPath, accept, contentType, nil
 	}
 
-	contentType, err = contentNegociateBestHeaderValue(header, "Content-Type", options.codecs.OrderedMimeTypes)
+	contentType, err = contentNegociateBestHeaderValue(header, "Content-Type", cfg.codecs.OrderedMimeTypes)
 	if err != nil {
 		return "", "", "", Error{Status: http.StatusUnsupportedMediaType, Detail: fmt.Sprintf("bad content type header format: %v", err)}
 	}

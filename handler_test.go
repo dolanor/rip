@@ -18,24 +18,25 @@ import (
 
 func TestHandleResourceWithPath(t *testing.T) {
 	up := newUserProvider()
-	ro := NewRouteOptions().
-		WithCodecs(
-			json.Codec,
-			yaml.Codec,
-			msgpack.Codec,
-			xml.Codec,
-		)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(HandleEntities("/users/", up, ro))
+
+	codecs, codecsOption := buildCodecOptions(
+		json.Codec,
+		yaml.Codec,
+		msgpack.Codec,
+		xml.Codec,
+	)
+
+	mux.HandleFunc(HandleEntities("/users/", up, codecsOption))
 	s := httptest.NewServer(mux)
 
 	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
 
 	c := s.Client()
 
-	availableCodecs := ro.codecs.Codecs
-	t.Log(ro.codecs)
+	availableCodecs := codecs.Codecs
+	t.Log(codecs)
 
 	for name, codec := range availableCodecs {
 		var b bytes.Buffer
@@ -294,12 +295,9 @@ func TestMiddleware(t *testing.T) {
 			f(w, r)
 		}
 	}
-	ro := NewRouteOptions().
-		WithMiddlewares(middleware).
-		WithCodecs(json.Codec)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(HandleEntities[*user]("/users/", up, ro))
+	mux.HandleFunc(HandleEntities[*user]("/users/", up, WithMiddlewares(middleware), WithCodecs(json.Codec)))
 	s := httptest.NewServer(mux)
 
 	u := user{Name: "Jane", BirthDate: time.Date(2009, time.November, 1, 23, 0, 0, 0, time.UTC)}
@@ -333,4 +331,16 @@ func panicErr(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func buildCodecOptions(codecSlice ...encoding.Codec) (encoding.Codecs, EntityRouteOption) {
+	codecs := encoding.Codecs{
+		Codecs: map[string]encoding.Codec{},
+	}
+	for _, c := range codecSlice {
+		codecs.Register(c)
+	}
+
+	codecsOption := WithCodecs(codecSlice...)
+	return codecs, codecsOption
 }

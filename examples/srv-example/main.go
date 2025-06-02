@@ -35,14 +35,15 @@ func main() {
 	memLogger := slog.New(slog.NewTextHandler(logWriter, nil))
 
 	// start route option OMIT
-	ro := rip.NewRouteOptions().
-		WithCodecs(
+	ro := []rip.EntityRouteOption{
+		rip.WithCodecs(
 			json.Codec,
 			xml.Codec,
 			html.NewEntityCodec("/users/"),
 			html.NewEntityFormCodec("/users/"),
-		).
-		WithMiddlewares(loggerMiddleware(logWriter))
+		),
+		rip.WithMiddlewares(loggerMiddleware(logWriter)),
+	}
 	// end route option OMIT
 
 	// start HandleFuncEntities OMIT
@@ -61,7 +62,7 @@ func main() {
 		})
 	}
 
-	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
+	http.HandleFunc(rip.HandleEntities("/users/", up, ro...))
 	// end HandleFuncEntities OMIT
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
@@ -88,14 +89,13 @@ func main() {
 		})
 	}
 
-	ro = ro.
-		WithCodecs(
-			// overwrite codec with another path
-			html.NewEntityCodec("/sqlusers/"),
-			html.NewEntityFormCodec("/sqlusers/"),
-		)
+	ro = append(ro, rip.WithCodecs(
+		// overwrite codec with another path
+		html.NewEntityCodec("/sqlusers/"),
+		html.NewEntityFormCodec("/sqlusers/"),
+	))
 
-	http.HandleFunc(rip.HandleEntities("/sqlusers/", sup, ro))
+	http.HandleFunc(rip.HandleEntities("/sqlusers/", sup, ro...))
 
 	fmt.Println("check http://" + hostPort + "/users/ or http://" + hostPort + "/sqlusers/")
 	err = http.ListenAndServe(hostPort, nil)

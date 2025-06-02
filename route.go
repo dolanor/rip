@@ -49,7 +49,13 @@ func (er *EntityRoute[Ent, EP]) OpenAPISchema() *openapi3.T {
 func NewEntityRoute[
 	Ent any,
 	EP EntityProvider[Ent],
-](path string, entityProvider EP, options *RouteOptions) Route {
+](path string, entityProvider EP, options ...EntityRouteOption) *EntityRoute[Ent, EP] {
+
+	var cfg entityRouteConfig
+	for _, o := range options {
+		o(&cfg)
+	}
+
 	generator := openapi3gen.NewGenerator(
 		openapi3gen.UseAllExportedFields(),
 	)
@@ -65,7 +71,7 @@ func NewEntityRoute[
 
 	rt.generateOperation()
 
-	_, handler := rt.createEntityHandler(path, entityProvider, options)
+	_, handler := rt.createEntityHandler(path, entityProvider, cfg)
 	rt.handlerFunc = handler
 	return &rt
 }
@@ -73,18 +79,14 @@ func NewEntityRoute[
 func (rt *EntityRoute[Ent, EP]) createEntityHandler(
 	urlPath string,
 	ep EP,
-	options *RouteOptions,
+	cfg entityRouteConfig,
 ) (path string, handler http.HandlerFunc) {
-	if options == nil {
-		options = defaultOptions
-	}
-
-	if len(options.codecs.Codecs) == 0 {
+	if len(cfg.codecs.Codecs) == 0 {
 		err := fmt.Sprintf("no codecs defined on route: %s", urlPath)
 		panic(err)
 	}
 
-	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, options)
+	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, cfg)
 }
 
 func (rt *EntityRoute[Ent, EP]) generateOperation() {

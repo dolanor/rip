@@ -36,18 +36,19 @@ func main() {
 		hostPort += defaultPort
 	}
 
-	ro := rip.NewRouteOptions().
-		WithCodecs(
+	opts := []rip.EntityRouteOption{
+		rip.WithCodecs(
 			json.Codec,
 			html.NewEntityCodec("/users/"),
 			html.NewEntityFormCodec("/users/"),
-		).
-		WithMiddlewares(loggerMiddleware(os.Stdout)).
-		WithErrors(rip.StatusMap{
+		),
+		rip.WithMiddlewares(loggerMiddleware(os.Stdout)),
+		rip.WithErrors(rip.StatusMap{
 			domain.ErrAppNotFound:       http.StatusNotFound,
 			domain.ErrAppNotImplemented: http.StatusNotImplemented,
-		}).
-		WithListPageSize(3)
+		}),
+		rip.WithListPage(3, 10),
+	}
 
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
@@ -64,7 +65,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc(rip.HandleEntities("/users/", up, ro))
+	http.HandleFunc(rip.HandleEntities("/users/", up, opts...))
 
 	fmt.Println("listening on " + hostPort)
 	err = http.ListenAndServe(hostPort, nil)

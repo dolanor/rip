@@ -21,10 +21,10 @@ func TestChooseHeaderValue(t *testing.T) {
 		"nothing":                     {map[string][]string{"a": {""}}, ""},
 	}
 
-	options := NewRouteOptions().WithCodecs(json.Codec, xml.Codec)
+	codecs, _ := buildCodecOptions(json.Codec, xml.Codec)
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			got, err := contentNegociateBestHeaderValue(c.in, "a", options.codecs.OrderedMimeTypes)
+			got, err := contentNegociateBestHeaderValue(c.in, "a", codecs.OrderedMimeTypes)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -39,8 +39,8 @@ func TestBadHeaderQArgValue(t *testing.T) {
 	in := map[string][]string{"a": {"application/json; q=HAHA"}}
 	expErr := Error{Source: ErrorSource{Header: "a"}}
 
-	options := NewRouteOptions().WithCodecs(json.Codec, xml.Codec)
-	_, err := contentNegociateBestHeaderValue(in, "a", options.codecs.OrderedMimeTypes)
+	codecs, _ := buildCodecOptions(json.Codec, xml.Codec)
+	_, err := contentNegociateBestHeaderValue(in, "a", codecs.OrderedMimeTypes)
 	if err == nil {
 		t.Fatal(err)
 	}

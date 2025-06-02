@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/dolanor/rip/encoding"
+	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/internal/ripreflect"
 )
 
@@ -50,19 +51,27 @@ func HandleEntities[
 ](
 	urlPath string,
 	ep EP,
-	options *RouteOptions,
+	options ...EntityRouteOption,
 ) (path string, handler http.HandlerFunc) {
 	// end HandleEntities OMIT
-	if options == nil {
-		options = defaultOptions
+	var cfg entityRouteConfig
+	for _, o := range options {
+		o(&cfg)
 	}
 
-	if len(options.codecs.Codecs) == 0 {
-		err := fmt.Sprintf("no codecs defined on route: %s", urlPath)
-		panic(err)
+	if len(cfg.codecs.Codecs) == 0 {
+		cfg.codecs.Register(json.Codec)
 	}
 
-	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, options)
+	if cfg.listPageSize == 0 {
+		cfg.listPageSize = 20
+	}
+
+	if cfg.listPageSizeMax == 0 {
+		cfg.listPageSizeMax = 100
+	}
+
+	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, cfg)
 }
 
 type (
@@ -80,36 +89,36 @@ func handleEntityWithPath[Ent any](
 	update updateFunc[Ent],
 	deleteFn deleteFunc,
 	list listFunc[Ent],
-	options *RouteOptions,
+	cfg entityRouteConfig,
 ) (path string, handler http.HandlerFunc) {
 	handler = func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			handleCreate(r.Method, urlPath, create, options)(w, r)
+			handleCreate(r.Method, urlPath, create, cfg)(w, r)
 		case http.MethodGet:
-			_, _, _, _, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath, options)
+			_, _, _, _, accept, editMode, err := getIDAndEditMode(w, r, r.Method, urlPath, cfg)
 			if err != nil {
-				writeError(w, accept, err, options)
+				writeError(w, accept, err, cfg)
 				return
 			}
 
 			if urlPath == r.URL.Path && editMode == encoding.EditOff {
-				handleListAll(urlPath, r.Method, list, options)(w, r)
+				handleListAll(urlPath, r.Method, list, cfg)(w, r)
 				return
 			}
-			handleGet(urlPath, r.Method, get, options)(w, r)
+			handleGet(urlPath, r.Method, get, cfg)(w, r)
 		case http.MethodPut:
-			updatePathID(urlPath, r.Method, update, get, options)(w, r)
+			updatePathID(urlPath, r.Method, update, get, cfg)(w, r)
 		case http.MethodDelete:
-			deletePathID(urlPath, r.Method, deleteFn, options)(w, r)
+			deletePathID(urlPath, r.Method, deleteFn, cfg)(w, r)
 		default:
-			badMethodHandler(w, r, options)
+			badMethodHandler(w, r, cfg)
 		}
 	}
 
-	for i := len(options.middlewares) - 1; i >= 0; i-- {
+	for i := len(cfg.middlewares) - 1; i >= 0; i-- {
 		// we wrap the handler in the middlewares
-		handler = options.middlewares[i](handler)
+		handler = cfg.middlewares[i](handler)
 	}
 
 	return urlPath, handler
@@ -122,25 +131,14 @@ func resID(requestPath, prefixPath string) string {
 }
 
 // decode use the content type to decode the data from r into t.
-func decode[T any](r io.Reader, contentType string, options *RouteOptions) (T, error) {
+func decode[T any](r io.Reader, contentType string, cfg entityRouteConfig) (T, error) {
 	var t T
-	decoder, err := encoding.ContentTypeDecoder(r, contentType, options.codecs)
+	decoder, err := encoding.ContentTypeDecoder(r, contentType, cfg.codecs)
 	if err != nil {
 		return t, err
 	}
 
 	err = decoder.Decode(&t)
-	return t, err
-}
-
-// decodeIn use the content type to decode the data from r into t (which should be a pointer).
-func decodeIn(t any, r io.Reader, contentType string, options *RouteOptions) (any, error) {
-	decoder, err := encoding.ContentTypeDecoder(r, contentType, options.codecs)
-	if err != nil {
-		return t, err
-	}
-
-	err = decoder.Decode(t)
 	return t, err
 }
 
@@ -169,21 +167,21 @@ func updateFieldInEntity[Ent any](entity Ent, fieldName string, fieldValue any) 
 	return nil
 }
 
-func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFunc[Ent], options *RouteOptions) http.HandlerFunc {
+func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFunc[Ent], cfg entityRouteConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//TODO add edit mode on
-		id, field, _, contentType, accept, _, err := getIDAndEditMode(w, r, method, urlPath, options)
+		id, field, _, contentType, accept, _, err := getIDAndEditMode(w, r, method, urlPath, cfg)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
 		var ent Ent
 		if field == "" {
 			// if we have no field selected, we just decode the entire entity
-			ent, err = decode[Ent](r.Body, contentType, options)
+			ent, err = decode[Ent](r.Body, contentType, cfg)
 			if err != nil {
-				writeError(w, accept, fmt.Errorf("bad input format: %w", err), options)
+				writeError(w, accept, fmt.Errorf("bad input format: %w", err), cfg)
 				return
 			}
 		} else {
@@ -202,7 +200,7 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 
 				ent, err = get(r.Context(), id)
 				if err != nil {
-					writeError(w, accept, fmt.Errorf("can not get original entity: %w", err), options)
+					writeError(w, accept, fmt.Errorf("can not get original entity: %w", err), cfg)
 					return err
 				}
 
@@ -222,14 +220,14 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 
 				var fieldData any
 
-				decoder, err := encoding.ContentTypeDecoder(r.Body, contentType, options.codecs)
+				decoder, err := encoding.ContentTypeDecoder(r.Body, contentType, cfg.codecs)
 				if err != nil {
 					return err
 				}
 
 				err = decoder.Decode(&fieldData)
 				if err != nil {
-					writeError(w, accept, fmt.Errorf("can not decode entity field: %w", err), options)
+					writeError(w, accept, fmt.Errorf("can not decode entity field: %w", err), cfg)
 					return err
 				}
 				fieldDataValue := reflect.ValueOf(fieldData)
@@ -237,21 +235,21 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 				if fieldValue.CanSet() {
 					fieldValue.Set(fieldDataValue)
 				} else {
-					writeError(w, accept, fmt.Errorf("can not set entity field: %s", fieldValue.String()), options)
+					writeError(w, accept, fmt.Errorf("can not set entity field: %s", fieldValue.String()), cfg)
 				}
 
 				// We've updated the field. We're good to go.
 				return nil
 			}()
 			if err != nil {
-				writeError(w, accept, fmt.Errorf("can not decode entity field: %w", err), options)
+				writeError(w, accept, fmt.Errorf("can not decode entity field: %w", err), cfg)
 				return
 			}
 		}
 
 		entID, err := ripreflect.GetID(ent)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
@@ -265,7 +263,7 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 		// then we can update the whole entity with updateFunc
 		err = f(r.Context(), ent)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
@@ -279,25 +277,25 @@ func updatePathID[Ent any](urlPath, method string, f updateFunc[Ent], get getFun
 			Request:        r,
 		}
 
-		err = encoding.AcceptEncoder(rrw, accept, encoding.EditOff, options.codecs).Encode(ent)
+		err = encoding.AcceptEncoder(rrw, accept, encoding.EditOff, cfg.codecs).Encode(ent)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 	}
 }
 
-func deletePathID(urlPath, method string, f deleteFunc, options *RouteOptions) http.HandlerFunc {
+func deletePathID(urlPath, method string, f deleteFunc, cfg entityRouteConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
+		cleanedPath, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, cfg)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
 		rID := resID(cleanedPath, urlPath)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("incompatible entity id VS path ID: %w", err), options)
+			writeError(w, accept, fmt.Errorf("incompatible entity id VS path ID: %w", err), cfg)
 			return
 		}
 
@@ -310,11 +308,11 @@ func deletePathID(urlPath, method string, f deleteFunc, options *RouteOptions) h
 				// we should continue with 204/200 as it is idempotent: the entity
 				// the entity doesn't exist anymore.
 				if e.Code != ErrorCodeNotFound {
-					writeError(w, accept, e, options)
+					writeError(w, accept, e, cfg)
 					return
 				}
 			} else {
-				writeError(w, accept, err, options)
+				writeError(w, accept, err, cfg)
 				return
 			}
 		}
@@ -347,14 +345,14 @@ func getEntityField(entityPrefix, requestPath string) (id, field string) {
 	return id, field
 }
 
-func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string, options *RouteOptions) (id, field, cleanedPath, contentType, accept string, editMode encoding.EditMode, err error) {
+func getIDAndEditMode(w http.ResponseWriter, r *http.Request, method string, urlPath string, cfg entityRouteConfig) (id, field, cleanedPath, contentType, accept string, editMode encoding.EditMode, err error) {
 	vals := r.URL.Query()
 	editMode = encoding.EditOff
 	if vals.Get("mode") == "edit" {
 		editMode = encoding.EditOn
 	}
 
-	cleanedPath, accept, contentType, err = preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
+	cleanedPath, accept, contentType, err = preprocessRequest(r.Method, method, r.Header, r.URL.Path, cfg)
 	if err != nil {
 		return id, field, cleanedPath, contentType, accept, editMode, err
 	}
@@ -409,17 +407,17 @@ func fieldValue(st reflect.Value, field string) any {
 	}
 }
 
-func handleGet[Ent any](urlPath, method string, f getFunc[Ent], options *RouteOptions) http.HandlerFunc {
+func handleGet[Ent any](urlPath, method string, f getFunc[Ent], cfg entityRouteConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, field, _, _, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath, options)
+		id, field, _, _, accept, editMode, err := getIDAndEditMode(w, r, method, urlPath, cfg)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
 		res, err := f(r.Context(), id)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
@@ -433,23 +431,23 @@ func handleGet[Ent any](urlPath, method string, f getFunc[Ent], options *RouteOp
 			Request:        r,
 		}
 
-		err = encoding.AcceptEncoder(rrw, accept, editMode, options.codecs).Encode(ret)
+		err = encoding.AcceptEncoder(rrw, accept, editMode, cfg.codecs).Encode(ret)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 	}
 }
 
-func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *RouteOptions) http.HandlerFunc {
+func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], cfg entityRouteConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, options)
+		_, accept, _, err := preprocessRequest(r.Method, method, r.Header, r.URL.Path, cfg)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
-		pageSize := options.listPageSize
+		pageSize := cfg.listPageSize
 		if r.URL.Query().Has("page_size") {
 			pageSizeErr := Error{
 				Status: http.StatusBadRequest,
@@ -462,19 +460,19 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 			pageSizeUint, err := strconv.ParseUint(pageSizeStr, 10, 64)
 			if err != nil {
 				pageSizeErr.Detail = `malformed "page_size" query parameter`
-				writeError(w, accept, pageSizeErr, options)
+				writeError(w, accept, pageSizeErr, cfg)
 				return
 			}
 
-			if int(pageSizeUint) > options.listPageSizeMax {
-				pageSizeErr.Detail = fmt.Sprintf(`%q query parameter cannot be bigger than: %d`, "page_size", options.listPageSizeMax)
-				writeError(w, accept, pageSizeErr, options)
+			if int(pageSizeUint) > cfg.listPageSizeMax {
+				pageSizeErr.Detail = fmt.Sprintf(`%q query parameter cannot be bigger than: %d`, "page_size", cfg.listPageSizeMax)
+				writeError(w, accept, pageSizeErr, cfg)
 				return
 			}
 
 			if int(pageSizeUint) == 0 {
 				pageSizeErr.Detail = fmt.Sprintf(`%q query parameter should be > 0`, "page_size")
-				writeError(w, accept, pageSizeErr, options)
+				writeError(w, accept, pageSizeErr, cfg)
 				return
 			}
 
@@ -493,7 +491,7 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 						Parameter: "page",
 					},
 				}
-				writeError(w, accept, err, options)
+				writeError(w, accept, err, cfg)
 				return
 			}
 
@@ -509,54 +507,54 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], options *Ro
 
 		ents, err := f(r.Context(), offset, limit)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 
-		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(ents)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, cfg.codecs).Encode(ents)
 		if err != nil {
-			writeError(w, accept, err, options)
+			writeError(w, accept, err, cfg)
 			return
 		}
 	}
 }
 
-func handleCreate[Ent any](method, urlPath string, f createFunc[Ent], options *RouteOptions) http.HandlerFunc {
+func handleCreate[Ent any](method, urlPath string, f createFunc[Ent], cfg entityRouteConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", cfg.codecs.OrderedMimeTypes)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), options)
+			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), cfg)
 			return
 		}
 
 		if r.Method != method {
-			writeError(w, accept, fmt.Errorf("method not allowed: %s", r.Method), options)
+			writeError(w, accept, fmt.Errorf("method not allowed: %s", r.Method), cfg)
 			return
 		}
 
-		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
+		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", cfg.codecs.OrderedMimeTypes)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("bad content type header format: %w", err), options)
+			writeError(w, accept, fmt.Errorf("bad content type header format: %w", err), cfg)
 			return
 		}
 
-		res, err := decode[Ent](r.Body, contentType, options)
+		res, err := decode[Ent](r.Body, contentType, cfg)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("decode POST body: %w", err), options)
+			writeError(w, accept, fmt.Errorf("decode POST body: %w", err), cfg)
 			return
 		}
 
 		res, err = f(r.Context(), res)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("entity provider create: %w", err), options)
+			writeError(w, accept, fmt.Errorf("entity provider create: %w", err), cfg)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
 
-		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(res)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, cfg.codecs).Encode(res)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("encode POST body: %w", err), options)
+			writeError(w, accept, fmt.Errorf("encode POST body: %w", err), cfg)
 			return
 		}
 	}
@@ -569,58 +567,65 @@ func Handle[
 	Input, Output any,
 ](
 	method string, f InputOutputFunc[Input, Output],
-	options *RouteOptions,
+	options ...EntityRouteOption,
 ) http.HandlerFunc {
 	// end Handle OMIT
-	if options == nil {
-		options = defaultOptions
+
+	var cfg entityRouteConfig
+	for _, o := range options {
+		o(&cfg)
 	}
+
+	if len(cfg.codecs.Codecs) == 0 {
+		cfg.codecs.Register(json.Codec)
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", cfg.codecs.OrderedMimeTypes)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), options)
+			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), cfg)
 			return
 		}
 
 		if r.Method != method {
-			writeError(w, accept, fmt.Errorf("method not allowed: %s", r.Method), options)
+			writeError(w, accept, fmt.Errorf("method not allowed: %s", r.Method), cfg)
 			return
 		}
 
-		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", options.codecs.OrderedMimeTypes)
+		contentType, err := contentNegociateBestHeaderValue(r.Header, "Content-Type", cfg.codecs.OrderedMimeTypes)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("bad content type header format: %w", err), options)
+			writeError(w, accept, fmt.Errorf("bad content type header format: %w", err), cfg)
 			return
 		}
 
-		req, err := decode[Input](r.Body, contentType, options)
+		req, err := decode[Input](r.Body, contentType, cfg)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("decode %s body: %w", r.Method, err), options)
+			writeError(w, accept, fmt.Errorf("decode %s body: %w", r.Method, err), cfg)
 			return
 		}
 
 		res, err := f(r.Context(), req)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("handle: %w", err), options)
+			writeError(w, accept, fmt.Errorf("handle: %w", err), cfg)
 			return
 		}
 
-		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, options.codecs).Encode(res)
+		err = encoding.AcceptEncoder(w, accept, encoding.EditOff, cfg.codecs).Encode(res)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("encode %s body: %w", r.Method, err), options)
+			writeError(w, accept, fmt.Errorf("encode %s body: %w", r.Method, err), cfg)
 			return
 		}
 	}
 }
 
-func badMethodHandler(w http.ResponseWriter, r *http.Request, options *RouteOptions) http.HandlerFunc {
+func badMethodHandler(w http.ResponseWriter, r *http.Request, cfg entityRouteConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", options.codecs.OrderedMimeTypes)
+		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", cfg.codecs.OrderedMimeTypes)
 		if err != nil {
-			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), options)
+			writeError(w, accept, fmt.Errorf("bad accept header format: %w", err), cfg)
 			return
 		}
 
-		writeError(w, accept, Error{Status: http.StatusMethodNotAllowed, Detail: "bad method"}, options)
+		writeError(w, accept, Error{Status: http.StatusMethodNotAllowed, Detail: "bad method"}, cfg)
 	}
 }

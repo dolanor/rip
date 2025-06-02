@@ -21,7 +21,7 @@ func ExampleHandle() {
 		return output, nil
 	}
 
-	handler := rip.Handle(http.MethodPost, toUpper, rip.NewRouteOptions().WithCodecs(json.Codec))
+	handler := rip.Handle(http.MethodPost, toUpper, rip.WithCodecs(json.Codec))
 
 	http.HandleFunc("/uppercase/", handler)
 
@@ -35,7 +35,7 @@ func toUpper(ctx context.Context, input string) (output string, err error) {
 }
 
 func ExampleHandle_withClient() {
-	handler := rip.Handle(http.MethodPost, toUpper, rip.NewRouteOptions().WithCodecs(json.Codec))
+	handler := rip.Handle(http.MethodPost, toUpper, rip.WithCodecs(json.Codec))
 	http.HandleFunc("/uppercase/", handler)
 
 	ts := httptest.NewServer(http.DefaultServeMux)
