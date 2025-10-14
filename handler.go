@@ -503,7 +503,7 @@ func handleListAll[Ent any](urlPath, method string, f listFunc[Ent], cfg entityR
 			offset = int(page) * pageSize
 		}
 
-		limit := offset + pageSize
+		limit := pageSize
 
 		ents, err := f(r.Context(), offset, limit)
 		if err != nil {
