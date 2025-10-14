@@ -261,6 +261,8 @@ func expandFields(s reflect.Value) entity {
 			}
 			var isID bool
 			if fName == "ID" || ripreflect.HasRIPIDField(t.Field(i)) {
+				// TODO: check if it works correctly, even when a struct has an .ID field and
+				// a field with a `rip:"id"` struct tag somewhere else.
 				ent.ID = fVal
 				isID = true
 			}

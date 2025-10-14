@@ -2,12 +2,13 @@
 	{{ $pathPrefix := .PathPrefix }}
 	{{ $method := "put" }}
 	{{ with .Entity }}
+        {{ $id := (.ID | toString) }}
 
-	{{ if eq .ID "" }}
+	{{ if eq $id "" }}
 		{{ $method = "post" }}
-<form class="entity" id="entity-{{ .ID }}" method="{{ $method }}" target="{{ $pathPrefix }}">
+<form class="entity" id="entity-{{ $id }}" method="{{ $method }}" target="{{ $pathPrefix }}">
 	{{ else }}
-<form class="entity" id="entity-{{ .ID }}" hx-{{ $method }}="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
+<form class="entity" id="entity-{{ $id }}" hx-{{ $method }}="{{ $pathPrefix }}{{ $id }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
 	{{ end }}
 	{{- range $f := .Fields }}
 		{{ if not $f.IsID }}
@@ -25,7 +26,7 @@
 	{{- end }}
 
 	<button class="btn btn-primary">Submit</button>
-	<button hx-get="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
+	<button hx-get="{{ $pathPrefix }}{{ $id }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
 </form>
 	{{ end }}
 {{ end }}
