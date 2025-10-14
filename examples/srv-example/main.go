@@ -54,6 +54,10 @@ func main() {
 	}
 
 	up := mapprovider.New[User](memLogger)
+
+	http.HandleFunc(rip.HandleEntities("/users/", up, ro...))
+	// end HandleFuncEntities OMIT
+
 	for i := 0; i < 10; i++ {
 		id := strconv.Itoa(i)
 		up.Create(context.Background(), User{
@@ -61,9 +65,6 @@ func main() {
 			Name: "George-" + id,
 		})
 	}
-
-	http.HandleFunc(rip.HandleEntities("/users/", up, ro...))
-	// end HandleFuncEntities OMIT
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
