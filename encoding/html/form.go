@@ -66,8 +66,8 @@ func NewFormEncoder(pathPrefix string, opts ...Option) func(w io.Writer) *FormEn
 
 	if cfg.mux == nil {
 		cfg.mux = http.DefaultServeMux
-		serveHTMX(cfg.mux)
 	}
+	serveHTMX(cfg.mux)
 
 	return func(w io.Writer) *FormEncoder {
 		return &FormEncoder{
