@@ -16,8 +16,9 @@ import (
 
 func New[Ent any](logger *slog.Logger) *entityMapProvider[Ent] {
 	return &entityMapProvider[Ent]{
-		store:  map[string]Ent{},
-		logger: logger,
+		store:     map[string]Ent{},
+		logger:    logger,
+		listCache: []Ent{},
 	}
 }
 
@@ -104,12 +105,22 @@ func (dp *entityMapProvider[Ent]) Get(ctx context.Context, id string) (Ent, erro
 }
 
 func (dp *entityMapProvider[Ent]) List(ctx context.Context, offset, limit int) ([]Ent, error) {
-	dp.logger.Info("list")
+	log := dp.logger.With("func", "list")
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
 
+	maxLen := max(len(dp.listCache), len(dp.store))
+	log.Debug("check for maxLen of offset", "max_length", maxLen)
+	if offset > maxLen {
+		return []Ent{}, nil
+	}
+
+	log.Debug("check for maxLen of offset + limit", "fresh", dp.listCacheFresh, "len list cache", len(dp.listCache), "offset", offset, "limit", limit, "max_length", maxLen)
+	maxLen = min(maxLen, offset+limit)
+	limit = maxLen
 	if dp.listCacheFresh {
-		return dp.listCache[offset:limit], nil
+		log.Debug("returning cache", "offset", offset, "limit", limit, "max_length", maxLen)
+		return dp.listCache[offset:maxLen], nil
 	}
 
 	var dd []Ent
