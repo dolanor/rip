@@ -32,7 +32,7 @@ func main() {
 	}
 
 	logWriter := &yellowWriter{w: os.Stderr}
-	memLogger := slog.New(slog.NewTextHandler(logWriter, nil))
+	memLogger := slog.New(slog.NewTextHandler(logWriter, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// start route option OMIT
 	ro := []rip.EntityRouteOption{

@@ -49,7 +49,7 @@ func (dp *entityMapProvider[Ent]) Create(ctx context.Context, d Ent) (Ent, error
 		}
 		id = uuid.String()
 
-		err = ripreflect.SetID(&d, uuid.String())
+		err = ripreflect.SetID(&d, id)
 		if err != nil {
 			return d, errors.New("can not set unique id")
 		}
