@@ -23,6 +23,7 @@ var htmxHandled sync.Once
 func serveHTMX(mux HandleFuncer) {
 	htmxHandled.Do(func() {
 		mux.HandleFunc("/js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/javascript")
 			_, err := w.Write(htmxJS)
 			if err != nil {
 				log.Println("error sending htmx js script file")
