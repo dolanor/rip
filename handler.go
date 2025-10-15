@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/dolanor/rip/encoding"
-	"github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/internal/ripreflect"
 )
 
@@ -59,17 +58,7 @@ func HandleEntities[
 		o(&cfg)
 	}
 
-	if len(cfg.codecs.Codecs) == 0 {
-		cfg.codecs.Register(json.Codec)
-	}
-
-	if cfg.listPageSize == 0 {
-		cfg.listPageSize = 20
-	}
-
-	if cfg.listPageSizeMax == 0 {
-		cfg.listPageSizeMax = 100
-	}
+	cfg = setEntityRouteConfigDefaults(cfg)
 
 	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, cfg)
 }
@@ -576,9 +565,7 @@ func Handle[
 		o(&cfg)
 	}
 
-	if len(cfg.codecs.Codecs) == 0 {
-		cfg.codecs.Register(json.Codec)
-	}
+	cfg = setEntityRouteConfigDefaults(cfg)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		accept, err := contentNegociateBestHeaderValue(r.Header, "Accept", cfg.codecs.OrderedMimeTypes)

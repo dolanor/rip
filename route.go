@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	ripjson "github.com/dolanor/rip/encoding/json"
 	"github.com/dolanor/rip/internal/ripreflect"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
@@ -85,6 +86,8 @@ func (rt *EntityRoute[Ent, EP]) createEntityHandler(
 		err := fmt.Sprintf("no codecs defined on route: %s", urlPath)
 		panic(err)
 	}
+
+	cfg = setEntityRouteConfigDefaults(cfg)
 
 	return handleEntityWithPath(urlPath, ep.Create, ep.Get, ep.Update, ep.Delete, ep.List, cfg)
 }
@@ -237,4 +240,20 @@ func dumpSchema(title string, schema any) {
 	b, _ := json.Marshal(schema)
 	fmt.Print(string(b))
 	fmt.Fprintln(os.Stderr)
+}
+
+func setEntityRouteConfigDefaults(cfg entityRouteConfig) entityRouteConfig {
+	if len(cfg.codecs.Codecs) == 0 {
+		cfg.codecs.Register(ripjson.Codec)
+	}
+
+	if cfg.listPageSize == 0 {
+		cfg.listPageSize = 20
+	}
+
+	if cfg.listPageSizeMax == 0 {
+		cfg.listPageSizeMax = 100
+	}
+
+	return cfg
 }
