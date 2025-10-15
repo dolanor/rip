@@ -1,16 +1,8 @@
 {{ define "entity_header" }}
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <script src="/js/htmx.min.js"></script>
-<style type="text/css">
-label {
-	font-weight: bold;
-}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.jade.min.css" >
 
-.entity {
-	padding: 2rem 1rem;
-	border-radius: 20px;
-	background: rgb(255,0,0);
-	background: linear-gradient(217deg, rgba(255,0,0,1) 0%, rgba(32,173,215,1) 100%); 
-}
-</style>
 {{ end }}
