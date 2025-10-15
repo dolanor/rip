@@ -3,7 +3,7 @@
 	{{ with .Entity }}
 	<p>
 		<!-- TODO use fieldset -->
-		<div class="entity" id="entity-{{ .ID }}" hx-target="this" hx-select=".entity" hx-swap="outerHTML">
+		<div class="entity" id="entity-{{ . | idField }}" hx-target="this" hx-select=".entity" hx-swap="outerHTML">
 		{{- range $v := .Fields }}
 			{{ if eq $v.Key "ID" }}
 			<div><label>{{ $v.Key }}</label>: <a href="{{ $v.Value }}">{{ $v.Value }}</a></div>
