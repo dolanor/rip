@@ -1,4 +1,5 @@
 {{ define "entity_page" }}
+<!doctype html>
 <html>
 	<head>
 		{{ template "entity_header" }}
