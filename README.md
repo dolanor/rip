@@ -110,8 +110,9 @@ The slides are [in my talks repository](https://github.com/dolanor/talks/blob/ma
 - [ ] improve the error API
 - [ ] support for hypermedia discoverability
 - [x] support for multiple data representation
-- [ ] add automatic OpenAPI schema
-- [ ] add automatic API client
+- [x] add automatic OpenAPI schema
+- [ ] add automatic API client (WIP)
+- [ ] add automatic API client with local cache for some local-first/offline mode (WIP)
 
 ## Thanks
 
