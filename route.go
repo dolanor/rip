@@ -143,9 +143,11 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 				WithDescription("Request body for " + tag)
 
 			if bodySchema != nil {
-				// TODO add route options multiple encoding
-				content := openapi3.NewContentWithSchema(bodySchema.Value, []string{"application/json"})
+				// TODO: add encoding types from registered codecs
+				content := openapi3.NewContentWithSchema(bodySchema.Value, []string{"application/json", "text/yaml"})
+
 				content["application/json"].Schema.Ref = "#/components/schemas/" + tag
+				content["text/yaml"].Schema.Ref = "#/components/schemas/" + tag
 				requestBody.WithContent(content)
 			}
 
@@ -175,6 +177,7 @@ func (rt *EntityRoute[Ent, EP]) generateOperation() {
 				panic("could not find response schema: " + tag)
 			}
 
+			// TODO: add encoding types from registered codecs
 			content := openapi3.NewContentWithSchema(responseSchema.Value, []string{"application/json"})
 			content["application/json"].Schema.Ref = "#/components/schemas/" + tag
 			response.WithContent(content)
