@@ -92,6 +92,7 @@ func AcceptEncoder(w http.ResponseWriter, acceptHeader string, edit EditMode, co
 		return &noEncoder{missingEncoder: acceptHeader}
 	}
 
+	w.Header().Set("Content-Type", acceptHeader)
 	return encoder.NewEncoder(w)
 }
 
