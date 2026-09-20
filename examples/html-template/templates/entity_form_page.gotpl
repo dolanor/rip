@@ -5,7 +5,9 @@
 		{{ template "entity_header" }}
 	</head>
 	<body>
-		<h2 id="entity-name"><a href="{{ $pathPrefix }}">{{ .Name }}</a></h2>
+                <header>
+                        <h1 id="entity-name"><a href="{{ .PathPrefix }}">{{ .Name }}</a></h1>
+                </header>
 		{{ template "entity_form" . }}
 
 	</body>

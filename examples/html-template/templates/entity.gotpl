@@ -3,22 +3,25 @@
 	{{ with .Entity }}
 	<p>
 		<!-- TODO use fieldset -->
-		<div class="entity" id="entity-{{ .ID }}" hx-target="this" hx-select=".entity" hx-swap="outerHTML">
+		<div class="entity" id="entity-{{ . | idField }}" hx-target="this" hx-select=".entity" hx-swap="outerHTML">
+                        <fieldset>
 		{{- range $v := .Fields }}
-			{{ if eq $v.Key "ID" }}
-			<div><label>{{ $v.Key }}</label>: <a href="{{ $v.Value }}">{{ $v.Value }}</a></div>
+			{{ if $v.IsID }}
+                                <div role="group"><label>{{ $v.Key }}</label><a href="{{ $v.Value }}">{{ $v.Value }}</a></div>
 			{{ else }}
 				{{ if eq $v.Type "time.Time" }}
-			<div><label>{{ $v.Key }}</label>: <time datetime="{{ $v.Value }}">{{$v.Value}}<time></div>
+                                <div role="group"><label>{{ $v.Key }}</label><time datetime="{{ $v.Value }}">{{$v.Value}}<time></div>
 				{{ else }}
-			<div><label>{{ $v.Key }}</label>: {{ $v.Value }}</div>
+                                <div role="group"><label>{{ $v.Key }}</label>{{ $v.Value }}</div>
 				{{ end }}
 			{{ end }}
 		{{- end }}
+                        </fieldset>
 
 			<button hx-get="{{ $pathPrefix }}{{ .ID }}?{{ editModeQueryParam }}" hx-headers='{"Accept": "text/html"}' class="btn btn-primary" style="font-size: 2em;">&#9998;</button>
 			<button hx-delete="{{ $pathPrefix }}{{ .ID }}" hx-confirm="Are you sure you want to delete it?" class="btn btn-primary" style="font-size: 2em;">&#128465;</button>
 		</div>
+                <hr />
 	</p>
 	{{ end }}
 {{ end }}

@@ -1,16 +1,23 @@
 {{ define "entity_list" }}
 {{ $pathPrefix := .PathPrefix }}
-<h2 id="entity-name">
-	<a href="{{ $pathPrefix }}">{{ .EntityName }}</a>
-	<form method="get" action="{{ $pathPrefix }}?mode=edit">
-		<input type="hidden" name="mode" value="edit">
-		<button type="submit" style="font-size: 2em;">+</button>
-	</form>
-</h2>
+<header>
+        <h1 id="entity-name">
+                <a href="{{ $pathPrefix }}">{{ .EntityName }}</a>
+        </h1>
+</header>
 
+<main>
 {{ range $k, $v := .Entities }}
 	{{ $wrapped := wrapMetadata $pathPrefix $v }}
 	{{ template "entity" $wrapped }}
 {{ end }}
+</main>
+
+<footer>
+	<form method="get" action="{{ $pathPrefix }}?mode=edit">
+		<input type="hidden" name="mode" value="edit">
+		<button type="submit" style="font-size: 2em;">+</button>
+	</form>
+</footer>
 
 {{ end }}

@@ -2,31 +2,33 @@
 	{{ $pathPrefix := .PathPrefix }}
 	{{ $method := "put" }}
 	{{ with .Entity }}
+	{{ $id := (.ID | toString) }}
 
-	{{ if eq .ID 0 }}
+	{{ if eq $id "" }}
 		{{ $method = "post" }}
-<form class="entity" id="entity-{{ .ID }}" method="{{ $method }}" target="{{ $pathPrefix }}">
+<form class="entity" id="entity-{{ $id }}" method="{{ $method }}" target="{{ $pathPrefix }}">
 	{{ else }}
-<form class="entity" id="entity-{{ .ID }}" hx-{{ $method }}="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
+<form class="entity" id="entity-{{ $id }}" hx-{{ $method }}="{{ $pathPrefix }}{{ $id }}" hx-headers='{"Accept": "text/html"}' hx-target="this" hx-select=".entity" hx-swap="outerHTML">
 	{{ end }}
+        <fieldset>
 	{{- range $f := .Fields }}
-		{{ if ne $f.Key "ID" }}
-			{{ if ne ($f.Value | toString) "0" }}
-	<div >
-		<label>{{ $f.Key }}</label>:
-		<input type="text" name="{{ $f.Key }}" value="{{ $f.Value }}">
-	</div>
-			{{ end }}
+		{{ if not $f.IsID }}
+		<div role="group">
+			<label>{{ $f.Key }}</label>
+			<input type="text" name="{{ $f.Key }}" value="{{ $f.Value }}">
+		</div>
 		{{ else }}
-			{{ if ne ($f.Value | toString) "0" }}
-	<a href="{{ $f.Value }}"><div><label>{{ $f.Key }}</label>: {{ $f.Value }}</div></a>
+		<div role="group">
+			<label>{{ $f.Key }}</label>
+			<a href="{{ $f.Value }}">{{ $f.Value }}</a>
+		</div>
 		<input type="hidden" name="{{ $f.Key }}" value="{{ $f.Value }}">
-			{{ end }}
 		{{ end }}
 	{{- end }}
+        </fieldset>
 
 	<button class="btn btn-primary">Submit</button>
-	<button hx-get="{{ $pathPrefix }}{{ .ID }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
+	<button hx-get="{{ $pathPrefix }}{{ $id }}" hx-headers='{"Accept": "text/html"}' class="btn">Cancel</button>
 </form>
 	{{ end }}
 {{ end }}

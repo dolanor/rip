@@ -1,11 +1,18 @@
 {{ define "entity_page" }}
+<!doctype html>
 <html>
 	<head>
 		{{ template "entity_header" }}
 	</head>
 	<body>
-		<h2 id="entity-name"><a href="{{ .PathPrefix }}">{{ .Name }}</a></h2>
-		{{ template "entity" . }}
+                <header>
+                        <h1 id="entity-name"><a href="{{ .PathPrefix }}">{{ .Name }}</a></h1>
+                </header>
+                <section class="section">
+                        <div class="container">
+                                {{ template "entity" . }}
+                        </div>
+                </section>
 	</body>
 </html>
 {{ end }}
